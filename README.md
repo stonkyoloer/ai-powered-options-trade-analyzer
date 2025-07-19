@@ -1,124 +1,137 @@
-## 🚀 Overview
-Stonk‑Yoloer is an AI‑powered options‑trading pipeline that:
+# Overview
+Stonk‑Yoloer is an AI‑powered options‑trading pipeline that:Screens for the most liquid, high-IV tickers and builds a basket of the top 6.    
 
-1. **Scans** for the most liquid, high‑IV tickers (top 9 by volume × IV, nearest 30‑DTE).  
-2. **Collects** fundamentals, option‑chain greeks, price/volume history, macro & sentiment feeds.  
-3. **Pipes** all data into an Excel workbook (one sheet per ticker, SQL‑linked).  
-4. **Feeds** the data + prompt into an LLM to output **exactly three trades** that meet strict POP / risk bands.  
-5. *(Future)* **Automates** the entire flow on a schedule.  
+#  Scope
+1. Scrape Bartchart.com AIP to build a stock screener 
 
----
+## How-to Build a Stock Screener
 
-## ⚡ Quick Start
-~~~bash
-git clone https://github.com/stonkyoloer/stonk-yoloer-bot.git
-cd stonk-yoloer-bot
-pip install -r requirements.txt
-cp .env.example .env        # add tastytrade, Polygon, IEX, FRED, Twitter keys
+### 🕵️‍♂️ Verify Python 3 and Create a Folder 
+Confirm we have a proper Python 3 interpreter (needed for virtual environment) and have a clean workspace directory before proceeding.
 
-# 1) Find nine liquid / volatile tickers (~30‑day expiry)
-python src/scan_liquid_iv.py --top 9 --dte 30
+#### Step 1: Verify Python 3 [TERMINAL]
 
-# 2) Pull every data feed for those tickers
-python src/etl_collect.py --tickers $(cat results/tickers.txt)
+````bash
+python3 --version
+````
 
-# 3) Run the prompt and print the 3‑trade table
-python src/run_prompt.py --nav 100000
-~~~
+#### Step 2: Create the folder [TERMINAL]
+````bash
+mkdir screener
+````
 
----
+#### Step 3: Move into the folder [TERMINAL]
 
-## 📊 Data Coverage (primary live sources)
+````bash
+cd screener
+````
 
-| Category       | Key fields (sample)          | API / Feed            |
-| -------------- | ---------------------------- | --------------------- |
-| Option Chains  | IV, greeks, OI, IV Rank      | tastytrade Open API   |
-| Price / Volume | 1‑min OHLCV, ATR             | Polygon.io            |
-| Fundamentals   | EPS, FCF yield, margins      | IEX Cloud             |
-| Macro          | CPI, VIX, 10‑yr yield        | FRED API              |
-| Sentiment      | Reddit + X scores            | Pushshift, Twitter v2 |
-| ETF Flows      | SPY, QQQ, sector baskets     | Nasdaq ETFF           |
-| Trends         | Google Trends spikes         | pytrends              |
+#### Step 4: Confirm you are inside the folder [TERMINAL]
 
+````bash
+pwd
+````
 
----
+### 🧱 Create and Activate a Virtual Environment 
+Isolate project packages (so versions of pandas, etc. don’t clash with system-wide installs).
 
-## 📚 Detailed Data Specification
-<details>
-<summary>Click to expand full field list</summary>
+#### Step 1: Create the virtual environment [TERMINAL]
 
-### Fundamental  
-EPS, Revenue, Net Income, EBITDA, P/E, Price/Sales, Gross & Operating Margins, Free Cash Flow Yield, Insider Transactions, Forward Guidance, PEG (forward), Blended sell‑side multiples, Deep insider‑sentiment analytics.
+````bash
+python3 -m venv .venv
+````
 
-### Option Chain  
-IV, Delta, Gamma, Theta, Vega, Rho, OI & Volume by strike/expiry, Skew/term‑structure, IV Rank & Percentile, 52‑wk IV history, Minute‑level IV surface, Dealer gamma/charm maps, Weekly & deep OTM strikes.
+#### Step 2: Activate the virtual environment [TERMINAL]
 
-### Price & Volume History  
-Daily OHLCV, Historical Volatility, 50/100/200‑DMA, ATR, RSI, MACD, Bollinger Bands, VWAP, Pivot Points, Price‑momentum metrics, 1‑min / 5‑min intraday bars, Tick prints, Real‑time consolidated tape.
+````bash
+source .venv/bin/activate
+````
 
-### Alternative  
-Social sentiment (Reddit, X), Headline‑news detection, Google Trends, Credit‑card spend, Geolocation foot‑traffic, Satellite parking‑lot counts, App‑download trends, Job‑posting feeds, Product‑pricing scrapes.
+#### Step 3: Confirm the active python is inside (.vene) [TERMINAL]
 
-### Macro  
-CPI, GDP, Unemployment, 10‑yr Treasury, VIX, ISM PMI, Consumer Confidence, Non‑farm Payrolls, Retail Sales, Live FOMC minutes, Treasury futures, SOFR curve.
+````bash
+which python
+````
 
-### ETF & Fund Flow  
-SPY/QQQ flows, Sector ETF in/out‑flows, Hedge‑fund 13F, ETF short interest, Creation / redemption baskets, Leveraged‑ETF rebalance estimates, Large redemption notices, Index reconstruction.
+#### Step 4: Show python version [TERMINAL]
 
-### Analyst Ratings  
-Consensus target, Upgrades/downgrades, Coverage initiations, EPS & revenue revisions, Margin changes, Short‑interest updates, Institutional ownership shifts, Full model revisions, Recommendation dispersion.
-</details>
+````bash
+python --version
+````
 
----
+### 🤖 Install Required Packages 
+pandas = data table handling.
+requests = calling the Barchart API.
+Upgrading pip first avoids annoying install warnings.
 
-## 🧠 Prompt & Trade Selection Logic
-<details>
-<summary>System Instructions (verbatim)</summary>
+#### Step 1: Upgrade pip [TERMINAL]
 
-**Role**  
-You are ChatGPT, Head of Options Research at an elite quant fund. Your task is to analyze the user's current trading portfolio, which is provided in the attached excel spreadsheet, timestamped less than 60 seconds ago, representing live market data.
+````bash
+pip install --upgrade pip
+````
 
-### Trade Selection Criteria  
-* **Number of Trades:** Exactly 3  
-* **Goal:** Maximize edge while maintaining portfolio delta, vega, and sector exposure limits.
+#### Step 2: Install libraries [TERMINAL]
 
-#### Hard Filters  
-* Quote age ≤ 10 minutes  
-* Top option Probability of Profit (POP) ≥ 0.65  
-* Top option credit / max loss ratio ≥ 0.33  
-* Top option max loss ≤ 0.5 % of $100 000 NAV (≤ $500)
+````bash
+pip install pandas requests
+````
 
-#### Selection Rules  
-1. Rank trades by `model_score`.  
-2. Diversification: **max 2 trades per GICS sector**.  
-3. Net basket **Δ** must stay in [-0.30, +0.30] × (NAV / 100k).  
-4. Net basket **Vega ≥ ‑0.05** × (NAV / 100k).  
-5. Ties → prefer higher `momentum_z` and `flow_z`.
+#### Step 3: Verify they are installed [TERMINAL]
 
-#### Output Format  
-Return a text‑wrapped table with **only**:
+````bash
+pip show pandas
+````
 
-| Ticker | Strategy | Legs | Thesis (≤ 30 words) | POP |
+### 📂 Create config.py 
+Central place to hold the API key + base URL so other scripts can import the key; avoids hard‑coding it multiple times.
 
-If fewer than 3 trades qualify, output:  
-`Fewer than 3 trades meet criteria, do not execute.`
+#### Step 1: Create a new file [Visual Stduio]
 
-#### Additional Guidelines  
-* Keep each thesis ≤ 30 words, plain language.  
-* No exaggerated claims.  
-* No extra commentary outside the table.
-</details>
+````bash
+config.py
+````
 
----
+#### Step 2: API Key Place Holder [Visual Studio]
 
-## 🛠 Roadmap
-- Manual ETL + Excel linkage  
-- GitHub Actions for daily auto‑run @ 08:00 ET  
-- Push result tables to `/results/YYYY‑MM‑DD.md`  
-- One‑click posting to social via API  
-- Full broker auto‑execution (tastytrade FIX bridge)  
+````bash
+API_KEY = "PUT_YOUR_KEY_HERE"
+BASE_URL = "https://marketdata.websol.barchart.com"
+````
 
----
+#### Step 3: Save the file [Visual Studio]
 
-## 📜 License
-MIT — free to fork, adapt, and yeet gains responsibly.
+````bash
+ctrl + S
+````
+
+#### Step 4: Create a file in terminal [TERMINAL]
+
+````bash
+cat > config.py <<'EOF'
+API_KEY = "PUT_YOUR_KEY_HERE"
+BASE_URL = "https://marketdata.websol.barchart.com"
+EOF
+````
+
+#### Step 5: Verify a file exists in terminal [TERMINAL]
+
+````bash
+ls -l config.py
+````
+
+#### Step 6: Show contents within file [TERMINAL]
+
+````bash
+cat config.py
+````
+
+### 🏃‍♂️ Create a test_run.py 
+To verify: (a) file imports work, (b) we can execute within the venv, (c) path is correct.
+
+#### Step 1: Create a new file [Visual Studio]
+
+````bash
+test_run.py
+````
+
+#### Step 2: 
