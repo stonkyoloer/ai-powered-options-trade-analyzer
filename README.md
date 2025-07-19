@@ -128,10 +128,74 @@ cat config.py
 ### 🏃‍♂️ Create a test_run.py 
 To verify: (a) file imports work, (b) we can execute within the venv, (c) path is correct.
 
-#### Step 1: Create a new file [Visual Studio]
+
+#### Step 1:  Create a new file [terminal]
 
 ````bash
-test_run.py
+cat > test_run.py <<'EOF'
+import config
+
+print("Config loaded. Base URL =", config.BASE_URL)
+print("API key placeholder length =", len(config.API_KEY))
+EOF
 ````
 
-#### Step 2: 
+#### Step 2: Verify the file exists [terminal]
+
+````bash
+ls -l test_run.py
+````
+
+### 🧑‍💻 Create fetch_leaders.py
+Creating a script that will (soon) fetch option volume leaders from Barchart. For now it just sets up the request function and prints a URL (no actual API call yet because key is placeholder).
+
+#### Step 1: Create the file [terminal]
+
+````bash
+cat > fetch_leaders.py <<'EOF'
+import requests
+import config
+
+def api_get(endpoint, params=None):
+    """
+    Basic GET wrapper.
+    endpoint: path after base, e.g. '/getOptionVolumeLeaders.json'
+    params: dict of query params (apikey added automatically)
+    """
+    if params is None:
+        params = {}
+    params['apikey'] = config.API_KEY
+    url = config.BASE_URL + endpoint
+    print("DEBUG requesting:", url)
+    resp = requests.get(url, params=params, timeout=10)
+    print("HTTP status:", resp.status_code)
+    if resp.status_code == 200:
+        try:
+            js = resp.json()
+            print("Top-level keys:", list(js.keys()))
+            if 'results' in js and isinstance(js['results'], list):
+                print("Number of results:", len(js['results']))
+        except Exception as e:
+            print("JSON parse error:", e)
+    else:
+        print("Response text (truncated):", resp.text[:200])
+
+if __name__ == "__main__":
+    api_get("/getOptionVolumeLeaders.json", params={"limit": 5})
+EOF
+````
+
+#### Step 2: Confirm the file exists 
+
+````bash
+ls -l fetch_leaders.py
+````
+
+#### Step 3: Run the script
+
+````bash
+python fetch_leaders.py
+````
+
+
+
