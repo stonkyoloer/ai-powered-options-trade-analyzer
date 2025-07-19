@@ -1,258 +1,288 @@
 # Overview
-Stonk‑Yoloer is an AI‑powered options‑trading pipeline that:Screens for the most liquid, high-IV tickers and builds a basket of the top 6.    
+
+Stonk‑Yoloer is running an AI‑powered options‑trading pipeline that uses python to request api access from tastytrade, a stock trading brokerage designed for developers to build trading algorithms.
+
+
 
 #  Scope
-1. Scrape Bartchart.com AIP to build a stock screener 
 
-## How-to Build a Stock Screener
+1. Open a tastytrade account, enable API access, gather data.
+2. Screen data.
+3. Select 6 stock tickers for trading
 
-### 🕵️‍♂️ Verify Python 3 and Create a Folder 
-Confirm we have a proper Python 3 interpreter (needed for virtual environment) and have a clean workspace directory before proceeding.
+### Build Stock Screener
 
-#### Step 1: Verify Python 3 [TERMINAL]
+#### 1.  Create a base project folder structure
+
+Set up the base folders (config/, src/stonk_yoloer/, data/raw/, tests/) so the project isn’t a landfill. This keeps later files landing in predictable spots.  [terminal]
 
 ````bash
-python3 --version
+mkdir -p stonk_yoloer/{config,src/stonk_yoloer,data/raw,tests} \
+&& cd stonk_yoloer \
+&& pwd \
+&& ls -1
 ````
 
-#### Step 2: Create the folder [TERMINAL]
-````bash
-mkdir screener
-````
+#### 2. Create config/settings.py 
 
-#### Step 3: Move into the folder [TERMINAL]
+Centralizes all API keys & tunable parameters in one place; every component (tastytrade, polygon, etc.) imports this instead of duplicating config logic. [terminal]
 
 ````bash
-cd screener
-````
+cat > config/settings.py <<'EOF'
+from pydantic import BaseSettings, Field
 
-#### Step 4: Confirm you are inside the folder [TERMINAL]
+class Settings(BaseSettings):
+    # Tastytrade (we will populate .env later)
+    tasty_base_url: str = Field("https://api.tastytrade.com", env="TASTY_BASE_URL")
+    tasty_username: str = Field("", env="TASTY_USERNAME")  # keep empty for now
+    tasty_password: str = Field("", env="TASTY_PASSWORD")
 
-````bash
-pwd
-````
+    request_timeout: float = Field(5.0, env="REQUEST_TIMEOUT")
 
-### 🧱 Create and Activate a Virtual Environment 
-Isolate project packages (so versions of pandas, etc. don’t clash with system-wide installs).
+    class Config:
+        env_file = ".env"
+        env_file_encoding = "utf-8"
 
-#### Step 1: Create the virtual environment [TERMINAL]
-
-````bash
-python3 -m venv .venv
-````
-
-#### Step 2: Activate the virtual environment [TERMINAL]
-
-````bash
-source .venv/bin/activate
-````
-
-#### Step 3: Confirm the active python is inside (.vene) [TERMINAL]
-
-````bash
-which python
-````
-
-#### Step 4: Show python version [TERMINAL]
-
-````bash
-python --version
-````
-
-### 🤖 Install Required Packages 
-pandas = data table handling.
-requests = calling the Barchart API.
-Upgrading pip first avoids annoying install warnings.
-
-#### Step 1: Upgrade pip [TERMINAL]
-
-````bash
-pip install --upgrade pip
-````
-
-#### Step 2: Install libraries [TERMINAL]
-
-````bash
-pip install pandas requests
-````
-
-#### Step 3: Verify they are installed [TERMINAL]
-
-````bash
-pip show pandas
-````
-
-### 📂 Create config.py 
-Central place to hold the API key + base URL so other scripts can import the key; avoids hard‑coding it multiple times.
-
-#### Step 1: Create a new file [Visual Stduio]
-
-````bash
-config.py
-````
-
-#### Step 2: API Key Place Holder [Visual Studio]
-
-````bash
-API_KEY = "PUT_YOUR_KEY_HERE"
-BASE_URL = "https://marketdata.websol.barchart.com"
-````
-
-#### Step 3: Save the file [Visual Studio]
-
-````bash
-ctrl + S
-````
-
-#### Step 4: Create a file in terminal [TERMINAL]
-
-````bash
-cat > config.py <<'EOF'
-API_KEY = "PUT_YOUR_KEY_HERE"
-BASE_URL = "https://marketdata.websol.barchart.com"
+settings = Settings()
 EOF
 ````
 
-#### Step 5: Verify a file exists in terminal [TERMINAL]
+Verify file contents 
 
 ````bash
-ls -l config.py
+sed -n '1,160p' config/settings.py
 ````
 
-#### Step 6: Show contents within file [TERMINAL]
+#### 3. Initialize a Python virtual environment for isolated dependencies
+
+Keeps project packages separate from system Python; ensures reproducibility and prevents version conflicts. [terminal]
 
 ````bash
-cat config.py
+python3 -m venv .venv && source .venv/bin/activate && python -V
 ````
 
-### 🏃‍♂️ Create a test_run.py 
-To verify: (a) file imports work, (b) we can execute within the venv, (c) path is correct.
+#### 4. Install the minimal dependency set
 
+Required to make the forthcoming Tastytrade client work; installs libraries inside the virtual environment. [terminal]
 
-#### Step 1:  Create a new file [terminal]
 
 ````bash
-cat > test_run.py <<'EOF'
-import config
+pip install --upgrade pip && pip install httpx pydantic python-dotenv
+````
 
-print("Config loaded. Base URL =", config.BASE_URL)
-print("API key placeholder length =", len(config.API_KEY))
+verify key packages 
+
+````bash
+pip show httpx | grep Version
+pip show pydantic | grep Version
+````
+
+#### 5. Create a .env file with Tastytrade credentials
+
+Your Settings class will read these values; keeping them in .env separates secrets from code and prevents accidental commits. [terminal]
+
+````bash
+# Create .env with placeholders (edit later with real creds)
+cat > .env <<'EOF'
+TASTY_USERNAME=PUT_USERNAME_HERE
+TASTY_PASSWORD=PUT_PASSWORD_HERE
+# Optional override:
+# TASTY_BASE_URL=https://api.tastytrade.com
 EOF
+
+# Create or append to .gitignore to exclude secrets & venv
+grep -q "^.env$" .gitignore 2>/dev/null || {
+  printf ".env\n.venv/\n__pycache__/\n*.pyc\n" >> .gitignore
+}
+
+# Show the .env so you can confirm contents
+sed -n '1,120p' .env
 ````
 
-#### Step 2: Verify the file exists [terminal]
+#### 6. Create a minimal Tastytrade client file with just login
+
+To verify credentials + session token before adding more complexity. If login works, downstream calls will be simpler to debug. [terminal]
 
 ````bash
-ls -l test_run.py
-````
+cat > src/stonk_yoloer/tasty_client.py <<'EOF'
+import httpx
+from config.settings import settings
 
-### 🧑‍💻 Create fetch_leaders.py
-Creating a script that will (soon) fetch option volume leaders from Barchart. For now it just sets up the request function and prints a URL (no actual API call yet because key is placeholder).
-
-#### Step 1: Create the file [terminal]
-
-````bash
-cat > fetch_leaders.py <<'EOF'
-import requests
-import config
-
-def api_get(endpoint, params=None):
-    """
-    Basic GET wrapper.
-    endpoint: path after base, e.g. '/getOptionVolumeLeaders.json'
-    params: dict of query params (apikey added automatically)
-    """
-    if params is None:
-        params = {}
-    params['apikey'] = config.API_KEY
-    url = config.BASE_URL + endpoint
-    print("DEBUG requesting:", url)
-    resp = requests.get(url, params=params, timeout=10)
-    print("HTTP status:", resp.status_code)
-    if resp.status_code == 200:
+def login():
+    if not settings.tasty_username or not settings.tasty_password:
+        raise SystemExit("Username/password empty. Edit .env first.")
+    url = f"{settings.tasty_base_url.rstrip('/')}/sessions"
+    payload = {"login": settings.tasty_username, "password": settings.tasty_password}
+    with httpx.Client(timeout=settings.request_timeout) as c:
+        r = c.post(url, json=payload)
         try:
-            js = resp.json()
-            print("Top-level keys:", list(js.keys()))
-            if 'results' in js and isinstance(js['results'], list):
-                print("Number of results:", len(js['results']))
-        except Exception as e:
-            print("JSON parse error:", e)
-    else:
-        print("Response text (truncated):", resp.text[:200])
+            r.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            print("Status error:", e.response.status_code, e.response.text[:200])
+            raise
+    data = r.json()
+    token = (
+        data.get("data", {}).get("session-token")
+        or data.get("data", {}).get("sessionToken")
+        or data.get("session-token")
+    )
+    if not token:
+        print("Raw response (truncated):", str(data)[:300])
+        raise SystemExit("No session token found in response.")
+    print("Logged in. Token length:", len(token))
+    return token
 
 if __name__ == "__main__":
-    api_get("/getOptionVolumeLeaders.json", params={"limit": 5})
+    login()
 EOF
 ````
 
-#### Step 2: Confirm the file exists 
+Run:
 
 ````bash
-ls -l fetch_leaders.py
+python src/stonk_yoloer/tasty_client.py
 ````
 
-#### Step 3: Run the script
+#### 7. Fix import error 
+
+Python couldn’t find config (ModuleNotFoundError) because the interpreter didn’t treat the config/ directory as a package on your sys.path. Adding __init__.py (and confirming you’re in the project root) resolves that reliably. [terminal]
 
 ````bash
-python fetch_leaders.py
+# Ensure we are in project root
+pwd
+
+# Create __init__.py so 'config' is a proper package
+touch config/__init__.py
+
+# (Optional) show structure to sanity-check
+ls -1 config
+
+# Re-run the client
+python src/stonk_yoloer/tasty_client.py
 ````
 
-### 🔍 Inspect Raw Data
-Temporarily modifying the script to print the first part of the raw body so we can see the error message.
+#### 7. (Revised Fix) Re-run the login script with PYTHONPATH
 
-#### Step 1: Replace file with debug version
+To make the config package discoverable and eliminate the ModuleNotFoundError. [terminal]
 
 ````bash
-cat > fetch_leaders.py <<'EOF'
-import requests
-import config
+PYTHONPATH=. python src/stonk_yoloer/tasty_client.py
+````
 
-def api_get(endpoint, params=None):
-    if params is None:
-        params = {}
-    params['apikey'] = config.API_KEY
-    url = config.BASE_URL + endpoint
-    print("DEBUG requesting:", url)
-    resp = requests.get(url, params=params, timeout=10)
-    print("HTTP status:", resp.status_code)
-    text_snip = resp.text[:400]
-    try:
-        js = resp.json()
-        print("Parsed JSON ok. Keys:", list(js.keys()))
-        if 'results' in js and isinstance(js['results'], list):
-            print("Number of results:", len(js['results']))
-    except Exception as e:
-        print("JSON parse failed:", e)
-        print("---- Raw snippet start ----")
-        print(text_snip)
-        print("---- Raw snippet end ----")
+#### 8. Fix the Pydantic v2 import error by installing pydantic-settings and updating settings.py to import BaseSettings from the correct package.
+
+In Pydantic v2, BaseSettings moved out of pydantic into pydantic_settings; current import causes the crash you saw. [terminal]
+
+````bash
+# 1. Install the new package
+pip install pydantic-settings
+
+# 2. Replace the first import line in settings.py
+# (Backup optional)
+cp config/settings.py config/settings.py.bak
+
+# Update the import line to use pydantic_settings
+sed -i '' '1s/^from pydantic import BaseSettings, Field$/from pydantic_settings import BaseSettings\nfrom pydantic import Field/' config/settings.py
+
+# 3. Show the updated top lines to verify
+sed -n '1,20p' config/settings.py
+
+# 4. Re-run the client (with project root on PYTHONPATH)
+PYTHONPATH=. python src/stonk_yoloer/tasty_client.py
+````
+
+#### 9. Enter tastytrade login credientials
+
+Putting your Tastytrade login (username + password) into the .env file, then running the login script to get a session token.  he script reads .env to authenticate [terminal]
+
+````bash
+nano .env
+````
+
+Inside the editor, change the two lines to  your login creds):
+
+````bash
+TASTY_USERNAME= STONKYOLOER
+TASTY_PASSWORD= PASSWORD_1
+````
+
+press ctrl + O (save)
+press ctrl + X (quit)
+
+Then run the login script
+
+````bash
+PYTHONPATH=. python src/stonk_yoloer/tasty_client.py
+````
+
+#### 10.Add a function to fetch a single option chain
+
+A saved raw chain file is the foundation for building your screener and later parsing metrics (IV rank, spreads, volume). [terminal]
+
+````bash
+nano src/stonk_yoloer/tasty_client.py
+````
+
+Inside the editor replace the whole file contents with
+
+````bash
+import httpx, json, time, pathlib
+from config.settings import settings
+
+RAW_DIR = pathlib.Path("data/raw")
+RAW_DIR.mkdir(parents=True, exist_ok=True)
+
+def login():
+    if not settings.tasty_username or not settings.tasty_password:
+        raise SystemExit("Username/password empty. Edit .env first.")
+    url = f"{settings.tasty_base_url.rstrip('/')}/sessions"
+    payload = {"login": settings.tasty_username, "password": settings.tasty_password}
+    with httpx.Client(timeout=settings.request_timeout) as c:
+        r = c.post(url, json=payload)
+        r.raise_for_status()
+    data = r.json()
+    token = (
+        data.get("data", {}).get("session-token")
+        or data.get("data", {}).get("sessionToken")
+        or data.get("session-token")
+    )
+    if not token:
+        raise SystemExit("No session token found.")
+    return token
+
+def get_option_chain(token: str, symbol: str):
+    url = f"{settings.tasty_base_url.rstrip('/')}/option-chains/{symbol.upper()}"
+    headers = {"Authorization": token}
+    with httpx.Client(timeout=10.0, headers=headers) as c:
+        r = c.get(url)
+        r.raise_for_status()
+    return r.json()
+
+def save_raw(prefix: str, symbol: str, data: dict):
+    ts = int(time.time())
+    path = RAW_DIR / f"tasty_{prefix}_{symbol}_{ts}.json"
+    path.write_text(json.dumps(data, indent=2))
+    return path
 
 if __name__ == "__main__":
-    api_get("/getOptionVolumeLeaders.json", params={"limit": 5})
-EOF
+    token = login()
+    print("Logged in. Token length:", len(token))
+    symbol = "NVDA"
+    chain = get_option_chain(token, symbol)
+    out_path = save_raw("chain", symbol, chain)
+    items = chain.get("data", {}).get("items") or []
+    print(f"Saved chain to {out_path} with {len(items)} items")
 ````
 
-#### Step 2: Run fetch 
+Save it: Ctrl + O (enter)
+Close it:Ctrl + X (enter)
+
+Then run: 
 
 ````bash
-python fetch_leaders.py
+PYTHONPATH=. python src/stonk_yoloer/tasty_client.py
 ````
 
-
-### 📈 Insert Real API Key
-Replacing the placeholder in config.py with the real Barchart key.  So the API will return valid JSON instead of that HTML block.
-
-#### Step 1: Replace Placeholder 
-
-````bash
-sed -i '' 's/PUT_YOUR_KEY_HERE/YOUR_REAL_KEY/' config.py
-````
-
-
-
-
-
-
-
+#### 10. 
 
 
