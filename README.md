@@ -197,5 +197,62 @@ ls -l fetch_leaders.py
 python fetch_leaders.py
 ````
 
+### 🔍 Inspect Raw Data
+Temporarily modifying the script to print the first part of the raw body so we can see the error message.
+
+#### Step 1: Replace file with debug version
+
+````bash
+cat > fetch_leaders.py <<'EOF'
+import requests
+import config
+
+def api_get(endpoint, params=None):
+    if params is None:
+        params = {}
+    params['apikey'] = config.API_KEY
+    url = config.BASE_URL + endpoint
+    print("DEBUG requesting:", url)
+    resp = requests.get(url, params=params, timeout=10)
+    print("HTTP status:", resp.status_code)
+    text_snip = resp.text[:400]
+    try:
+        js = resp.json()
+        print("Parsed JSON ok. Keys:", list(js.keys()))
+        if 'results' in js and isinstance(js['results'], list):
+            print("Number of results:", len(js['results']))
+    except Exception as e:
+        print("JSON parse failed:", e)
+        print("---- Raw snippet start ----")
+        print(text_snip)
+        print("---- Raw snippet end ----")
+
+if __name__ == "__main__":
+    api_get("/getOptionVolumeLeaders.json", params={"limit": 5})
+EOF
+````
+
+#### Step 2: Run fetch 
+
+````bash
+python fetch_leaders.py
+````
+
+
+### 📈 Insert Real API Key
+Replacing the placeholder in config.py with the real Barchart key.  So the API will return valid JSON instead of that HTML block.
+
+#### Step 1: Replace Placeholder 
+
+````bash
+sed -i '' 's/PUT_YOUR_KEY_HERE/YOUR_REAL_KEY/' config.py
+````
+
+
+
+
+
+
+
 
 
