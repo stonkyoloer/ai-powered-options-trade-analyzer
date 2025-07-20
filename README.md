@@ -11,20 +11,16 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 
 ## 🤖 Prompt GROK: Build an Optimized, Sector-Diversified, Options Trading Portfolio
 
-### Input 1: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
-### Input 2: Prompt
-
+### CSV: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
+### Prompt:
 #### Goal:
 Construct an optimized, sector-diversified options portfolio emphasizing high implied volatility (IV), significant trading volume, deep liquidity, and strong short-term price swings.
-
 #### Asset Selection Criteria:
 Industry-leading exposure to Artificial Intelligence (AI)
 High liquidity for efficient trade execution (tight bid-ask spreads)
 Elevated IV to capitalize on substantial volatility
 Significant market attention (high retail/institutional hype)
-
 #### Portfolio Construction:
-
 ##### Select exactly 1 ticker per sector meeting all the criteria above:
 1. Agriculture (Precision farming, automation, biotech ag)
 2. Technology (Computing, semiconductors, data centers, servers)
@@ -35,7 +31,6 @@ Significant market attention (high retail/institutional hype)
 7. Financials (Banks or insurance firms significantly utilizing AI for risk modeling, fraud detection, trading)
 8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
 9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
-
 #### Output: 
 Provide ticker, sector, rationale for AI leadership, average IV %, daily trading volume, and liquidity metrics (bid-ask spread or options open interest) to justify inclusion.
 
