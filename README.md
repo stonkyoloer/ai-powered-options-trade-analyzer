@@ -15,7 +15,7 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/shld)
-## Visit: ([https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
+## Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
 
 
 ##  GROK: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
