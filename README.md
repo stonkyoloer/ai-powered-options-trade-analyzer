@@ -8,12 +8,12 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 
 1. Fetch (AIQ) Artificial Intelligence & Technology ETF Full Holdings
 2. Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly) 
-3. 
+3. Fetch TastyTrade portfolio data 
 4. Screen for Trades
 
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 
-## 🤖 GROK: Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
+##  GROK: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
 
 ### Attachment: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
 ### Instructions:
@@ -53,7 +53,16 @@ The CSV provide is a complete list of all AIQ holdings. Refer to only to the dat
 | COST   | Consumer Staples           | Employs AI for supply chain optimization and customer analytics                             | ~25-30%      | ~2M shares           | Good              |
 | FDX    | Transportation & Shipping  | Uses AI for logistics optimization, route planning, and autonomous delivery solutions       | ~25-30%      | ~2M shares           | Good              |
 
-## 🔍 GROK: Screen Trading Portfolio 
+
+
+## 🤖 Programming: 
+
+Using Tasty Trade Data Only, what is the optimal table, that I can deliver to GROK, to assist with the following analysis below.  What data points do I need to provide.  Make a list.  
+
+
+
+
+## 🔍 GROK: Screen Trading Portfolio For Daily Moves
 
 ### Attachment: Data 9
 ### Instructions: 
