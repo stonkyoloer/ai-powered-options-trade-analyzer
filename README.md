@@ -32,8 +32,19 @@ Significant market attention (high retail/institutional hype)
 8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
 9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
 #### Output: 
-Provide ticker, sector, rationale for AI leadership, average IV %, daily trading volume, and liquidity metrics (bid-ask spread or options open interest) to justify inclusion.
+# Portfolio Metrics Summary
 
+| Ticker | Sector                     | Rationale for AI Leadership                                                                 | Average IV % | Daily Trading Volume | Liquidity Metrics |
+|--------|----------------------------|---------------------------------------------------------------------------------------------|--------------|----------------------|-------------------|
+| DE     | Agriculture                | Leader in precision agriculture with AI-driven autonomous tractors and data analytics        | ~30-40%      | ~1.5M shares         | High              |
+| NVDA   | Technology                 | Dominant in AI chips for data centers and machine learning                                  | >40%         | ~400M shares         | Extremely high    |
+| CAT    | Industrials                | Uses AI for predictive maintenance and autonomous machinery in construction                 | ~25-30%      | ~3M shares           | High              |
+| CRSP   | Biotechnology              | Uses AI for gene editing and drug discovery, especially in oncology and rare diseases       | >70%         | ~3.46M shares        | Moderate          |
+| SLB    | Energy (Traditional)       | Applies AI for drilling optimization and predictive maintenance in oil/gas                 | ~35-50%      | ~10M shares          | High              |
+| ENPH   | Energy (Renewable)         | Utilizes AI for solar energy management and optimization                                    | >50%         | ~3M shares           | Good              |
+| GS     | Financials                 | Significant use of AI for risk modeling, fraud detection, and algorithmic trading           | ~30-50%      | ~2.2M shares         | High              |
+| COST   | Consumer Staples           | Employs AI for supply chain optimization and customer analytics                             | ~25-30%      | ~2M shares           | Good              |
+| FDX    | Transportation & Shipping  | Uses AI for logistics optimization, route planning, and autonomous delivery solutions       | ~25-30%      | ~2M shares           | Good              |
 
 ## 🔍 Screen for Trades
 
