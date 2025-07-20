@@ -41,17 +41,11 @@ Construct an optimized, sector-diversified options portfolio emphasizing high im
 8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
 9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
 ### Prompt:
-First, Refer to the Prompt.
-Second, Refer to the Instructions.
-Third, Refer to the Project Files. 
+1. Refer to the Prompt.
+2. Refer to the Instructions.
+3. Refer to the Project Attachments/Files.
 
-Prompt:
-Review the list of companies provided in the CSV attachment. 
-Then map the best ranked ticker back to each of the 9 sectors (provided in the instructions). 
-A different ticker mapped to each sector. 
-The best ranked ticker gets mapped to each sector.
-Then produce a portfolio metrics summary output. 
-Oupput as a table, with the following columns: Ticker, Sector, Rationale for AI Leadership, Average IV %, Daily Trading Volume, Liquidity Metrics. 
+Prompt: Review the list of companies provided in the files/attachments.  Analyze them based on the instructions. Then map the best ranked ticker back to each of the 9 sectors (provided in the instructions). A different ticker mapped to each sector. The best ranked ticker gets mapped to each sector. Then produce a portfolio metrics summary output. Output as a table, with the following columns: Ticker, Sector, Rationale for AI Leadership, Average IV %, Daily Trading Volume, Liquidity Metrics.  You should be resourceful, and find the most recent and accurate data possible when scraping for data to fill in the table.
 
 ### Output: 
 # Portfolio Metrics Summary
