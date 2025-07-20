@@ -32,7 +32,7 @@ Significant market attention (high retail/institutional hype)
 8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
 9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
 ### Prompt:
-Refer to only to the data provided in the CSV attached.
+The CSV provide is a complete list of all AIQ holdings. Refer to only to the data provided in the CSV attached when executing the instructions.  The objective is to review the list of compaines provided in the CSV attachment.  Then map the absolute best ticker back to each of the 9 sectors.  A different ticker for each sector.  
 
 ### Output: 
 # Portfolio Metrics Summary
