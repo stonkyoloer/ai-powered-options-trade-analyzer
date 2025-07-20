@@ -6,12 +6,16 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 
 #  Scope
 
-1. Build an Optimized, Sector-Diversified, Options Trading Portfolio
-2. Screen for Trades
+1. Fetch (AIQ) Artificial Intelligence & Technology ETF Full Holdings
+2. Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly) 
+3. 
+4. Screen for Trades
 
-## 🤖 GROK: Build an Optimized, Sector-Diversified, Options Trading Portfolio
+## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 
-### CSV: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
+## 🤖 GROK: Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
+
+### Attachment: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
 ### Instructions:
 #### Goal:
 Construct an optimized, sector-diversified options portfolio emphasizing high implied volatility (IV), significant trading volume, deep liquidity, and strong short-term price swings.
@@ -49,9 +53,9 @@ The CSV provide is a complete list of all AIQ holdings. Refer to only to the dat
 | COST   | Consumer Staples           | Employs AI for supply chain optimization and customer analytics                             | ~25-30%      | ~2M shares           | Good              |
 | FDX    | Transportation & Shipping  | Uses AI for logistics optimization, route planning, and autonomous delivery solutions       | ~25-30%      | ~2M shares           | Good              |
 
-## 🔍 GROK: Screen Trading Portfolio Data
+## 🔍 GROK: Screen Trading Portfolio 
 
-### CSV: Data 9
+### Attachment: Data 9
 ### Instructions: 
 ### Prompt: 
 Screen for Trade Type Setups, can tasty trade data be used to determine this?
