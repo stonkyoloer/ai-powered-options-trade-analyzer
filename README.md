@@ -1,6 +1,7 @@
 # Overview
 
-Use Case for AI in personal finance [portfolio management - trading portfolio - algo trading - AI trading]
+1. Construct a Diverse, AI-Focuses, Trading Portfolio (Monthly)
+2. Create a Trading Portfolio Screener for Daily Strategies (Daily)
 
 
 
