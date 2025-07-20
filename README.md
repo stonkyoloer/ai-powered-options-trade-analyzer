@@ -1,18 +1,18 @@
-# Overview
+# 🚀 Overview
 
 1. Construct a Diverse, AI-Focuses, Trading Portfolio (Monthly)
 2. Create a Trading Portfolio Screener for Daily Strategies (Daily)
 
 
 
-#  Scope
+# 👨‍🏫 Scope
 
 1. Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
 2. Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
 4. Program a TastyTrade data Pipe
 5. Run Prompt to Screen for Trades
 
-# Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
+# 🗂 Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
 
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
@@ -20,7 +20,7 @@
 ## Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
 
 
-# Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
+# 🔍 Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
 
 ##  GROK: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
 
