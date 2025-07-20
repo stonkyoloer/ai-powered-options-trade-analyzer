@@ -51,17 +51,20 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 ### Output: 
 # Portfolio Metrics Summary
 
-| Ticker | Sector                     | Rationale for AI Leadership                                                                 | Average IV % | Daily Trading Volume | Liquidity Metrics |
-|--------|----------------------------|---------------------------------------------------------------------------------------------|--------------|----------------------|-------------------|
-| DE     | Agriculture                | Leader in precision agriculture with AI-driven autonomous tractors and data analytics        | ~30-40%      | ~1.5M shares         | High              |
-| NVDA   | Technology                 | Dominant in AI chips for data centers and machine learning                                  | >40%         | ~400M shares         | Extremely high    |
-| CAT    | Industrials                | Uses AI for predictive maintenance and autonomous machinery in construction                 | ~25-30%      | ~3M shares           | High              |
-| CRSP   | Biotechnology              | Uses AI for gene editing and drug discovery, especially in oncology and rare diseases       | >70%         | ~3.46M shares        | Moderate          |
-| SLB    | Energy (Traditional)       | Applies AI for drilling optimization and predictive maintenance in oil/gas                 | ~35-50%      | ~10M shares          | High              |
-| ENPH   | Energy (Renewable)         | Utilizes AI for solar energy management and optimization                                    | >50%         | ~3M shares           | Good              |
-| GS     | Financials                 | Significant use of AI for risk modeling, fraud detection, and algorithmic trading           | ~30-50%      | ~2.2M shares         | High              |
-| COST   | Consumer Staples           | Employs AI for supply chain optimization and customer analytics                             | ~25-30%      | ~2M shares           | Good              |
-| FDX    | Transportation & Shipping  | Uses AI for logistics optimization, route planning, and autonomous delivery solutions       | ~25-30%      | ~2M shares           | Good              |
+# Optimized AI-Driven Options Portfolio (2025-07-20)
+# | Ticker | Sector             | Rationale for AI Leadership                             | Avg_IV(%) | Daily_Volume | Liquidity_Metrics                   |
+| Ticker | Sector        | Rationale for AI Leadership                                                      | Avg_IV_% | Daily_Volume | Liquidity_Metrics                              |
+|--------|---------------|----------------------------------------------------------------------------------|----------|--------------|------------------------------------------------|
+| DE     | Agriculture   | AI-powered autonomous tractors & precision ag, leader in smart farming           | ~32      | ~1.2M        | Tight spreads (~$0.05–$0.10), deep OI          |
+| NVDA   | Technology    | Dominates AI computing, >90% data center GPU share, foundation of AI workloads   | ~34      | ~180M        | Penny spreads, huge volume, deep OI            |
+| SYM    | Industrials   | AI-powered warehouse automation for Walmart and others, logistics robotics       | ~100     | ~2M          | Spreads ~$0.10–$0.20, active weeklies          |
+| RXRX   | Biotech       | AI-first drug discovery, automating target ID & preclinical with ML              | ~100     | ~25–30M      | Spreads ~$0.05–$0.10, thinner OI but active    |
+| HLX    | Energy (Trad) | AI-driven robotics for oil/gas, subsea ROVs & automation                         | ~54      | ~1.8M        | Spreads ~$0.10+, concentrated OI               |
+| GOOGL  | Energy (Ren)  | AI optimizing wind/solar, DeepMind grid AI, global leader in green AI apps       | ~35      | ~40M         | Penny spreads, huge OI, deep chain             |
+| PLTR   | Cons. Staples | AI-driven supply chain, demand forecasting, logistics for FMCG/retail            | ~69      | ~85M         | Spreads $0.01–$0.05, deep OI, high retail flow |
+| UPST   | Financials    | AI lending & credit modeling, disruptive loan/credit AI, wild price swings       | ~107     | ~6M          | Spreads $0.05–$0.10, active weeklies           |
+| TSLA   | Transport     | AI for self-driving, robotics, logistics, undisputed auto AI leader              | ~54      | ~100M+       | Penny spreads, massive OI, liquid weeklies     |
+
 
 
 
