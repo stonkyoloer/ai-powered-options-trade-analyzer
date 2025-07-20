@@ -85,65 +85,52 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 # 🤖 Program a TastyTrade data Pipe
 
-## Programming: 
 
-### Install the pandas library 
-This is what you'll use to handle data in Python. You need pandas to read and manipulate your options data.
-
-````bash
-pip install pandas
-````
-
-### Install the Python client for tastytrade
-You need this to connect to the Tastytrade API and pull option chain data.
-
-````bash
-pip install tastytrade
-````
-
-### Login to tastytrade so you can access your account and pull live data.
-
-```bash
-from tastytrade import Session
-
-# Replace with your tastytrade login email and password
-email = "YOUR_EMAIL"
-password = "YOUR_PASSWORD"
-
-session = Session(email, password)
-print("Logged in successfully!")
-````
+In Progress... 
 
 
 # 🔍 Run Prompt to Screen for Trades
 
 ##  GROK: Screen Trading Portfolio For Daily Moves
 
-### Attachment: Data 9
+### Attachment: TastyTrade Data
 ### Instructions: 
+#### Trade Selection Criteria
+1. Number of Trades: Exactly 5
+2. Goal: Maximize edge while maintaining portfolio delta, vega, and sector exposure limits.
+3. Quote age ≤ 10 minutes
+4. Top option Probability of Profit (POP) ≥ 0.65
+5. Top option credit / max loss ratio ≥ 0.33
+6. Top option max loss ≤ 0.5% of $100,000 NAV (≤ $500)
+#### Selection Rules
+1. Assign a model_score.
+2. Rank trades by model_score.
+3. Ensure diversification: maximum of 2 trades per GICS sector.
+4. Net basket Delta must remain between [-0.30, +0.30] × (NAV / 100k).
+5. Net basket Vega must remain ≥ -0.05 × (NAV / 100k).
+6. In case of ties, prefer higher momentum_z and flow_z scores.
+#### Output Format
+1. Provide output strictly as a clean, text-wrapped table.
+3. Include Ticker
+4. Include Strategy
+5. Incude Legs
+6. Include Thesis (≤ 30 words, plain language)
+7. Includ POP
+#### Additional Guidelines
+1. Limit each trade thesis to ≤ 30 words.
+2. Use straightforward language, free from exaggerated claims.
+3. Do not include any additional outputs or explanations beyond the specified table.
+
 ### Prompt: 
-Screen for Trade Type Setups, can tasty trade data be used to determine this?
+#### Screen for Trade Type Setups, can tasty trade data be used to determine this?
 1. Day Trade (0-9)DTE
 2. Short Premium (9-27)DTE
 3. Directional Swing (18-45)DTE
 4. Event Play (Event Date+9)DTE
 
-### Input 3: Screen for Strategies, can tasty trade data be used to determine this? 
+#### Screen for Strategies, can tasty trade data be used to determine this? 
 1. Vertical Spreads
 2. Straddle and Strangle
 3. Condors
 4. Long Puts and Calls
    
-### Input 4: Prompt
-
-#### Goal:
-
-
-
-
-
-
-
-
-
-
