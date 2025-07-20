@@ -36,7 +36,17 @@ Significant market attention (high retail/institutional hype)
 8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
 9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
 ### Prompt:
-The CSV provide is a complete list of all AIQ holdings. Refer to only to the data provided in the CSV attached when executing the instructions.  Read the instructions carefully.  The objective is to review the list of companies provided in the CSV attachment.  Then map the absolute best ticker back to each of the 9 sectors, provided in the instructions.  A different ticker for each sector.  Then produce a portfolio metrics summary output, as a table, with the following columns: Ticker, Sector, Rationale for AI Leadership, Average IV %, Daily Trading Volume, Liquidity Metrics. 
+First, Refer to the Prompt.
+Second, Refer to the Instructions.
+Third, Refer to the Project Files. 
+
+Prompt:
+Review the list of companies provided in the CSV attachment. 
+Then map the best ranked ticker back to each of the 9 sectors (provided in the instructions). 
+A different ticker mapped to each sector. 
+The best ranked ticker gets mapped to each sector.
+Then produce a portfolio metrics summary output. 
+Oupput as a table, with the following columns: Ticker, Sector, Rationale for AI Leadership, Average IV %, Daily Trading Volume, Liquidity Metrics. 
 
 ### Output: 
 # Portfolio Metrics Summary
