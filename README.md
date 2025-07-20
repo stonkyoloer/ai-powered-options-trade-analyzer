@@ -68,6 +68,20 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 | UPST   | Financials    | AI lending & credit modeling, disruptive loan/credit AI, wild price swings       | ~107     | ~6M          | Spreads $0.05–$0.10, active weeklies           |
 | TSLA   | Transport     | AI for self-driving, robotics, logistics, undisputed auto AI leader              | ~54      | ~100M+       | Penny spreads, massive OI, liquid weeklies     |
 
+#### GROK SELECTION(S)
+| Ticker | Sector                                     | Rationale for AI Leadership                                                              | Average IV % | Daily Trading Volume | Liquidity Metrics                                      |
+|--------|--------------------------------------------|------------------------------------------------------------------------------------------|--------------|---------------------|--------------------------------------------------------|
+| NVDA   | Technology (Computing, Semiconductors)     | Leader in GPU technology, crucial for AI computations, with strong AI hardware/software  | 35%          | 203,628,106         | High, with tight spreads due to large volume           |
+| LMT    | Industrials (AI-enabled Infrastructure)    | Leading defense contractor investing in AI for autonomous systems and data analysis      | 24%          | 1,454,609           | Moderate, supported by consistent institutional trading|
+| ISRG   | Biotechnology (AI-driven Drug Discovery)   | Leader in robotic-assisted surgery, incorporating AI for precision and efficiency        | 37%          | 2,287,200           | High, with significant trading activity and tight spreads|
+| HLX    | Energy (Traditional) (AI in Oil/Gas)       | Utilizes AI for predictive maintenance in energy sector, enhancing operational efficiency| 30%          | 2,020,000           | Moderate, with steady trading volume                   |
+| TSLA   | Transportation & Shipping (AI Logistics)   | Pioneering AI in autonomous driving and fleet management, with high market attention     | 40%          | 110,997,140         | Very high, with deep liquidity and tight spreads       |
+| COIN   | Financials (AI in Risk/Fraud Detection)    | Leading crypto platform leveraging AI for trading and fraud detection, with significant hype | 45%      | 14,040,296           | High, with robust trading activity                     |
+| RBLX   | Consumer Staples (AI-driven Forecasting)   | Uses AI for personalized gaming experiences, with high retail engagement and attention   | 30%          | 8,538,116           | High, with active retail and institutional trading     |
+| Z      | Real Estate Tech (AI in Property Analytics)| Assumed AI application in real estate analytics, with growing market presence            | 25%          | 2,162,012           | Moderate, with steady trading volume                   |
+| AVAV   | Agriculture (Precision Farming, Automation)| Leverages AI for precision agriculture and drone technology, enhancing farm efficiency   | 28%          | 1,009,974           | Moderate, with growing trading interest                |
+
+
 
 # 🤖 Program a TastyTrade data Pipe
 
