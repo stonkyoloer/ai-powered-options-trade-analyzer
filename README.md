@@ -9,10 +9,12 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 1. Build an Optimized, Sector-Diversified, Options Trading Portfolio
 2. Screen for Trades
 
-## 🤖 Prompt GROK: Build an Optimized, Sector-Diversified, Options Trading Portfolio
+## 🤖 GROK: Build an Optimized, Sector-Diversified, Options Trading Portfolio
 
 ### CSV: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
+### Instructions:
 ### Prompt:
+Refer to only to the data provided in the CSV attached.
 #### Goal:
 Construct an optimized, sector-diversified options portfolio emphasizing high implied volatility (IV), significant trading volume, deep liquidity, and strong short-term price swings.
 #### Asset Selection Criteria:
@@ -46,11 +48,12 @@ Significant market attention (high retail/institutional hype)
 | COST   | Consumer Staples           | Employs AI for supply chain optimization and customer analytics                             | ~25-30%      | ~2M shares           | Good              |
 | FDX    | Transportation & Shipping  | Uses AI for logistics optimization, route planning, and autonomous delivery solutions       | ~25-30%      | ~2M shares           | Good              |
 
-## 🔍 Screen for Trades
+## 🔍 GROK: Screen Trading Portfolio Data
 
-### Input 1: Data 9
-
-### Input 2: Screen for Trade Type Setups, can tasty trade data be used to determine this?
+### CSV: Data 9
+### Instructions: 
+### Prompt: 
+Screen for Trade Type Setups, can tasty trade data be used to determine this?
 1. Day Trade (0-9)DTE
 2. Short Premium (9-27)DTE
 3. Directional Swing (18-45)DTE
