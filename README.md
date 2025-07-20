@@ -67,7 +67,32 @@ Oupput as a table, with the following columns: Ticker, Sector, Rationale for AI 
 
 ## 🤖 Programming: 
 
-Using Tasty Trade Data Only, what is the optimal table, that I can deliver to GROK, to assist with the following analysis below.  What data points do I need to provide.  Make a list.  
+### Install the pandas library 
+This is what you'll use to handle data in Python. You need pandas to read and manipulate your options data.
+
+````bash
+pip install pandas
+````
+
+### Install the Python client for tastytrade
+You need this to connect to the Tastytrade API and pull option chain data.
+
+````bash
+pip install tastytrade
+````
+
+### Login to tastytrade so you can access your account and pull live data.
+
+```bash
+from tastytrade import Session
+
+# Replace with your tastytrade login email and password
+email = "YOUR_EMAIL"
+password = "YOUR_PASSWORD"
+
+session = Session(email, password)
+print("Logged in successfully!")
+````
 
 
 
