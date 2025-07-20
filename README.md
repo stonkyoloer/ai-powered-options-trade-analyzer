@@ -7,9 +7,9 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 #  Scope
 
 1. Fetch (AIQ) Artificial Intelligence & Technology ETF Full Holdings
-2. Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly) 
-3. Fetch TastyTrade portfolio data 
-4. Screen for Trades
+2. Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
+4. Fetch TastyTrade portfolio data 
+5. Screen for Trades
 
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 
@@ -36,7 +36,7 @@ Significant market attention (high retail/institutional hype)
 8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
 9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
 ### Prompt:
-The CSV provide is a complete list of all AIQ holdings. Refer to only to the data provided in the CSV attached when executing the instructions.  The objective is to review the list of compaines provided in the CSV attachment.  Then map the absolute best ticker back to each of the 9 sectors.  A different ticker for each sector.  
+The CSV provide is a complete list of all AIQ holdings. Refer to only to the data provided in the CSV attached when executing the instructions.  Read the instructions carefully.  The objective is to review the list of companies provided in the CSV attachment.  Then map the absolute best ticker back to each of the 9 sectors, provided in the instructions.  A different ticker for each sector.  Then produce a portfolio metrics summary output, as a table, with the following columns: Ticker, Sector, Rationale for AI Leadership, Average IV %, Daily Trading Volume, Liquidity Metrics. 
 
 ### Output: 
 # Portfolio Metrics Summary
