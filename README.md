@@ -22,7 +22,7 @@
 
 # 🔍 Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
 
-##  GROK: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
+##  GROK3/GPTo3: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
 
 ### Attachment: AIQ, BOTZ, SHLD, ARKK
 ### Instructions:
@@ -91,7 +91,7 @@ In Progress...
 
 # 🔍 Run Prompt to Screen for Trades
 
-##  GROK: Screen Trading Portfolio For Daily Moves
+##  GROK3/GPTo3: Screen Trading Portfolio For Daily Moves
 
 ### Attachment: TastyTrade Data
 ### Instructions: 
