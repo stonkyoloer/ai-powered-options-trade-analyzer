@@ -52,7 +52,7 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 # Portfolio Metrics Summary
 
 # Optimized AI-Driven Options Portfolio (2025-07-20)
-# | Ticker | Sector             | Rationale for AI Leadership                             | Avg_IV(%) | Daily_Volume | Liquidity_Metrics                   |
+# CHAT GPT SELECTION(S)
 | Ticker | Sector        | Rationale for AI Leadership                                                      | Avg_IV_% | Daily_Volume | Liquidity_Metrics                              |
 |--------|---------------|----------------------------------------------------------------------------------|----------|--------------|------------------------------------------------|
 | DE     | Agriculture   | AI-powered autonomous tractors & precision ag, leader in smart farming           | ~32      | ~1.2M        | Tight spreads (~$0.05–$0.10), deep OI          |
