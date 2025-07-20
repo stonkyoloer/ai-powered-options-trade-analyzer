@@ -6,16 +6,21 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 
 #  Scope
 
-1. Fetch (AIQ) Artificial Intelligence & Technology ETF Full Holdings
-2. Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
-4. Fetch TastyTrade portfolio data 
-5. Screen for Trades
+1. Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
+2. Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
+4. Program a TastyTrade data Pipe
+5. Fetch TastyTrade data 
+6. Run Prompt to Screen for Trades
 
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
+## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
+## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/shld)
+## Visit: ([https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
+
 
 ##  GROK: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
 
-### Attachment: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
+### Attachment: AIQ, BOTZ, SHLD, ARKK
 ### Instructions:
 #### Goal:
 Construct an optimized, sector-diversified options portfolio emphasizing high implied volatility (IV), significant trading volume, deep liquidity, and strong short-term price swings.
