@@ -13,8 +13,6 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 
 ### CSV: [AIQ Full Holdings (2025-07-18)](aiq_full-holdings_20250718.csv)
 ### Instructions:
-### Prompt:
-Refer to only to the data provided in the CSV attached.
 #### Goal:
 Construct an optimized, sector-diversified options portfolio emphasizing high implied volatility (IV), significant trading volume, deep liquidity, and strong short-term price swings.
 #### Asset Selection Criteria:
@@ -33,7 +31,10 @@ Significant market attention (high retail/institutional hype)
 7. Financials (Banks or insurance firms significantly utilizing AI for risk modeling, fraud detection, trading)
 8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
 9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
-#### Output: 
+### Prompt:
+Refer to only to the data provided in the CSV attached.
+
+### Output: 
 # Portfolio Metrics Summary
 
 | Ticker | Sector                     | Rationale for AI Leadership                                                                 | Average IV % | Daily Trading Volume | Liquidity Metrics |
