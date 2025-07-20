@@ -10,14 +10,17 @@
 1. Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
 2. Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
 4. Program a TastyTrade data Pipe
-5. Fetch TastyTrade data 
-6. Run Prompt to Screen for Trades
+5. Run Prompt to Screen for Trades
+
+# Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
 
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
 ## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/shld)
 ## Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
 
+
+# Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
 
 ##  GROK: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
 
@@ -49,10 +52,10 @@ Construct an optimized, sector-diversified options portfolio emphasizing high im
 Prompt: Review the list of companies provided in the files/attachments.  Analyze them based on the instructions. Then map the best ranked ticker back to each of the 9 sectors (provided in the instructions). A different ticker mapped to each sector. The best ranked ticker gets mapped to each sector. Then produce a portfolio metrics summary output. Output as a table, with the following columns: Ticker, Sector, Rationale for AI Leadership, Average IV %, Daily Trading Volume, Liquidity Metrics.  You should be resourceful, and find the most recent and accurate data possible when scraping for data to fill in the table.
 
 ### Output: 
-# Portfolio Metrics Summary
+#### Portfolio Metrics Summary
 
-# Optimized AI-Driven Options Portfolio (2025-07-20)
-# CHAT GPT SELECTION(S)
+#### Optimized AI-Driven Options Portfolio (2025-07-20)
+#### CHAT GPT SELECTION(S)
 | Ticker | Sector        | Rationale for AI Leadership                                                      | Avg_IV_% | Daily_Volume | Liquidity_Metrics                              |
 |--------|---------------|----------------------------------------------------------------------------------|----------|--------------|------------------------------------------------|
 | DE     | Agriculture   | AI-powered autonomous tractors & precision ag, leader in smart farming           | ~32      | ~1.2M        | Tight spreads (~$0.05–$0.10), deep OI          |
@@ -66,9 +69,9 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 | TSLA   | Transport     | AI for self-driving, robotics, logistics, undisputed auto AI leader              | ~54      | ~100M+       | Penny spreads, massive OI, liquid weeklies     |
 
 
+# 🤖 Program a TastyTrade data Pipe
 
-
-## 🤖 Programming: 
+## Programming: 
 
 ### Install the pandas library 
 This is what you'll use to handle data in Python. You need pandas to read and manipulate your options data.
@@ -98,9 +101,9 @@ print("Logged in successfully!")
 ````
 
 
+# 🔍 Run Prompt to Screen for Trades
 
-
-## 🔍 GROK: Screen Trading Portfolio For Daily Moves
+##  GROK: Screen Trading Portfolio For Daily Moves
 
 ### Attachment: Data 9
 ### Instructions: 
