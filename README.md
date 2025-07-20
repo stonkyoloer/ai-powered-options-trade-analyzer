@@ -20,10 +20,10 @@ Use Case for AI in personal finance [portfolio management - trading portfolio - 
 #### Goal:
 Construct an optimized, sector-diversified options portfolio emphasizing high implied volatility (IV), significant trading volume, deep liquidity, and strong short-term price swings.
 #### Asset Selection Criteria:
-Industry-leading exposure to Artificial Intelligence (AI)
-High liquidity for efficient trade execution (tight bid-ask spreads)
-Elevated IV to capitalize on substantial volatility
-Significant market attention (high retail/institutional hype)
+1. Industry-leading exposure to Artificial Intelligence (AI)
+2. High liquidity for efficient trade execution (tight bid-ask spreads)
+3. Elevated IV to capitalize on substantial volatility
+4. Significant market attention (high retail/institutional hype)
 #### Portfolio Construction:
 ##### Select exactly 1 ticker per sector meeting all the criteria above:
 1. Agriculture (Precision farming, automation, biotech ag)
