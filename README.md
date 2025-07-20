@@ -85,8 +85,35 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 # 🤖 Program a TastyTrade data Pipe
 
+## Terminal Commands
 
-In Progress... 
+### Install Required Tools
+
+````bash
+python --version
+````
+ensure version 3.8 or later.  
+
+````bash
+pip3 install tastytrade pandas requests openpyxl
+````
+
+install 3.8 or later. 
+
+````bash
+python3 -m pip install tastytrade
+````
+
+install tastytrade
+
+````bash
+python3 -m pip show tastytrade
+````
+
+verify install
+
+(https://code.visualstudio.com/docs/?dv=osx)
+
 
 
 # 🔍 Run Prompt to Screen for Trades
