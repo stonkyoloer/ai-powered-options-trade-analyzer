@@ -3,14 +3,15 @@
 1. Construct a Diverse, AI-Focuses, Trading Portfolio (Monthly)
 2. Create a Trading Portfolio Screener for Daily Strategies (Daily)
 
-
-
 # 👨‍🏫 Scope
 
 1. Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
 2. Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
-4. Program a TastyTrade data Pipe
-5. Run Prompt to Screen for Trades
+4. Program a TastyTrade data pipe
+5. Program a yfinance data pipe
+6. Program a merge of the two data sets
+8. Run Prompt to Screen for Trades
+9. Cont. to improve accuracy of data!
 
 # 🗂 Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
 
