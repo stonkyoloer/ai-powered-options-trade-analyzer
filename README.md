@@ -453,14 +453,8 @@ print("✅ CSV saved: final_options_report_full_columns.csv")
 ### Terminal
 #### Run Data Query 
 ````bash
-export TASTYTRADE_USER='your_username'
-export TASTYTRADE_PASS='your_password'
-python3 full_options_report.py
+python3 generate_final_options_report.py
 ````
-
-
-
-
 
 
 
@@ -468,7 +462,7 @@ python3 full_options_report.py
 
 ##  GROK3/GPTo3: Screen Trading Portfolio For Daily Moves
 
-### Attachment: TastyTrade Data
+### Attachment: TastyTrade and Yahoo Finance Data
 ### Instructions: 
 #### Trade Selection Criteria
 1. Number of Trades: Exactly 5
@@ -497,13 +491,18 @@ python3 full_options_report.py
 3. Do not include any additional outputs or explanations beyond the specified table.
 
 ### Prompt: 
-#### Screen for Trade Type Setups, can tasty trade data be used to determine this?
+
+Analyze the attached CSV files, which provide screenshots of live market data.
+Follow the instructions already provided.
+Then Follow the instructions in the prompt.
+
+#### Screen for Trade Type Setups
 1. Day Trade (0-9)DTE
 2. Short Premium (9-27)DTE
 3. Directional Swing (18-45)DTE
 4. Event Play (Event Date+9)DTE
 
-#### Screen for Strategies, can tasty trade data be used to determine this? 
+#### Screen for Strategies
 1. Vertical Spreads
 2. Straddle and Strangle
 3. Condors
