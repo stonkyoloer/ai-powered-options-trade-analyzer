@@ -85,41 +85,41 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 # 🤖 Program a TastyTrade data Pipe
 
-## Terminal Commands
+## Install Required Tools
 
-### Install Required Tools
+### Terminal Commands
 
 #### install packages
 
+##### istall require packages
 ````bash
 pip3 install tastytrade pandas requests openpyxl yfinance
 ````
-
-
+##### install tastytrade
 ````bash
 python3 -m pip install tastytrade
 ````
-
-
+##### verify install 
 ````bash
 python3 -m pip show tastytrade
 ````
 
 #### Find and launch Visual Studio Code 
 
+##### open folder
 ````bash
 ls ~/Desktop/stonkyoloer
 ````
-
+##### find file
 ````bash
 find ~/Desktop -name "Visual Studio Code*.app" -maxdepth 2
 ````
-
+##### launch file 
 ````bash
 open -a "/Users/alexanderstuart/Desktop/stonkyoloer/Visual Studio Code.app"
 ````
 
-
+#### 
 
 
 
