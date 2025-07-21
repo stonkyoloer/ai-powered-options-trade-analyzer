@@ -116,27 +116,24 @@ open -a "/Users/alexanderstuart/Desktop/stonkyoloer/Visual Studio Code.app"
 ````bash
 #!/usr/bin/env python3
 """
-Boss Analysis Data Pull: Fetch full option chain metadata (market data, Greeks, PoP, probabilities, theoreticals) via Tastytrade API
-and export to a single CSV for quantitative analysis.
+Tastytrade Chain Exporter & Market Merge: fetches full option chain metadata via Tastytrade API,
+merges it with live market quotes from Yahoo Finance, and writes everything to a CSV for review.
+
+Save this as `tastytrade_chain_exporter.py` in your project folder.
 
 Usage:
   export TASTYTRADE_USER='your_username'
   export TASTYTRADE_PASS='your_password'
-  pip install pandas tastytrade
+  pip install pandas yfinance tastytrade
   python3 tastytrade_chain_exporter.py
 
-Outputs:
-  - chain_meta.csv   (flattened chain: one row per option, with all available fields)
-
-Features:
-  • Automatically reads credentials from environment variables
-  • Fetches for a predefined universe of tickers
-  • Flattens call/put sub-objects into top-level columns
-  • Prints progress, row counts, available columns & sample rows
+Output:
+  - combined_chain_data.csv   (one row per option with metadata + market data)
 """
 import os
 import sys
 import pandas as pd
+import yfinance as yf
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
 
@@ -155,9 +152,9 @@ def get_session():
         sys.exit(1)
     return Session(user, pw)
 
-# --- Fetch and flatten an option chain for a single ticker ---
-def fetch_chain_df(session, ticker: str) -> pd.DataFrame:
-    print(f"Fetching option chain for {ticker}...")
+# --- Fetch and flatten option chain metadata from Tastytrade ---
+def fetch_metadata_df(session, ticker: str) -> pd.DataFrame:
+    print(f"Fetching metadata for {ticker}...")
     try:
         chain_map = get_option_chain(session, ticker)
     except Exception as e:
@@ -168,20 +165,20 @@ def fetch_chain_df(session, ticker: str) -> pd.DataFrame:
     for exp_date, options in chain_map.items():
         exp_str = exp_date.isoformat()
         for opt in options:
-            raw = opt.dict()
-            # Base fields
+            raw = opt.model_dump()  # Pydantic v2
             flat = {
                 'ticker': ticker,
                 'expiration': exp_str,
                 'strike_price': raw.get('strike_price'),
                 'option_type': raw.get('option_type')
             }
-            # Flatten 'call' and 'put' sub-objects
+            # Flatten call and put sub-objects
             for side in ('call', 'put'):
-                side_data = raw.get(side) or {}
-                for k, v in side_data.items():
-                    flat[f"{side}_{k}"] = v
-            # Include any other top-level fields
+                sub = raw.get(side) or {}
+                if isinstance(sub, dict):
+                    for k, v in sub.items():
+                        flat[f"{side}_{k}"] = v
+            # Include other top-level fields
             for k, v in raw.items():
                 if k not in ('strike_price', 'option_type', 'call', 'put'):
                     flat[k] = v
@@ -191,29 +188,88 @@ def fetch_chain_df(session, ticker: str) -> pd.DataFrame:
     print(f"  Collected {len(df)} rows for {ticker}")
     return df
 
-# --- Main export logic ---
+# --- Fetch market data via Yahoo Finance ---
+def fetch_market_df(ticker: str) -> pd.DataFrame:
+    print(f"Fetching market data for {ticker}...")
+    tk = yf.Ticker(ticker)
+    try:
+        exp_dates = tk.options
+    except Exception:
+        exp_dates = []
+    all_rows = []
+    for exp in exp_dates:
+        try:
+            opt_chain = tk.option_chain(exp)
+        except Exception:
+            continue
+        for side, df_side in [('call', opt_chain.calls), ('put', opt_chain.puts)]:
+            if df_side.empty:
+                continue
+            df2 = df_side.copy()
+            df2['ticker'] = ticker
+            df2['expiration'] = exp
+            df2['option_type'] = side.upper()
+            df2.rename(
+                columns={
+                    'strike': 'strike_price',
+                    'lastPrice': 'last',
+                    'bid': 'bid',
+                    'ask': 'ask',
+                    'volume': 'volume',
+                    'openInterest': 'open_interest',
+                    'impliedVolatility': 'implied_volatility'
+                },
+                inplace=True
+            )
+            cols = ['ticker', 'expiration', 'strike_price', 'option_type',
+                    'bid', 'ask', 'last', 'volume', 'open_interest', 'implied_volatility']
+            all_rows.append(df2[cols])
+    if not all_rows:
+        return pd.DataFrame()
+    market_df = pd.concat(all_rows, ignore_index=True)
+    print(f"  Retrieved {len(market_df)} market rows for {ticker}")
+    return market_df
+
+# --- Main merging and export logic ---
 def main():
     session = get_session()
-    all_dfs = []
+    metadata_dfs = []
+    market_dfs   = []
     for t in TICKERS:
-        df = fetch_chain_df(session, t)
-        if not df.empty:
-            all_dfs.append(df)
+        md = fetch_metadata_df(session, t)
+        if not md.empty:
+            metadata_dfs.append(md)
+        mk = fetch_market_df(t)
+        if not mk.empty:
+            market_dfs.append(mk)
 
-    if not all_dfs:
-        print("No data fetched for any ticker. Exiting.")
+    if not metadata_dfs:
+        print("No metadata fetched. Exiting.")
         sys.exit(0)
 
-    full_df = pd.concat(all_dfs, ignore_index=True)
-    out_file = 'chain_meta.csv'
-    full_df.to_csv(out_file, index=False)
+    meta_df = pd.concat(metadata_dfs, ignore_index=True)
+    market_df = pd.concat(market_dfs, ignore_index=True) if market_dfs else pd.DataFrame()
 
-    # Summary output
-    print(f"Saved full option chain metadata to {out_file} ({len(full_df)} total rows)")
-    print("\nAvailable columns:")
-    print(full_df.columns.tolist())
+    # Merge metadata with market data
+    if not market_df.empty:
+        combined = pd.merge(
+            meta_df,
+            market_df,
+            on=['ticker', 'expiration', 'strike_price', 'option_type'],
+            how='left',
+            suffixes=('_meta', '_mkt')
+        )
+    else:
+        combined = meta_df.copy()
+
+    out_file = 'combined_chain_data.csv'
+    combined.to_csv(out_file, index=False)
+    print(f"Saved combined data to {out_file} ({len(combined)} rows)")
+
+    print("\nColumns:")
+    print(combined.columns.tolist())
     print("\nSample rows:")
-    print(full_df.head(5).to_string(index=False))
+    print(combined.head(5).to_string(index=False))
 
 if __name__ == '__main__':
     main()
