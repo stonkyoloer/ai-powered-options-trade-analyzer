@@ -85,209 +85,381 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 # 🤖 Program a TastyTrade and yfinance Data Pipe
 
-## Terminal Commands
+## Get the Raw Data
+### Terminal
 
+#### Create Project Folder 
 
-##### istall require packages
 ````bash
-python3 -m pip install pandas yfinance tastytrade openpyxl requests
+mkdir -p ~/Desktop/StonkYoloer
 ````
 
-##### open folder
-````bash
-ls ~/Desktop/stonkyoloer
-````
-##### find file
-````bash
-find ~/Desktop -name "Visual Studio Code*.app" -maxdepth 2
-````
-##### launch file 
-````bash
-open -a "/Users/alexanderstuart/Desktop/stonkyoloer/Visual Studio Code.app"
-````
-## Visual Studio 
+#### Open Stonk Yoler Project Foler
 
-##### Open Jupyter Notebook
+````bash
+cd ~/Desktop/StonkYoloer
+````
 
-"Ctrl" + "Shift" + "P" > Search: "Jupyter"
+#### Wipe old venv (if it exists)
 
-#### Query for yfinance and tastytrade data
+````bash
+rm -rf .venv
+````
+
+#### Create Virtual Environment
+
+````bash
+python3 -m venv .venv
+````
+
+#### Open Virtual Environment
+
+````bash
+source .venv/bin/activate
+````
+
+#### Install Packages
+
+````bash
+pip install pandas numpy scipy yfinance
+````
+
+#### Enter UN and PW
+
+````bash
+export TASTYTRADE_USER='stonkyoloer'
+export TASTYTRADE_PASS='PASSWORD'
+````
+
+#### Overwrite Script
+
+````bash
+nano full_options_report.py
+````
 
 ````bash
 #!/usr/bin/env python3
-"""
-Tastytrade Chain Exporter & Market Merge: fetches full option chain metadata via Tastytrade API,
-merges it with live market quotes from Yahoo Finance, and writes everything to a CSV for review.
-
-Save this as `tastytrade_chain_exporter.py` in your project folder.
-
-Usage:
-  export TASTYTRADE_USER='your_username'
-  export TASTYTRADE_PASS='your_password'
-  pip install pandas yfinance tastytrade
-  python3 tastytrade_chain_exporter.py
-
-Output:
-  - combined_chain_data.csv   (one row per option with metadata + market data)
-"""
-import os
-import sys
+import os, sys
 import pandas as pd
 import yfinance as yf
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
 
-# --- Configuration: define your ticker list here ---
 TICKERS = [
     'NVDA','LMT','ISRG','HLX','TSLA','COIN','RBLX','Z','AVAV',
     'DE','SYM','RXRX','GOOGL','PLTR','UPST'
 ]
 
-# --- Authenticate with Tastytrade ---
 def get_session():
-    user = os.getenv('TASTYTRADE_USER')
-    pw   = os.getenv('TASTYTRADE_PASS')
+    user, pw = os.getenv('TASTYTRADE_USER'), os.getenv('TASTYTRADE_PASS')
     if not user or not pw:
-        print("ERROR: set TASTYTRADE_USER and TASTYTRADE_PASS environment variables.")
+        print("ERROR: set TASTYTRADE_USER & TASTYTRADE_PASS")
         sys.exit(1)
     return Session(user, pw)
 
-# --- Fetch and flatten option chain metadata from Tastytrade ---
-def fetch_metadata_df(session, ticker: str) -> pd.DataFrame:
+def fetch_metadata_df(session, ticker):
     print(f"Fetching metadata for {ticker}...")
     try:
-        chain_map = get_option_chain(session, ticker)
+        chain = get_option_chain(session, ticker)
     except Exception as e:
-        print(f"  ERROR fetching chain for {ticker}: {e}")
+        print(f"  ⚠️  {e}")
         return pd.DataFrame()
-
     rows = []
-    for exp_date, options in chain_map.items():
-        exp_str = exp_date.isoformat()
-        for opt in options:
-            raw = opt.model_dump()  # Pydantic v2
-            flat = {
+    for exp_date, opts in chain.items():
+        exp = exp_date.isoformat()
+        for opt in opts:
+            raw = opt.model_dump()
+            rows.append({
                 'ticker': ticker,
-                'expiration': exp_str,
-                'strike_price': raw.get('strike_price'),
-                'option_type': raw.get('option_type')
-            }
-            # Flatten call and put sub-objects
-            for side in ('call', 'put'):
-                sub = raw.get(side) or {}
-                if isinstance(sub, dict):
-                    for k, v in sub.items():
-                        flat[f"{side}_{k}"] = v
-            # Include other top-level fields
-            for k, v in raw.items():
-                if k not in ('strike_price', 'option_type', 'call', 'put'):
-                    flat[k] = v
-            rows.append(flat)
+                'expiration': exp,
+                'strike_price': raw['strike_price'],
+                'option_type': raw['option_type'],
+                'symbol': raw['symbol'],
+                'streamer_symbol': raw.get('streamer_symbol') or f".{raw['symbol']}"
+            })
+    return pd.DataFrame(rows)
 
-    df = pd.DataFrame(rows)
-    print(f"  Collected {len(df)} rows for {ticker}")
-    return df
-
-# --- Fetch market data via Yahoo Finance ---
-def fetch_market_df(ticker: str) -> pd.DataFrame:
+def fetch_market_df(ticker):
     print(f"Fetching market data for {ticker}...")
     tk = yf.Ticker(ticker)
-    try:
-        exp_dates = tk.options
-    except Exception:
-        exp_dates = []
     all_rows = []
-    for exp in exp_dates:
+    for exp in tk.options:
         try:
-            opt_chain = tk.option_chain(exp)
-        except Exception:
+            chain = tk.option_chain(exp)
+        except:
             continue
-        for side, df_side in [('call', opt_chain.calls), ('put', opt_chain.puts)]:
-            if df_side.empty:
-                continue
+        for side, df_side in [('Call', chain.calls), ('Put', chain.puts)]:
+            if df_side.empty: continue
             df2 = df_side.copy()
-            df2['ticker'] = ticker
-            df2['expiration'] = exp
-            df2['option_type'] = side.upper()
-            df2.rename(
-                columns={
-                    'strike': 'strike_price',
-                    'lastPrice': 'last',
-                    'bid': 'bid',
-                    'ask': 'ask',
-                    'volume': 'volume',
-                    'openInterest': 'open_interest',
-                    'impliedVolatility': 'implied_volatility'
-                },
-                inplace=True
-            )
-            cols = ['ticker', 'expiration', 'strike_price', 'option_type',
-                    'bid', 'ask', 'last', 'volume', 'open_interest', 'implied_volatility']
-            all_rows.append(df2[cols])
-    if not all_rows:
-        return pd.DataFrame()
-    market_df = pd.concat(all_rows, ignore_index=True)
-    print(f"  Retrieved {len(market_df)} market rows for {ticker}")
-    return market_df
+            df2['ticker'], df2['expiration'], df2['option_type'] = ticker, exp, side
+            df2.rename(columns={
+                'strike':'strike_price',
+                'lastPrice':'last',
+                'openInterest':'open_interest',
+                'impliedVolatility':'implied_volatility'
+            }, inplace=True)
+            keep = ['ticker','expiration','strike_price','option_type','bid','ask','last','volume','open_interest','implied_volatility']
+            all_rows.append(df2[keep])
+    return pd.concat(all_rows, ignore_index=True) if all_rows else pd.DataFrame()
 
-# --- Main merging and export logic ---
 def main():
-    session = get_session()
-    metadata_dfs = []
-    market_dfs   = []
-    for t in TICKERS:
-        md = fetch_metadata_df(session, t)
-        if not md.empty:
-            metadata_dfs.append(md)
-        mk = fetch_market_df(t)
-        if not mk.empty:
-            market_dfs.append(mk)
+    sess = get_session()
+    all_meta = [fetch_metadata_df(sess, t) for t in TICKERS]
+    all_market = [fetch_market_df(t) for t in TICKERS]
 
-    if not metadata_dfs:
-        print("No metadata fetched. Exiting.")
-        sys.exit(0)
+    meta_df = pd.concat(all_meta, ignore_index=True)
+    market_df = pd.concat(all_market, ignore_index=True)
 
-    meta_df = pd.concat(metadata_dfs, ignore_index=True)
-    market_df = pd.concat(market_dfs, ignore_index=True) if market_dfs else pd.DataFrame()
-
-    # Merge metadata with market data
-    if not market_df.empty:
-        combined = pd.merge(
-            meta_df,
-            market_df,
-            on=['ticker', 'expiration', 'strike_price', 'option_type'],
-            how='left',
-            suffixes=('_meta', '_mkt')
-        )
-    else:
-        combined = meta_df.copy()
-
-    out_file = 'combined_chain_data.csv'
-    combined.to_csv(out_file, index=False)
-    print(f"Saved combined data to {out_file} ({len(combined)} rows)")
-
-    print("\nColumns:")
-    print(combined.columns.tolist())
-    print("\nSample rows:")
-    print(combined.head(5).to_string(index=False))
+    meta_df.to_csv("metadata.csv", index=False)
+    market_df.to_csv("market_data.csv", index=False)
+    print("✅ Saved metadata.csv and market_data.csv")
 
 if __name__ == '__main__':
     main()
 ````
 
-#### Save the Notebook
 
-"Ctrl" + "Shift" + "P" > Desktop/stonkyoloer/tastytrade_trade_selector.ipynb
 
-## Terminal 
 
-#### run query request 
+
+
+
+
+### Visual Studio
+#### Query
 
 ````bash
-cd ~/Desktop/StonkYoloer
-export TASTYTRADE_USER='fakeusername'
-export TASTYTRADE_PASS='fakepassword'
+#!/usr/bin/env python3
+"""
+Full Options Report Builder:
+- Pulls full option chain from Tastytrade
+- Grabs live quote data from Yahoo
+- Subscribes to real-time Greeks using Tastytrade's DXFeed
+- Merges all data into one CSV for analysis
+"""
+import os, sys, subprocess, time
+import pandas as pd
+import yfinance as yf
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain
+from tastytrade.dxfeed import DXLinkStreamer, EventType
+
+# —————————————————————————————————————————————
+# CONFIGURE your tickers here:
+TICKERS = [
+    'NVDA','LMT','ISRG','HLX','TSLA','COIN','RBLX','Z','AVAV',
+    'DE','SYM','RXRX','GOOGL','PLTR','UPST'
+]
+# —————————————————————————————————————————————
+
+def get_session():
+    user, pw = os.getenv('TASTYTRADE_USER'), os.getenv('TASTYTRADE_PASS')
+    if not user or not pw:
+        print("ERROR: set TASTYTRADE_USER & TASTYTRADE_PASS")
+        sys.exit(1)
+    return Session(user, pw)
+
+def fetch_metadata_df(session, ticker):
+    print(f"Fetching metadata for {ticker}...")
+    try:
+        chain = get_option_chain(session, ticker)
+    except Exception as e:
+        print(f"  ⚠️  {e}")
+        return pd.DataFrame()
+    rows = []
+    for exp_date, opts in chain.items():
+        exp = exp_date.isoformat()
+        for opt in opts:
+            raw = opt.model_dump()
+            base = {
+                'ticker': ticker,
+                'expiration': exp,
+                'strike_price': raw['strike_price'],
+                'option_type': raw['option_type'],
+                'symbol': raw['symbol'],
+                'streamer_symbol': raw.get('streamer_symbol') or f".{raw['symbol']}"
+            }
+            rows.append(base)
+    df = pd.DataFrame(rows)
+    print(f"  → {len(df)} chain rows")
+    return df
+
+def fetch_market_df(ticker):
+    print(f"Fetching market data for {ticker}...")
+    tk = yf.Ticker(ticker)
+    exps = getattr(tk, 'options', []) or []
+    all_rows = []
+    for exp in exps:
+        try:
+            chain = tk.option_chain(exp)
+        except:
+            continue
+        for side, df_side in [('CALL', chain.calls), ('PUT', chain.puts)]:
+            if df_side.empty: continue
+            df2 = df_side.copy()
+            df2['ticker'], df2['expiration'], df2['option_type'] = ticker, exp, side.title()
+            df2.rename(columns={
+                'strike':'strike_price',
+                'lastPrice':'last',
+                'openInterest':'open_interest',
+                'impliedVolatility':'implied_volatility'
+            }, inplace=True)
+            cols = ['ticker','expiration','strike_price','option_type',
+                    'bid','ask','last','volume','open_interest','implied_volatility']
+            all_rows.append(df2[cols])
+    if not all_rows:
+        return pd.DataFrame()
+    mdf = pd.concat(all_rows, ignore_index=True)
+    print(f"  → {len(mdf)} market rows")
+    return mdf
+
+def subscribe_greeks(streamer_symbols):
+    print("Subscribing to Greeks...")
+    streamer = DXLinkStreamer()
+    streamer.subscribe(EventType.GREEKS, streamer_symbols)
+    time.sleep(4)  # Allow time for data to stream in
+    greeks = streamer.greeks
+    greek_rows = []
+    for symbol, g in greeks.items():
+        greek_rows.append({
+            'streamer_symbol': symbol,
+            'delta': g.delta,
+            'gamma': g.gamma,
+            'theta': g.theta,
+            'vega': g.vega,
+            'rho': g.rho,
+            'theoretical_price': g.price
+        })
+    return pd.DataFrame(greek_rows)
+
+def main():
+    sess = get_session()
+    all_meta, all_market = [], []
+
+    for t in TICKERS:
+        m = fetch_metadata_df(sess, t)
+        if not m.empty: all_meta.append(m)
+        q = fetch_market_df(t)
+        if not q.empty: all_market.append(q)
+
+    if not all_meta:
+        print("No metadata fetched; aborting.")
+        sys.exit(1)
+
+    meta_df = pd.concat(all_meta, ignore_index=True)
+    market_df = pd.concat(all_market, ignore_index=True) if all_market else pd.DataFrame()
+
+    greeks_df = subscribe_greeks(meta_df['streamer_symbol'].dropna().unique().tolist())
+
+    # Merge all 3 datasets
+    merged = pd.merge(meta_df, greeks_df, on='streamer_symbol', how='left')
+    if not market_df.empty:
+        merged = pd.merge(merged, market_df, on=['ticker','expiration','strike_price','option_type'], how='left')
+
+    final_csv = 'options_report.csv'
+    merged.to_csv(final_csv, index=False)
+    print(f"✅ Saved full options report to {final_csv} ({len(merged)} rows)")
+
+    if os.path.exists(final_csv):
+        subprocess.run(['open', final_csv], check=False)
+
+if __name__ == '__main__':
+    main()
 ````
+
+
+
+
+
+## Produce Linked Report 
+
+````bash
+import pandas as pd
+import numpy as np
+from scipy.stats import norm
+
+# Load original CSVs
+meta_df = pd.read_csv("metadata.csv")
+market_df = pd.read_csv("market_data.csv")
+
+# Normalize option type for join
+meta_df['option_type'] = meta_df['option_type'].replace({'C': 'Call', 'P': 'Put'})
+
+# Merge metadata + market data
+merged = pd.merge(meta_df, market_df, on=['ticker','expiration','strike_price','option_type'], how='inner')
+
+# Add days to expiration if missing
+if 'days_to_expiration' not in merged.columns:
+    merged['days_to_expiration'] = (
+        pd.to_datetime(merged['expiration']) - pd.Timestamp.now()
+    ).dt.days.clip(lower=1)
+
+# Estimate spot prices from bid/ask or last
+market_df['mid'] = (market_df['bid'] + market_df['ask']) / 2
+spot_by_mid = market_df.groupby('ticker')['mid'].median()
+spot_by_last = market_df.groupby('ticker')['last'].median()
+
+spot_estimates = {}
+for ticker in set(spot_by_mid.index).union(spot_by_last.index):
+    spot_estimates[ticker] = (
+        spot_by_mid.get(ticker)
+        if not pd.isna(spot_by_mid.get(ticker))
+        else spot_by_last.get(ticker)
+    )
+
+# Greek + PoP calculation
+def calculate_greeks(row, S, r=0.03):
+    K = row['strike_price']
+    T = float(row['days_to_expiration']) / 365
+    iv = float(row.get('implied_volatility', 0.30))
+    if iv < 0.0001: iv = 0.30
+
+    d1 = (np.log(S / K) + (r + 0.5 * iv**2) * T) / (iv * np.sqrt(T))
+    d2 = d1 - iv * np.sqrt(T)
+
+    if row['option_type'] == 'Call':
+        delta = norm.cdf(d1)
+        theta = (-S * norm.pdf(d1) * iv / (2 * np.sqrt(T))) - r * K * np.exp(-r*T) * norm.cdf(d2)
+        vega = S * norm.pdf(d1) * np.sqrt(T)
+        gamma = norm.pdf(d1) / (S * iv * np.sqrt(T))
+        rho = K * T * np.exp(-r*T) * norm.cdf(d2)
+        pop = norm.cdf((S - K) / (iv * S * np.sqrt(T)))
+    else:
+        delta = -norm.cdf(-d1)
+        theta = (-S * norm.pdf(d1) * iv / (2 * np.sqrt(T))) + r * K * np.exp(-r*T) * norm.cdf(-d2)
+        vega = S * norm.pdf(d1) * np.sqrt(T)
+        gamma = norm.pdf(d1) / (S * iv * np.sqrt(T))
+        rho = -K * T * np.exp(-r*T) * norm.cdf(-d2)
+        pop = norm.cdf((K - S) / (iv * S * np.sqrt(T)))
+
+    return pd.Series([delta, gamma, theta, vega, rho, pop],
+                     index=['delta','gamma','theta','vega','rho','pop_estimate'])
+
+# Apply calculations row by row
+greeks = []
+for _, row in merged.iterrows():
+    spot = spot_estimates.get(row['ticker'], None)
+    if spot is None: continue
+    greeks.append(calculate_greeks(row, spot))
+
+# Combine results
+greeks_df = pd.DataFrame(greeks)
+final_df = pd.concat([merged.reset_index(drop=True), greeks_df.reset_index(drop=True)], axis=1)
+
+# Export final CSV
+final_df.to_csv("final_options_report_full_columns.csv", index=False)
+print("✅ CSV saved: final_options_report_full_columns.csv")
+````
+
+### Terminal
+#### Run Data Query 
+````bash
+export TASTYTRADE_USER='your_username'
+export TASTYTRADE_PASS='your_password'
+python3 full_options_report.py
+````
+
+
 
 
 
