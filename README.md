@@ -83,20 +83,15 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 
 
-# 🤖 Program a TastyTrade data Pipe
+# 🤖 Program a TastyTrade and yfinance Data Pipe
 
-## Install Required Tools
+## Terminal Commands
 
-### Terminal Commands
-
-#### install packages
 
 ##### istall require packages
 ````bash
 python3 -m pip install pandas yfinance tastytrade openpyxl requests
 ````
-
-#### Find and launch Visual Studio Code 
 
 ##### open folder
 ````bash
@@ -110,10 +105,9 @@ find ~/Desktop -name "Visual Studio Code*.app" -maxdepth 2
 ````bash
 open -a "/Users/alexanderstuart/Desktop/stonkyoloer/Visual Studio Code.app"
 ````
+## Visual Studio 
 
-### Visual Studio 
-
-#### Open Jupyter Notebook
+##### Open Jupyter Notebook
 
 "Ctrl" + "Shift" + "P" > Search: "Jupyter"
 
@@ -221,13 +215,19 @@ for symbol, df in optionchain_data.items():
 print("DataFrames displayed and CSVs saved.")
 ````
 
-
 #### Save the Notebook
 
 "Ctrl" + "Shift" + "P" > Desktop/stonkyoloer/tastytrade_trade_selector.ipynb
 
-### Terminal 
+## Terminal 
 
+#### run query request 
+
+````bash
+cd ~/Desktop/StonkYoloer
+export TASTYTRADE_USER='fakeusername'
+export TASTYTRADE_PASS='fakepassword'
+````
 
 
 
