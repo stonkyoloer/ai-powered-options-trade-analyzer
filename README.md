@@ -89,30 +89,39 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 ### Install Required Tools
 
-````bash
-python --version
-````
-ensure version 3.8 or later.  
+#### install packages
 
 ````bash
-pip3 install tastytrade pandas requests openpyxl
+pip3 install tastytrade pandas requests openpyxl yfinance
 ````
 
-install 3.8 or later. 
 
 ````bash
 python3 -m pip install tastytrade
 ````
 
-install tastytrade
 
 ````bash
 python3 -m pip show tastytrade
 ````
 
-verify install
+#### Find and launch Visual Studio Code 
 
-(https://code.visualstudio.com/docs/?dv=osx)
+````bash
+ls ~/Desktop/stonkyoloer
+````
+
+````bash
+find ~/Desktop -name "Visual Studio Code*.app" -maxdepth 2
+````
+
+````bash
+open -a "/Users/alexanderstuart/Desktop/stonkyoloer/Visual Studio Code.app"
+````
+
+
+
+
 
 
 
