@@ -114,105 +114,109 @@ open -a "/Users/alexanderstuart/Desktop/stonkyoloer/Visual Studio Code.app"
 #### Query for yfinance and tastytrade data
 
 ````bash
-# Cell 1: Imports and Authentication
+#!/usr/bin/env python3
+"""
+Boss Analysis Data Pull: Fetch full option chain metadata (market data, Greeks, PoP, probabilities, theoreticals) via Tastytrade API
+and export to a single CSV for quantitative analysis.
+
+Usage:
+  export TASTYTRADE_USER='your_username'
+  export TASTYTRADE_PASS='your_password'
+  pip install pandas tastytrade
+  python3 tastytrade_chain_exporter.py
+
+Outputs:
+  - chain_meta.csv   (flattened chain: one row per option, with all available fields)
+
+Features:
+  • Automatically reads credentials from environment variables
+  • Fetches for a predefined universe of tickers
+  • Flattens call/put sub-objects into top-level columns
+  • Prints progress, row counts, available columns & sample rows
+"""
 import os
 import sys
 import pandas as pd
-import yfinance as yf
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
-from datetime import datetime
 
-# Authenticate with Tastytrade
-user = os.getenv('TASTYTRADE_USER')
-password = os.getenv('TASTYTRADE_PASS')
-if not user or not password:
-    raise RuntimeError("Set TASTYTRADE_USER and TASTYTRADE_PASS environment variables.")
-session = Session(user, password)
+# --- Configuration: define your ticker list here ---
+TICKERS = [
+    'NVDA','LMT','ISRG','HLX','TSLA','COIN','RBLX','Z','AVAV',
+    'DE','SYM','RXRX','GOOGL','PLTR','UPST'
+]
 
-# Cell 2: Define Data Fetching Functions
+# --- Authenticate with Tastytrade ---
+def get_session():
+    user = os.getenv('TASTYTRADE_USER')
+    pw   = os.getenv('TASTYTRADE_PASS')
+    if not user or not pw:
+        print("ERROR: set TASTYTRADE_USER and TASTYTRADE_PASS environment variables.")
+        sys.exit(1)
+    return Session(user, pw)
 
-def fetch_historical_data(tickers, period='30d', interval='1d'):
-    """
-    Returns dict of DataFrames for each ticker with columns ['date','close']
-    """
-    data = {}
-    for symbol in tickers:
-        df = yf.Ticker(symbol).history(period=period, interval=interval)
-        if df.empty:
-            print(f"Warning: no historical data for {symbol}")
-            continue
-        df = df[['Close']].rename(columns={'Close': 'close'})
-        df = df.reset_index().rename(columns={'Date': 'date'})
-        # Strip timezone and convert to date only
-        df['date'] = pd.to_datetime(df['date']).dt.tz_localize(None).dt.date
-        data[symbol] = df
-    return data
+# --- Fetch and flatten an option chain for a single ticker ---
+def fetch_chain_df(session, ticker: str) -> pd.DataFrame:
+    print(f"Fetching option chain for {ticker}...")
+    try:
+        chain_map = get_option_chain(session, ticker)
+    except Exception as e:
+        print(f"  ERROR fetching chain for {ticker}: {e}")
+        return pd.DataFrame()
 
-
-def fetch_option_chain_df(symbol):
-    """
-    Returns a DataFrame for the option chain of a single symbol with columns:
-    ['expiration','strike','call_bid','call_ask','call_delta','call_oi',
-     'put_bid','put_ask','put_delta','put_oi']
-    """
-    chain = get_option_chain(session, symbol)
     rows = []
-    for exp_date, opts in chain.items():
-        exp_str = exp_date.isoformat() if isinstance(exp_date, datetime) else str(exp_date)
-        # Separate calls and puts
-        calls = [opt for opt in opts if getattr(opt, 'option_type', None) == 'CALL']
-        puts  = [opt for opt in opts if getattr(opt, 'option_type', None) == 'PUT']
-        # Map strikes
-        call_map = {opt.strike_price: opt for opt in calls}
-        put_map  = {opt.strike_price: opt for opt in puts}
-        all_strikes = sorted(set(call_map.keys()) | set(put_map.keys()))
-        for strike in all_strikes:
-            opt_c = call_map.get(strike)
-            opt_p = put_map.get(strike)
-            rows.append({
+    for exp_date, options in chain_map.items():
+        exp_str = exp_date.isoformat()
+        for opt in options:
+            raw = opt.dict()
+            # Base fields
+            flat = {
+                'ticker': ticker,
                 'expiration': exp_str,
-                'strike': strike,
-                'call_bid': getattr(opt_c, 'bid', None) if opt_c else None,
-                'call_ask': getattr(opt_c, 'ask', None) if opt_c else None,
-                'call_delta': getattr(opt_c, 'delta', None) if opt_c else None,
-                'call_oi': getattr(opt_c, 'open_interest', None) if opt_c else None,
-                'put_bid': getattr(opt_p, 'bid', None) if opt_p else None,
-                'put_ask': getattr(opt_p, 'ask', None) if opt_p else None,
-                'put_delta': getattr(opt_p, 'delta', None) if opt_p else None,
-                'put_oi': getattr(opt_p, 'open_interest', None) if opt_p else None,
-            })
+                'strike_price': raw.get('strike_price'),
+                'option_type': raw.get('option_type')
+            }
+            # Flatten 'call' and 'put' sub-objects
+            for side in ('call', 'put'):
+                side_data = raw.get(side) or {}
+                for k, v in side_data.items():
+                    flat[f"{side}_{k}"] = v
+            # Include any other top-level fields
+            for k, v in raw.items():
+                if k not in ('strike_price', 'option_type', 'call', 'put'):
+                    flat[k] = v
+            rows.append(flat)
+
     df = pd.DataFrame(rows)
+    print(f"  Collected {len(df)} rows for {ticker}")
     return df
 
-# Cell 3: Define Portfolios and Fetch Data
+# --- Main export logic ---
+def main():
+    session = get_session()
+    all_dfs = []
+    for t in TICKERS:
+        df = fetch_chain_df(session, t)
+        if not df.empty:
+            all_dfs.append(df)
 
-gro = ['NVDA','LMT','ISRG','HLX','TSLA','COIN','RBLX','Z','AVAV']
-gpt = ['DE','NVDA','SYM','RXRX','HLX','GOOGL','PLTR','UPST','TSLA']
-tickers = sorted(set(gro + gpt))
+    if not all_dfs:
+        print("No data fetched for any ticker. Exiting.")
+        sys.exit(0)
 
-# Fetch historical and option data
-historical_data = fetch_historical_data(tickers)
-optionchain_data = {symbol: fetch_option_chain_df(symbol) for symbol in tickers}
+    full_df = pd.concat(all_dfs, ignore_index=True)
+    out_file = 'chain_meta.csv'
+    full_df.to_csv(out_file, index=False)
 
-# Cell 4: Display DataFrames in Notebook
-from IPython.display import display, HTML
+    # Summary output
+    print(f"Saved full option chain metadata to {out_file} ({len(full_df)} total rows)")
+    print("\nAvailable columns:")
+    print(full_df.columns.tolist())
+    print("\nSample rows:")
+    print(full_df.head(5).to_string(index=False))
 
-for symbol, hist_df in historical_data.items():
-    print(f"\n=== {symbol} Historical Data ===")
-    display(hist_df)
-
-for symbol, chain_df in optionchain_data.items():
-    print(f"\n=== {symbol} Option Chain ===")
-    display(chain_df)
-
-# Cell 5: (Optional) Save to CSV for later analysis
-for symbol, df in historical_data.items():
-    df.to_csv(f"historical_{symbol}.csv", index=False)
-for symbol, df in optionchain_data.items():
-    df.to_csv(f"chains_{symbol}.csv", index=False)
-
-print("DataFrames displayed and CSVs saved.")
+if __name__ == '__main__':
+    main()
 ````
 
 #### Save the Notebook
