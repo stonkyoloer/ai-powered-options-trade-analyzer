@@ -93,15 +93,7 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 ##### istall require packages
 ````bash
-pip3 install tastytrade pandas requests openpyxl yfinance
-````
-##### install tastytrade
-````bash
-python3 -m pip install tastytrade
-````
-##### verify install 
-````bash
-python3 -m pip show tastytrade
+python3 -m pip install pandas yfinance tastytrade openpyxl requests
 ````
 
 #### Find and launch Visual Studio Code 
@@ -119,7 +111,123 @@ find ~/Desktop -name "Visual Studio Code*.app" -maxdepth 2
 open -a "/Users/alexanderstuart/Desktop/stonkyoloer/Visual Studio Code.app"
 ````
 
-#### 
+### Visual Studio 
+
+#### Open Jupyter Notebook
+
+"Ctrl" + "Shift" + "P" > Search: "Jupyter"
+
+#### Query for yfinance and tastytrade data
+
+````bash
+# Cell 1: Imports and Authentication
+import os
+import sys
+import pandas as pd
+import yfinance as yf
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain
+from datetime import datetime
+
+# Authenticate with Tastytrade
+user = os.getenv('TASTYTRADE_USER')
+password = os.getenv('TASTYTRADE_PASS')
+if not user or not password:
+    raise RuntimeError("Set TASTYTRADE_USER and TASTYTRADE_PASS environment variables.")
+session = Session(user, password)
+
+# Cell 2: Define Data Fetching Functions
+
+def fetch_historical_data(tickers, period='30d', interval='1d'):
+    """
+    Returns dict of DataFrames for each ticker with columns ['date','close']
+    """
+    data = {}
+    for symbol in tickers:
+        df = yf.Ticker(symbol).history(period=period, interval=interval)
+        if df.empty:
+            print(f"Warning: no historical data for {symbol}")
+            continue
+        df = df[['Close']].rename(columns={'Close': 'close'})
+        df = df.reset_index().rename(columns={'Date': 'date'})
+        # Strip timezone and convert to date only
+        df['date'] = pd.to_datetime(df['date']).dt.tz_localize(None).dt.date
+        data[symbol] = df
+    return data
+
+
+def fetch_option_chain_df(symbol):
+    """
+    Returns a DataFrame for the option chain of a single symbol with columns:
+    ['expiration','strike','call_bid','call_ask','call_delta','call_oi',
+     'put_bid','put_ask','put_delta','put_oi']
+    """
+    chain = get_option_chain(session, symbol)
+    rows = []
+    for exp_date, opts in chain.items():
+        exp_str = exp_date.isoformat() if isinstance(exp_date, datetime) else str(exp_date)
+        # Separate calls and puts
+        calls = [opt for opt in opts if getattr(opt, 'option_type', None) == 'CALL']
+        puts  = [opt for opt in opts if getattr(opt, 'option_type', None) == 'PUT']
+        # Map strikes
+        call_map = {opt.strike_price: opt for opt in calls}
+        put_map  = {opt.strike_price: opt for opt in puts}
+        all_strikes = sorted(set(call_map.keys()) | set(put_map.keys()))
+        for strike in all_strikes:
+            opt_c = call_map.get(strike)
+            opt_p = put_map.get(strike)
+            rows.append({
+                'expiration': exp_str,
+                'strike': strike,
+                'call_bid': getattr(opt_c, 'bid', None) if opt_c else None,
+                'call_ask': getattr(opt_c, 'ask', None) if opt_c else None,
+                'call_delta': getattr(opt_c, 'delta', None) if opt_c else None,
+                'call_oi': getattr(opt_c, 'open_interest', None) if opt_c else None,
+                'put_bid': getattr(opt_p, 'bid', None) if opt_p else None,
+                'put_ask': getattr(opt_p, 'ask', None) if opt_p else None,
+                'put_delta': getattr(opt_p, 'delta', None) if opt_p else None,
+                'put_oi': getattr(opt_p, 'open_interest', None) if opt_p else None,
+            })
+    df = pd.DataFrame(rows)
+    return df
+
+# Cell 3: Define Portfolios and Fetch Data
+
+gro = ['NVDA','LMT','ISRG','HLX','TSLA','COIN','RBLX','Z','AVAV']
+gpt = ['DE','NVDA','SYM','RXRX','HLX','GOOGL','PLTR','UPST','TSLA']
+tickers = sorted(set(gro + gpt))
+
+# Fetch historical and option data
+historical_data = fetch_historical_data(tickers)
+optionchain_data = {symbol: fetch_option_chain_df(symbol) for symbol in tickers}
+
+# Cell 4: Display DataFrames in Notebook
+from IPython.display import display, HTML
+
+for symbol, hist_df in historical_data.items():
+    print(f"\n=== {symbol} Historical Data ===")
+    display(hist_df)
+
+for symbol, chain_df in optionchain_data.items():
+    print(f"\n=== {symbol} Option Chain ===")
+    display(chain_df)
+
+# Cell 5: (Optional) Save to CSV for later analysis
+for symbol, df in historical_data.items():
+    df.to_csv(f"historical_{symbol}.csv", index=False)
+for symbol, df in optionchain_data.items():
+    df.to_csv(f"chains_{symbol}.csv", index=False)
+
+print("DataFrames displayed and CSVs saved.")
+````
+
+
+#### Save the Notebook
+
+"Ctrl" + "Shift" + "P" > Desktop/stonkyoloer/tastytrade_trade_selector.ipynb
+
+### Terminal 
+
 
 
 
