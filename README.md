@@ -11,7 +11,7 @@
 5. Program a yfinance data pipe
 6. Program a merge of the two data sets
 8. Run Prompt to Screen for Trades
-9. Cont. to improve accuracy of data!
+9. Tendies is cookin!  
 
 # 🗂 Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
 
