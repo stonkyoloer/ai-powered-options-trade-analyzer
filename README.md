@@ -218,13 +218,6 @@ if __name__ == '__main__':
     main()
 ````
 
-
-
-
-
-
-
-
 ### Visual Studio
 #### Query
 
@@ -367,7 +360,13 @@ if __name__ == '__main__':
     main()
 ````
 
+### Terminal 
 
+#### Run the Qurey
+
+````bash
+python3 full_options_report.py
+````
 
 
 
