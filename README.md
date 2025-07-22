@@ -1,7 +1,7 @@
-🚀 **Overview**  
+### 🚀 **Overview**  
 Build and maintain a monthly-refreshed, AI-driven, sector-diversified options portfolio—and power a daily screener for high-probability trades!
 
-👨‍🏫 **Scope**  
+### 👨‍🏫 **Scope**  
 - **Fetch ETF Holdings**  
   - Download and save AIQ, ARKK, BOTZ, SHLD holdings  
 - **Data Pipeline**  
@@ -18,7 +18,7 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
   - Review AI-generated ideas each morning  
   - Execute and monitor positions—tendies incoming!
 
-📈 **Workflow 1**  
+### 📈 **Workflow 1**  
 1. Download Full Holdings List(s)  
    - Download and save holdings list, to be updated to chatGPT/Grok later  
 2. Visit: https://www.globalxetfs.com/  
