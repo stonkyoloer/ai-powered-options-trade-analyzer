@@ -16,7 +16,7 @@
 10. Run Prompt to Screen for Daily Trades
 11. Tendies is cookin!  
 
-# Workflow 1
+# 📈 Workflow 1
 
 ## Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD 
 Download and save holdings list, to be updated to chatGPT/Grok later
@@ -118,7 +118,7 @@ _This prompt is battle‑tested for aggressive, short‑term premium extraction�
 | Z      | Real Estate Tech (AI in Property Analytics)| Assumed AI application in real estate analytics, with growing market presence            | 25%          | 2,162,012           | Moderate, with steady trading volume                   |
 | AVAV   | Agriculture (Precision Farming, Automation)| Leverages AI for precision agriculture and drone technology, enhancing farm efficiency   | 28%          | 1,009,974           | Moderate, with growing trading interest                |
 
-
+# ✈️ Workflow 2
 
 ##  Program a TastyTrade and yfinance Data Pipe
 ## Get the Raw Data
