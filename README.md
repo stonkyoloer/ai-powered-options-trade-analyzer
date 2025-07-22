@@ -1,29 +1,32 @@
-# 🚀 Overview
-1. Build an AI-powered, diversified trading portfolio, re-up monthly for max gains! 
-2. Create a Trading Portfolio Screener for Daily Strategies (Daily)
+🚀 **Overview**  
+Build and maintain a monthly‑refreshed, AI‑driven, sector‑diversified options portfolio—and power a daily screener for high‑probability trades!
 
-
-# 👨‍🏫 Scope
-1. Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD (AI ETF's)
-2. Attach holdings lists to chatGPT/Grok project
-3. Write Prompt
-4. Run the Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio.
-5. Program a TastyTrade data pipe
-6. Program a yfinance data pipe
-7. Program a merge of the two data sets
-8. Attach datasets to ChatGPT/Grok project
-9. Write Prompt
-10. Run Prompt to Screen for Daily Trades
-11. Tendies is cookin!  
+👨‍🏫 **Scope**  
+1. **Fetch ETF Holdings**  
+   - Download and save AIQ, ARKK, BOTZ, SHLD holdings  
+2. **Data Pipeline**  
+   - Ingest options data via TastyTrade API  
+   - Pull market/IV data via yfinance  
+   - Merge into a single dataset  
+3. **AI Prompting**  
+   - Attach merged data to ChatGPT/Grok  
+   - Run customized prompt to:  
+     - Select 1 high‑IV, high‑liquidity ticker per sector  
+     - Generate monthly portfolio  
+     - Screen daily setups  
+4. **Execution**  
+   - Review AI‑generated ideas each morning  
+   - Execute and monitor positions—tendies incoming!
+ 
 
 # 📈 Workflow 1
 
 ## Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD 
 Download and save holdings list, to be updated to chatGPT/Grok later
-Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
-Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
-Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/shld)
-Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
+1. Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
+2. Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
+3. Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/shld)
+4. Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
 
 
 
