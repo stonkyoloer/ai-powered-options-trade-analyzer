@@ -90,10 +90,7 @@ Select **exactly one ticker per sector** (no duplicates), drawn initially from t
   | Ticker | Sector | AI Leadership Summary | Avg IV % | IV Rank | RSI(5) | MACD Signal | Daily Volume | Liquidity Grade |  
 - **Liquidity Grade**: A (ideal), B (acceptable), C (avoid).  
 - **Explain** any sector where no perfect match exists by proposing the next best alternative and rationale.  
-- **Include** rebalancing triggers and signal filters in your commentary block below the table.  
-
-––  
-_This prompt is battle‑tested for aggressive, short‑term premium extraction—modeled on Cohen, Rotter, Bruton, Arnold, Sosnoff, Minervini, Williams, Krieger, and Taleb._  
+- **Include** rebalancing triggers and signal filters in your commentary block below the table.   
 
 
 ### Output: 
