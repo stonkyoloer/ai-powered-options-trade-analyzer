@@ -31,7 +31,11 @@ Download and save holdings list, to be updated to chatGPT/Grok later
 
 
 ## Prompt Query Sector‑Diversified AI Options Strategy  
-### Attachment: AIQ, BOTZ, SHLD, ARKK  
+### Attachment: 
+1. AIQ
+2. BOTZ
+3. SHLD
+4. ARKK  
 ### Instructions:  
 #### Goal:  
 Construct a 9‑ticker, sector‑diversified options portfolio emphasizing:  
