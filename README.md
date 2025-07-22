@@ -30,7 +30,7 @@ Download and save holdings list, to be updated to chatGPT/Grok later
 
 
 
-## Prompt ChatGPT/Grok to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio  
+## Prompt Query Sector‑Diversified AI Options Strategy  
 ### Attachment: AIQ, BOTZ, SHLD, ARKK  
 ### Instructions:  
 #### Goal:  
