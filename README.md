@@ -1,7 +1,7 @@
-🚀 **Overview**  
+# 🚀 **Overview**  
 Build and maintain a monthly‑refreshed, AI‑driven, sector‑diversified options portfolio—and power a daily screener for high‑probability trades!
 
-👨‍🏫 **Scope**  
+# 👨‍🏫 **Scope**  
 1. **Fetch ETF Holdings**  
    - Download and save AIQ, ARKK, BOTZ, SHLD holdings  
 2. **Data Pipeline**  
