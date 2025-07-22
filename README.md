@@ -21,7 +21,7 @@ Build and maintain a monthly‑refreshed, AI‑driven, sector‑diversified opti
 
 # 📈 Workflow 1
 
-## Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD 
+## Download Full Holdings List(s) 
 Download and save holdings list, to be updated to chatGPT/Grok later
 1. Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 2. Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
