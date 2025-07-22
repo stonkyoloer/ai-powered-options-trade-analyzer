@@ -97,30 +97,19 @@ Select **exactly one ticker per sector** (no duplicates), drawn initially from t
 #### Portfolio Metrics Summary
 #### Optimized AI-Driven Options Portfolio (2025-07-20)
 #### CHAT GPT SELECTION(S)
-| Ticker | Sector        | Rationale for AI Leadership                                                      | Avg_IV_% | Daily_Volume | Liquidity_Metrics                              |
-|--------|---------------|----------------------------------------------------------------------------------|----------|--------------|------------------------------------------------|
-| DE     | Agriculture   | AI-powered autonomous tractors & precision ag, leader in smart farming           | ~32      | ~1.2M        | Tight spreads (~$0.05–$0.10), deep OI          |
-| NVDA   | Technology    | Dominates AI computing, >90% data center GPU share, foundation of AI workloads   | ~34      | ~180M        | Penny spreads, huge volume, deep OI            |
-| SYM    | Industrials   | AI-powered warehouse automation for Walmart and others, logistics robotics       | ~100     | ~2M          | Spreads ~$0.10–$0.20, active weeklies          |
-| RXRX   | Biotech       | AI-first drug discovery, automating target ID & preclinical with ML              | ~100     | ~25–30M      | Spreads ~$0.05–$0.10, thinner OI but active    |
-| HLX    | Energy (Trad) | AI-driven robotics for oil/gas, subsea ROVs & automation                         | ~54      | ~1.8M        | Spreads ~$0.10+, concentrated OI               |
-| GOOGL  | Energy (Ren)  | AI optimizing wind/solar, DeepMind grid AI, global leader in green AI apps       | ~35      | ~40M         | Penny spreads, huge OI, deep chain             |
-| PLTR   | Cons. Staples | AI-driven supply chain, demand forecasting, logistics for FMCG/retail            | ~69      | ~85M         | Spreads $0.01–$0.05, deep OI, high retail flow |
-| UPST   | Financials    | AI lending & credit modeling, disruptive loan/credit AI, wild price swings       | ~107     | ~6M          | Spreads $0.05–$0.10, active weeklies           |
-| TSLA   | Transport     | AI for self-driving, robotics, logistics, undisputed auto AI leader              | ~54      | ~100M+       | Penny spreads, massive OI, liquid weeklies     |
-
+```markdown
+| Ticker | Sector             | AI Leadership Summary                                                      | Avg IV % | IV Rank | RSI(5)       | MACD Signal | Daily Volume | Liquidity Grade   |
+|--------|--------------------|-----------------------------------------------------------------------------|----------|---------|--------------|-------------|--------------|-------------------|
+| GOOGL  | Comm. Services     | Global leader in AI research & applications (search, cloud, generative AI) | 36%      | 43%     | 55 (neutral) | Bullish     | 24M          | A (ideal)         |
+| TSLA   | Cons. Discretionary| Autonomous driving pioneer; deploys advanced AI at scale in vehicles       | 55%      | 17%     | 60 (bullish) | Bullish     | 85M          | A (ideal)         |
+| HLX    | Energy             | Offshore energy services firm specializing in subsea robotics              | 52%      | 84%     | 60 (bullish) | Bullish     | 1.8M         | C (avoid)         |
+| UPST   | Financials         | Leading AI-driven lending platform expanding credit access for banks       | 109%     | 55%     | 50 (neutral) | Slight Bull | 6.3M         | B (acceptable)    |
+| ISRG   | Health Care        | Pioneer of robotic surgery – its da Vinci system is an AI-powered platform  | 38%      | 85%     | 60 (bullish) | Bullish     | 1.7M         | B (acceptable)    |
+| SYM    | Industrials        | Leading AI-powered robotics provider automating warehouse supply chains    | 114%     | 62%     | 80 (overbought)| Bullish   | 1.7M         | B (acceptable)    |
+| PLTR   | Info. Technology   | Defense & big-data software leader; “indispensable” AI partner for govts   | 66%      | 40%     | 50 (neutral) | Bullish     | 45M          | A (ideal)         |
+```
 #### GROK SELECTION(S)
-| Ticker | Sector                                     | Rationale for AI Leadership                                                              | Average IV % | Daily Trading Volume | Liquidity Metrics                                      |
-|--------|--------------------------------------------|------------------------------------------------------------------------------------------|--------------|---------------------|--------------------------------------------------------|
-| NVDA   | Technology (Computing, Semiconductors)     | Leader in GPU technology, crucial for AI computations, with strong AI hardware/software  | 35%          | 203,628,106         | High, with tight spreads due to large volume           |
-| LMT    | Industrials (AI-enabled Infrastructure)    | Leading defense contractor investing in AI for autonomous systems and data analysis      | 24%          | 1,454,609           | Moderate, supported by consistent institutional trading|
-| ISRG   | Biotechnology (AI-driven Drug Discovery)   | Leader in robotic-assisted surgery, incorporating AI for precision and efficiency        | 37%          | 2,287,200           | High, with significant trading activity and tight spreads|
-| HLX    | Energy (Traditional) (AI in Oil/Gas)       | Utilizes AI for predictive maintenance in energy sector, enhancing operational efficiency| 30%          | 2,020,000           | Moderate, with steady trading volume                   |
-| TSLA   | Transportation & Shipping (AI Logistics)   | Pioneering AI in autonomous driving and fleet management, with high market attention     | 40%          | 110,997,140         | Very high, with deep liquidity and tight spreads       |
-| COIN   | Financials (AI in Risk/Fraud Detection)    | Leading crypto platform leveraging AI for trading and fraud detection, with significant hype | 45%      | 14,040,296           | High, with robust trading activity                     |
-| RBLX   | Consumer Staples (AI-driven Forecasting)   | Uses AI for personalized gaming experiences, with high retail engagement and attention   | 30%          | 8,538,116           | High, with active retail and institutional trading     |
-| Z      | Real Estate Tech (AI in Property Analytics)| Assumed AI application in real estate analytics, with growing market presence            | 25%          | 2,162,012           | Moderate, with steady trading volume                   |
-| AVAV   | Agriculture (Precision Farming, Automation)| Leverages AI for precision agriculture and drone technology, enhancing farm efficiency   | 28%          | 1,009,974           | Moderate, with growing trading interest                |
+
 
 # ✈️ Workflow 2
 
