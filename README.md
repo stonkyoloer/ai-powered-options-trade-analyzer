@@ -31,13 +31,13 @@ Download and save holdings list, to be updated to chatGPT/Grok later
 
 
 ## Prompt Query Sector‑Diversified AI Options Strategy  
-### Attachment: 
+### Attachment 
 1. AIQ
 2. BOTZ
 3. SHLD
 4. ARKK  
-### Instructions:  
-#### Goal:  
+### Instructions  
+#### Goal  
 Construct a 9‑ticker, sector‑diversified options portfolio emphasizing:  
 - **High Implied Volatility (IV)** (rich premiums & IV Rank ≥ 30%)  
 - **Deep Liquidity** (OI ≥ 1,000 per leg; spreads ≤ $0.05 for top names, ≤ $0.10 for moderately liquid)  
@@ -45,23 +45,23 @@ Construct a 9‑ticker, sector‑diversified options portfolio emphasizing:
 - **Industry‑Leading AI Exposure** in each sector  
 - **Significant Market Attention** (institutional/retail hype)  
 
-#### Selection Criteria (ALL must be met):  
+#### Selection Criteria (ALL must be met)  
 1. **AI Leadership**: Core business or initiative is AI‑driven.  
 2. **Options Liquidity**: Weekly/monthly chains, ≥ 1,000 OI on each leg, tight spreads.  
 3. **Elevated IV + IV Rank ≥ 30%**: Ensure options are richly priced relative to their history.  
 4. **Public Buzz**: Recent catalysts, heavy newsflow, or social/institutional interest.  
 5. **Robinhood‑Available**: U.S.‑listed and accessible to retail traders.  
 
-#### Technical & Risk Filters:  
+#### Technical & Risk Filters
 - **Primary Signal (RSI(5))**: Confirm short‑term momentum (oversold/overbought swings).  
 - **Secondary Signal (MACD Crossover)**: Validate momentum for directional plays (debit spreads, straddles).  
-- **Rebalance Triggers**:  
+- **Rebalance Triggers**
   - **IV Rank < 30%** → remove/replace  
   - **Stop‑Loss Hit** → exit and free capital  
   - **Profit Target Hit** → lock in gains  
 - **Rebalance Cadence**: Event‑driven only (no routine weekly unless a trigger fires)  
 
-#### Portfolio Construction:  
+#### Portfolio Construction
 Select **exactly one ticker per sector** (no duplicates), drawn initially from the ETF holdings (AIQ, BOTZ, ARKK, SHLD), but include any **high‑IV recent IPOs or AI spin‑outs** that meet all criteria.
 
 | Sector                   | AI Theme                                                       |
@@ -76,8 +76,8 @@ Select **exactly one ticker per sector** (no duplicates), drawn initially from t
 | **Consumer Staples**     | AI‑driven forecasting, supply chain, personalization          |
 | **Transportation**       | Autonomous vehicles, predictive logistics, fleet AI           |
 
-### Prompt:  
-#### Rules:  
+### Prompt  
+#### Rules  
 1. Refer to the **Goal**, **Selection Criteria**, **Filters**, and **Construction** above.  
 2. Use the **attachments** as your candidate universe.  
 3. Be resourceful—pull **live or most recent data** (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
@@ -533,7 +533,7 @@ python3 generate_final_options_report.py
 2. Use straightforward language, free from exaggerated claims.
 3. Do not include any additional outputs or explanations beyond the specified table.
 
-### Prompt: 
+### Prompt 
 
 Analyze the attached CSV files, which provide screenshots of live market data.
 Follow the instructions already provided.
