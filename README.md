@@ -16,9 +16,9 @@
 10. Run Prompt to Screen for Daily Trades
 11. Tendies is cookin!  
 
-# Workflow
+# Workflow 1
 
-## 🗂 Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD 
+## Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD 
 Download and save holdings list, to be updated to chatGPT/Grok later
 Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
 Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
@@ -27,7 +27,7 @@ Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
 
 
 
-# 🔍 Prompt ChatGPT/Grok to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio  
+## Prompt ChatGPT/Grok to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio  
 ### Attachment: AIQ, BOTZ, SHLD, ARKK  
 ### Instructions:  
 #### Goal:  
@@ -120,7 +120,7 @@ _This prompt is battle‑tested for aggressive, short‑term premium extraction�
 
 
 
-# 🤖 Program a TastyTrade and yfinance Data Pipe
+##  Program a TastyTrade and yfinance Data Pipe
 ## Get the Raw Data
 ### Terminal
 
@@ -494,7 +494,7 @@ python3 generate_final_options_report.py
 
 
 
-# 🔍 Run Prompt to Screen for Trades
+##  Run Prompt to Screen for Trades
 
 ##  GROK3/GPTo3: Screen Trading Portfolio For Daily Moves
 
