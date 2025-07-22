@@ -488,51 +488,46 @@ python3 generate_final_options_report.py
 
 ##  Run Prompt to Screen for Trades
 
-##  GROK3/GPTo3: Screen Trading Portfolio For Daily Moves
+# 🔍 Prompt ChatGPT/Grok to Screen Daily High‑Return Options Trades  
+### Attachment: TastyTrade & Yahoo Finance Data (quotes ≤ 10 min old)  
+### Instructions:  
+#### Goal  
+Select **exactly 5** option trades from the AI‑optimized 9‑ticker portfolio (Prompt 1) that each target ≥ 33% return and ≥ 65% POP, with max loss ≤ $500, while respecting portfolio Greek and sector limits.  
 
-### Attachment: TastyTrade and Yahoo Finance Data
-### Instructions: 
-#### Trade Selection Criteria
-1. Number of Trades: Exactly 5
-2. Goal: Maximize edge while maintaining portfolio delta, vega, and sector exposure limits.
-3. Quote age ≤ 10 minutes
-4. Top option Probability of Profit (POP) ≥ 0.65
-5. Top option credit / max loss ratio ≥ 0.33
-6. Top option max loss ≤ 0.5% of $100,000 NAV (≤ $500)
-#### Selection Rules
-1. Assign a model_score.
-2. Rank trades by model_score.
-3. Ensure diversification: maximum of 2 trades per GICS sector.
-4. Net basket Delta must remain between [-0.30, +0.30] × (NAV / 100k).
-5. Net basket Vega must remain ≥ -0.05 × (NAV / 100k).
-6. In case of ties, prefer higher momentum_z and flow_z scores.
-#### Output Format
-1. Provide output strictly as a clean, text-wrapped table.
-3. Include Ticker
-4. Include Strategy
-5. Incude Legs
-6. Include Thesis (≤ 30 words, plain language)
-7. Includ POP
-#### Additional Guidelines
-1. Limit each trade thesis to ≤ 30 words.
-2. Use straightforward language, free from exaggerated claims.
-3. Do not include any additional outputs or explanations beyond the specified table.
+#### Data Inputs  
+- **Underlying Pool:** 9‑ticker sector‑diversified AI portfolio (from Prompt 1)  
+- **Market Data:** TastyTrade options chains + Yahoo Finance pricing/IV  
 
-### Prompt 
+#### Selection Criteria  
+1. **POP ≥ 0.65**  
+2. **Credit/Max‑Loss ≥ 0.33** (for credit strategies)  
+3. **Max loss ≤ $500** per trade  
+4. **Implied Volatility ≥ 30%**, **IV Rank ≥ 30%**  
+5. **Open Interest ≥ 1,000** per leg  
+6. **Bid/Ask Spread ≤ $0.10**  
+7. **Contract Cost ≤ $500**  
+8. **Quote Age ≤ 10 min**  
 
-Analyze the attached CSV files, which provide screenshots of live market data.
-Follow the instructions already provided.
-Then Follow the instructions in the prompt.
+#### Portfolio Constraints  
+- **Max 2 trades per GICS sector**  
+- **Net Delta** ∈ [–0.30, +0.30] × (NAV/100k)  
+- **Net Vega ≥ –0.05** × (NAV/100k)  
 
-#### Screen for Trade Type Setups
-1. Day Trade (0-9)DTE
-2. Short Premium (9-27)DTE
-3. Directional Swing (18-45)DTE
-4. Event Play (Event Date+9)DTE
+#### Scoring Weights  
+- **POP:** 40%  
+- **Expected Return:** 30%  
+- **momentum_z:** 20%  
+- **flow_z:** 10%  
 
-#### Screen for Strategies
-1. Vertical Spreads
-2. Straddle and Strangle
-3. Condors
-4. Long Puts and Calls
-   
+#### Trade Buckets & Allowed Strategies  
+- **DTE Buckets:** 0–9 (Day Trades), 9–27 (Short Premium), 18–45 (Directional Swing), Event Plays (earnings/catalyst + up to 9 DTE)  
+- **Strategies:** Vertical spreads, Iron condors, Straddles/strangles, Long calls/puts  
+
+#### Output Table Schema  
+| Ticker | Strategy | Legs | Thesis (≤ 30 words) | POP | Credit/Max‑Loss | DTE | Sector |  
+
+---
+
+### Prompt  
+Apply **the Instructions above** to the attached data. Filter, score (POP 40%, Return 30%, momentum_z 20%, flow_z 10%), rank, enforce sector/Greek limits, and **output only** the clean, markdown‑wrapped table with columns:  
+`Ticker, Strategy, Legs, Thesis (≤ 30 words), POP, Credit/Max‑Loss, DTE, Sector`.  
