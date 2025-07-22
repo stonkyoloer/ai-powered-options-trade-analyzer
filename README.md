@@ -1,60 +1,96 @@
 # 🚀 Overview
-
-1. Construct a Diverse, AI-Focuses, Trading Portfolio (Monthly)
+1. Build an AI-powered, diversified trading portfolio, re-up monthly for max gains! 
 2. Create a Trading Portfolio Screener for Daily Strategies (Daily)
 
+
 # 👨‍🏫 Scope
+1. Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD (AI ETF's)
+2. Attach holdings lists to chatGPT/Grok project
+3. Write Prompt
+4. Run the Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio.
+5. Program a TastyTrade data pipe
+6. Program a yfinance data pipe
+7. Program a merge of the two data sets
+8. Attach datasets to ChatGPT/Grok project
+9. Write Prompt
+10. Run Prompt to Screen for Daily Trades
+11. Tendies is cookin!  
 
-1. Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
-2. Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
-4. Program a TastyTrade data pipe
-5. Program a yfinance data pipe
-6. Program a merge of the two data sets
-8. Run Prompt to Screen for Trades
-9. Tendies is cookin!  
+# Workflow
 
-# 🗂 Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD
-
-## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
-## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
-## Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/shld)
-## Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
+## 🗂 Download Full Holdings List of: AIQ, ARKK, BOTZ, SHLD 
+Download and save holdings list, to be updated to chatGPT/Grok later
+Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/aiq)
+Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/botz)
+Visit: [https://www.globalxetfs.com/](https://www.globalxetfs.com/funds/shld)
+Visit: [https://www.ark-funds.com/](https://www.ark-funds.com/funds/arkk)
 
 
-# 🔍 Run Prompt to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio
 
-##  GROK3/GPTo3: Analyze AIQ - Build an Optimized, Sector-Diversified, Options Trading Portfolio (Monthly)
+# 🔍 Prompt ChatGPT/Grok to Build an AI-Optimized, Sector-Diversified, Options Trading Portfolio  
+### Attachment: AIQ, BOTZ, SHLD, ARKK  
+### Instructions:  
+#### Goal:  
+Construct a 9‑ticker, sector‑diversified options portfolio emphasizing:  
+- **High Implied Volatility (IV)** (rich premiums & IV Rank ≥ 30%)  
+- **Deep Liquidity** (OI ≥ 1,000 per leg; spreads ≤ $0.05 for top names, ≤ $0.10 for moderately liquid)  
+- **Strong Short‑Term Swings** (same‑day to 30 days)  
+- **Industry‑Leading AI Exposure** in each sector  
+- **Significant Market Attention** (institutional/retail hype)  
 
-### Attachment: AIQ, BOTZ, SHLD, ARKK
-### Instructions:
-#### Goal:
-Construct an optimized, sector-diversified options portfolio emphasizing high implied volatility (IV), significant trading volume, deep liquidity, and strong short-term price swings.
-#### Selection Criteria:
-1. Industry-leading exposure to Artificial Intelligence (AI)
-2. High liquidity for efficient trade execution (tight bid-ask spreads)
-3. Elevated IV to capitalize on substantial volatility
-4. Significant market attention (high retail/institutional hype)
-#### Portfolio Construction:
-##### Select exactly 1 ticker per sector meeting all the criteria above:
-1. Agriculture (Precision farming, automation, biotech ag)
-2. Technology (Computing, semiconductors, data centers, servers)
-3. Industrials (AI-enabled infrastructure, construction automation)
-4. Biotechnology (AI-driven drug discovery: psychedelics, oncology, antivirals, fungal-based treatments)
-5. Energy (Traditional) (AI applications in oil/gas optimization, predictive maintenance)
-6. Energy (Renewable) (AI-enhanced solar, wind, hydro, energy-storage optimization)
-7. Financials (Banks or insurance firms significantly utilizing AI for risk modeling, fraud detection, trading)
-8. Consumer Staples (AI-driven demand forecasting, supply chain, personalized products)
-9. Transportation & Shipping (AI logistics, autonomous vehicles, predictive fleet maintenance)
-### Prompt:
-1. Refer to the Prompt.
-2. Refer to the Instructions.
-3. Refer to the Project Attachments/Files.
+#### Selection Criteria (ALL must be met):  
+1. **AI Leadership**: Core business or initiative is AI‑driven.  
+2. **Options Liquidity**: Weekly/monthly chains, ≥ 1,000 OI on each leg, tight spreads.  
+3. **Elevated IV + IV Rank ≥ 30%**: Ensure options are richly priced relative to their history.  
+4. **Public Buzz**: Recent catalysts, heavy newsflow, or social/institutional interest.  
+5. **Robinhood‑Available**: U.S.‑listed and accessible to retail traders.  
 
-Prompt: Review the list of companies provided in the files/attachments.  Analyze them based on the instructions. Then map the best ranked ticker back to each of the 9 sectors (provided in the instructions). A different ticker mapped to each sector. The best ranked ticker gets mapped to each sector. Then produce a portfolio metrics summary output. Output as a table, with the following columns: Ticker, Sector, Rationale for AI Leadership, Average IV %, Daily Trading Volume, Liquidity Metrics.  You should be resourceful, and find the most recent and accurate data possible when scraping for data to fill in the table.
+#### Technical & Risk Filters:  
+- **Primary Signal (RSI(5))**: Confirm short‑term momentum (oversold/overbought swings).  
+- **Secondary Signal (MACD Crossover)**: Validate momentum for directional plays (debit spreads, straddles).  
+- **Rebalance Triggers**:  
+  - **IV Rank < 30%** → remove/replace  
+  - **Stop‑Loss Hit** → exit and free capital  
+  - **Profit Target Hit** → lock in gains  
+- **Rebalance Cadence**: Event‑driven only (no routine weekly unless a trigger fires)  
+
+#### Portfolio Construction:  
+Select **exactly one ticker per sector** (no duplicates), drawn initially from the ETF holdings (AIQ, BOTZ, ARKK, SHLD), but include any **high‑IV recent IPOs or AI spin‑outs** that meet all criteria.
+
+| Sector                   | AI Theme                                                       |
+|--------------------------|----------------------------------------------------------------|
+| **Agriculture**          | Precision farming, ag‑biotech, automation                     |
+| **Technology**           | AI chips, semiconductors, cloud/LLM infrastructure            |
+| **Industrials**          | Robotics, smart infrastructure, automation systems            |
+| **Biotechnology**        | ML drug discovery (oncology, antivirals, genomics, psychedelics) |
+| **Energy (Traditional)** | AI in oil/gas ops, predictive maintenance, commodities algos |
+| **Energy (Renewable)**   | AI‑optimized solar/wind/hydro, grid/storage analytics         |
+| **Financials**           | AI for risk models, fraud detection, quant trading           |
+| **Consumer Staples**     | AI‑driven forecasting, supply chain, personalization          |
+| **Transportation**       | Autonomous vehicles, predictive logistics, fleet AI           |
+
+### Prompt:  
+#### Rules:  
+1. Refer to the **Goal**, **Selection Criteria**, **Filters**, and **Construction** above.  
+2. Use the **attachments** as your candidate universe.  
+3. Be resourceful—pull **live or most recent data** (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
+
+**Task:**  
+- **Shortlist** all ETF holdings by sector.  
+- **Filter** by AI exposure, liquidity, IV & IVR ≥ 30%, OI ≥ 1,000, spread ≤ $0.05/0.10, and RSI+MACD confirmation.  
+- **Select** the single best ticker per sector.  
+- **Output** a markdown table with columns:  
+  | Ticker | Sector | AI Leadership Summary | Avg IV % | IV Rank | RSI(5) | MACD Signal | Daily Volume | Liquidity Grade |  
+- **Liquidity Grade**: A (ideal), B (acceptable), C (avoid).  
+- **Explain** any sector where no perfect match exists by proposing the next best alternative and rationale.  
+- **Include** rebalancing triggers and signal filters in your commentary block below the table.  
+
+––  
+_This prompt is battle‑tested for aggressive, short‑term premium extraction—modeled on Cohen, Rotter, Bruton, Arnold, Sosnoff, Minervini, Williams, Krieger, and Taleb._  
+
 
 ### Output: 
 #### Portfolio Metrics Summary
-
 #### Optimized AI-Driven Options Portfolio (2025-07-20)
 #### CHAT GPT SELECTION(S)
 | Ticker | Sector        | Rationale for AI Leadership                                                      | Avg_IV_% | Daily_Volume | Liquidity_Metrics                              |
@@ -85,7 +121,6 @@ Prompt: Review the list of companies provided in the files/attachments.  Analyze
 
 
 # 🤖 Program a TastyTrade and yfinance Data Pipe
-
 ## Get the Raw Data
 ### Terminal
 
