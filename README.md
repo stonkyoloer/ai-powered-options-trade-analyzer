@@ -28,13 +28,13 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
 
 ##### Prompt Query: Sector-Diversified AI Options Strategy  
 
-**Attachment**  
+## Attachment  
 - AIQ  
 - BOTZ  
 - SHLD  
 - ARKK  
 
-**Instructions**  
+## Instructions 
 
 **Goal**  
 Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
