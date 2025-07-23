@@ -525,14 +525,14 @@ python3 generate_final_options_report.py
 # 🤖 Project Prompt: AI Pick 3 Trades 
 **Attachment**  
 **Instructions**  
-**Goal** Select **exactly 3** option trades from the AI‑optimized 9‑ticker portfolio (Prompt 1) that each target ≥ 33% return and ≥ 65% POP, with max loss ≤ $500, while respecting portfolio Greek and sector limits.  
+**Goal** Select **exactly 3** option trades from the AI‑optimized 9‑ticker portfolio (Prompt 1) that each target ≥ 33% return and ≥ 66% POP, with max loss ≤ $500, while respecting portfolio Greek and sector limits.  
 
 #### Data Inputs  
 - **Underlying Pool:** 9‑ticker sector‑diversified AI portfolio (from Prompt 1)  
 - **Market Data:** TastyTrade options chains + Yahoo Finance pricing/IV  
 
 #### Selection Criteria  
-1. **POP ≥ 0.65**  
+1. **POP ≥ 0.66**  
 2. **Credit/Max‑Loss ≥ 0.33** (for credit strategies)  
 3. **Max loss ≤ $500** per trade  
 4. **Implied Volatility ≥ 30%**, **IV Rank ≥ 30%**  
