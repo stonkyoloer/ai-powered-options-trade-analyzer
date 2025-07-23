@@ -5,7 +5,6 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
 - **Fetch NASDAQ list**  
   - Download complete list of tickers on NASDAQ  
 - **Data Pipeline**
-  - Import ticker listing from nasdaq
   - Ingest options data via TastyTrade API  
   - Pull market/IV data via yfinance  
   - Merge TastyTrade and yfinance into a single dataset  
