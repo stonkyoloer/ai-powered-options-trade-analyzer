@@ -104,7 +104,7 @@ Construct a 9-ticker, sector-diversified options portfolio emphasizing:
 - **Rebalance Cadence**: Event-driven only (no routine weekly unless a trigger fires)  
 
 **Portfolio Construction**  
-Select exactly one ticker per sector (no duplicates), drawn initially from the ETF holdings (AIQ, BOTZ, ARKK, SHLD), but include any high-IV recent IPOs or AI spin-outs that meet all criteria.
+Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  include any high-IV recent IPOs or AI spin-outs that meet all criteria.
 
 | Sector                  | AI Theme                                                   |
 |-------------------------|------------------------------------------------------------|
