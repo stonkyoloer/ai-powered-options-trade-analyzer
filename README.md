@@ -118,6 +118,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
 | Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
 
+**Prompt**
 **Rules**  
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
 2. Use the attachments as your candidate universe.  
@@ -125,7 +126,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 4. Exclude all tickers not traded on Robinhood.  
 
 **Task**  
-- Shortlist all ETF holdings by sector.  
+- Shortlist all holdings by sector.  
 - Filter by AI exposure, liquidity, IV & IVR ≥ 30%, OI ≥ 1,000, spread ≤ $0.05/0.10, and RSI+MACD confirmation.  
 - Select the single best ticker per sector.  
 - Output a markdown table with columns:  
