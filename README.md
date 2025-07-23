@@ -72,10 +72,10 @@ python fetch_us_tickers.py
 
 ### Project - Prompt: AI Pick 9 
 
-**Attachment**
+#### Attachment
 - us_tickers.csv
 
-**Instructions** 
+#### Instructions 
 
 **Goal**  
 Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
@@ -117,8 +117,8 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
 | Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
 
-**Prompt**
-**Rules**  
+#### Prompt
+**Goal**
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
 2. Use the attachments as your candidate universe.  
 3. Be resourceful—pull live or most recent data (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
@@ -134,7 +134,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 - Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
 
-### Prompt Output
+#### Prompt Output
 **Portfolio Metrics Summary**  
 _Optimized AI-Driven Options Portfolio (2025-07-20)_  
 **CHAT GPT SELECTION(S)**
