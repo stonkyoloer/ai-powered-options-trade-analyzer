@@ -1,7 +1,7 @@
 # 🚀 **Overview**  
 Build and maintain a monthly-refreshed, AI-driven, sector-diversified options portfolio—and power a daily screener for high-probability trades!
 
-### 👨‍🏫 **Scope**  
+# 👨‍🏫 **Scope**  
 - **Fetch ETF Holdings**  
   - Download and save AIQ, ARKK, BOTZ, SHLD holdings  
 - **Data Pipeline**  
@@ -18,7 +18,7 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
   - Review AI-generated ideas each morning  
   - Execute and monitor positions—tendies incoming!
 
-### 📈 **Workflow 1**  
+# 📈 **Workflow 1**  
 1. Download Full Holdings List(s)  
    - Download and save holdings list, to be updated to chatGPT/Grok later  
 2. Visit: https://www.globalxetfs.com/  
@@ -110,7 +110,7 @@ _Optimized AI-Driven Options Portfolio (2025-07-20)_
 **GROK SELECTION(S)**
 
 
-### ✈️ Workflow 2
+# ✈️ Workflow 2
 
 ###  Program a TastyTrade and yfinance Data Pipe
 ## Get the Raw Data
@@ -388,7 +388,6 @@ if __name__ == '__main__':
     main()
 ````
 
-### Terminal 
 
 #### Run the Qurey
 
@@ -398,7 +397,7 @@ python3 full_options_report.py
 
 
 
-## Produce Linked Report 
+#### Produce Linked Report 
 
 ````bash
 import pandas as pd
@@ -478,7 +477,6 @@ final_df.to_csv("final_options_report_full_columns.csv", index=False)
 print("✅ CSV saved: final_options_report_full_columns.csv")
 ````
 
-### Terminal
 #### Run Data Query 
 ````bash
 python3 generate_final_options_report.py
@@ -486,9 +484,7 @@ python3 generate_final_options_report.py
 
 
 
-##  Run Prompt to Screen for Trades
-
-# 🔍 Prompt ChatGPT/Grok to Screen Daily High‑Return Options Trades  
+##  Run a Project Prompt to Screen for Trades
 ### Attachment: TastyTrade & Yahoo Finance Data (quotes ≤ 10 min old)  
 ### Instructions:  
 #### Goal  
@@ -521,13 +517,13 @@ Select **exactly 5** option trades from the AI‑optimized 9‑ticker portfolio 
 
 #### Trade Buckets & Allowed Strategies  
 - **DTE Buckets:** 0–9 (Day Trades), 9–27 (Short Premium), 18–45 (Directional Swing), Event Plays (earnings/catalyst + up to 9 DTE)  
-- **Strategies:** Vertical spreads, Iron condors, Straddles/strangles, Long calls/puts  
+- **Strategies:** Vertical spreads, Iron condors, Straddles/strangles, Long calls/puts
 
-#### Output Table Schema  
+#### Output Table Schema
 | Ticker | Strategy | Legs | Thesis (≤ 30 words) | POP | Credit/Max‑Loss | DTE | Sector |  
 
 ---
 
-### Prompt  
-Apply **the Instructions above** to the attached data. Filter, score (POP 40%, Return 30%, momentum_z 20%, flow_z 10%), rank, enforce sector/Greek limits, and **output only** the clean, markdown‑wrapped table with columns:  
+### Prompt:  
+Apply **the Instructions** to the attached data. Filter, score (POP 40%, Return 30%, momentum_z 20%, flow_z 10%), rank, enforce sector/Greek limits, and **output only** the clean, markdown‑wrapped table with columns:  
 `Ticker, Strategy, Legs, Thesis (≤ 30 words), POP, Credit/Max‑Loss, DTE, Sector`.  
