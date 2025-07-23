@@ -1,15 +1,16 @@
 # 🚀 **Overview**  
-Build and maintain a monthly-refreshed, AI-driven, sector-diversified options portfolio—and power a daily screener for high-probability trades!
+Build and maintain a monthly-refreshed, AI-driven, sector-diversified options portfolio—and power a daily screener for high-probability tendies!
 
 # 👨‍🏫 **Scope**  
-- **Fetch ETF Holdings**  
-  - Download and save AIQ, ARKK, BOTZ, SHLD holdings  
-- **Data Pipeline**  
+- **Fetch NASDAQ list**  
+  - Download complete list of tickers on NASDAQ  
+- **Data Pipeline**
+  - Import ticker listing from nasdaq
   - Ingest options data via TastyTrade API  
   - Pull market/IV data via yfinance  
-  - Merge into a single dataset  
+  - Merge TastyTrade and yfinance into a single dataset  
 - **AI Prompting**  
-  - Attach merged data to ChatGPT/Grok  
+  - Attach data to ChatGPT/Grok  
   - Run customized prompt to:  
     - Select 1 high-IV, high-liquidity ticker per sector  
     - Generate monthly portfolio  
@@ -19,22 +20,63 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
   - Execute and monitor positions—tendies incoming!
 
 # 📈 **Workflow 1**  
-1. Download Full Holdings List(s)  
-   - Download and save holdings list, to be updated to chatGPT/Grok later  
-2. Visit: https://www.globalxetfs.com/  
-3. Visit: https://www.globalxetfs.com/  
-4. Visit: https://www.globalxetfs.com/  
-5. Visit: https://www.ark-funds.com/  
 
-##### Prompt Query: Sector-Diversified AI Options Strategy  
 
-## Attachment  
-- AIQ  
-- BOTZ  
-- SHLD  
-- ARKK  
+### Data Pipe: NASDAQ
+ **Create your project folder and virtual env**
+````bash
+mkdir -p ~/Desktop/US_Tickers && cd ~/Desktop/US_Tickers
+python3 -m venv .venv
+source .venv/bin/activate
+````
 
-## Instructions 
+**Install Pandas**
+````bash
+pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org pandas requests
+````
+
+**Download the raw symbol lists**
+````bash
+curl -s -o nasdaqlisted.txt ftp://ftp.nasdaqtrader.com/SymbolDirectory/nasdaqlisted.txt
+curl -s -o otherlisted.txt  ftp://ftp.nasdaqtrader.com/SymbolDirectory/otherlisted.txt
+````
+
+**Create the parsing script**
+````bash
+cat > fetch_us_tickers.py << 'EOF'
+import pandas as pd
+
+# Load Nasdaq list and drop its footer row
+nas = pd.read_csv('nasdaqlisted.txt', sep='|')
+nas = nas[:-1]
+
+# Load other exchanges list and drop its footer row
+oth = pd.read_csv('otherlisted.txt', sep='|')
+oth = oth[:-1]
+
+# Combine symbols, remove NaNs, dedupe, sort
+symbols = pd.concat([nas['Symbol'], oth['ACT Symbol'].rename('Symbol')])
+symbols = symbols.dropna().unique()
+symbols = sorted(symbols)
+
+# Write out to CSV
+pd.Series(symbols, name='Ticker').to_csv('us_all_tickers.csv', index=False)
+print(f"Fetched {len(symbols)} tickers → us_all_tickers.csv")
+EOF
+````
+
+**Run the parser and generate your master list**
+````bash
+python fetch_us_tickers.py
+````
+
+
+### Prompt / Query 
+
+**Attachment**
+- us_tickers.csv
+
+**Instructions** 
 
 **Goal**  
 Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
@@ -76,13 +118,13 @@ Select exactly one ticker per sector (no duplicates), drawn initially from the E
 | Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
 | Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
 
-##### Rules  
+**Rules**  
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
 2. Use the attachments as your candidate universe.  
 3. Be resourceful—pull live or most recent data (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
 4. Exclude all tickers not traded on Robinhood.  
 
-##### Task  
+**Task**  
 - Shortlist all ETF holdings by sector.  
 - Filter by AI exposure, liquidity, IV & IVR ≥ 30%, OI ≥ 1,000, spread ≤ $0.05/0.10, and RSI+MACD confirmation.  
 - Select the single best ticker per sector.  
@@ -92,7 +134,7 @@ Select exactly one ticker per sector (no duplicates), drawn initially from the E
 - Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
 
-##### Output  
+### Prompt Output
 **Portfolio Metrics Summary**  
 _Optimized AI-Driven Options Portfolio (2025-07-20)_  
 **CHAT GPT SELECTION(S)**
@@ -112,7 +154,7 @@ _Optimized AI-Driven Options Portfolio (2025-07-20)_
 
 # ✈️ Workflow 2
 
-###  Program a TastyTrade and yfinance Data Pipe
+### Data Pipe: TastyTrade and yfinance
 ## Get the Raw Data
 ### Terminal
 
