@@ -1,7 +1,7 @@
-# 🚀 **Overview**  
+# 🚀 Overview  
 Build and maintain a monthly-refreshed, AI-driven, sector-diversified options portfolio—and power a daily screener for high-probability tendies!
 
-# 👨‍🏫 **Scope**  
+# 👨‍🏫 Scope  
 - **Fetch NASDAQ list**  
   - Download complete list of tickers on NASDAQ  
 - **Data Pipeline**
@@ -18,10 +18,8 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
   - Review AI-generated ideas each morning  
   - Execute and monitor positions—tendies incoming!
 
-# 📈 **Workflow 1**  
+# 📈  Data Pipe: NASDAQ
 
-
-### Data Pipe: NASDAQ
  **Create your project folder and virtual env**
 ````bash
 mkdir -p ~/Desktop/US_Tickers && cd ~/Desktop/US_Tickers
@@ -70,7 +68,7 @@ python fetch_us_tickers.py
 ````
 
 
-### Project - Prompt: AI Pick 9 
+# 🤖 Project Prompt: AI Pick 9 Tickers
 
 #### Attachment
 - us_tickers.csv
@@ -152,9 +150,8 @@ _Optimized AI-Driven Options Portfolio (2025-07-20)_
 **GROK SELECTION(S)**
 
 
-# ✈️ Workflow 2
+# ✈️ Data Pipe: TastyTrade and yfinance
 
-### Data Pipe: TastyTrade and yfinance
 ## Get the Raw Data
 ### Terminal
 
@@ -201,7 +198,7 @@ export TASTYTRADE_USER='stonkyoloer'
 export TASTYTRADE_PASS='PASSWORD'
 ````
 
-#### Overwrite Script
+#### Enter Script into terminal
 
 ````bash
 nano full_options_report.py
@@ -288,8 +285,7 @@ if __name__ == '__main__':
     main()
 ````
 
-### Visual Studio
-#### Query
+#### Launch Query
 
 ````bash
 #!/usr/bin/env python3
@@ -431,15 +427,15 @@ if __name__ == '__main__':
 ````
 
 
-#### Run the Qurey
+#### Download the Files
 
 ````bash
 python3 full_options_report.py
 ````
 
+# 📂  Data Join: TastyTrade and yfinance
 
-
-#### Produce Linked Report 
+#### Produce Linked Report and calculations
 
 ````bash
 import pandas as pd
@@ -526,7 +522,7 @@ python3 generate_final_options_report.py
 
 
 
-##  Run a Project Prompt to Screen for Trades
+# 🤖 Project Prompt: AI Pick 3 Trades 
 **Attachment**  
 **Instructions**  
 **Goal** Select **exactly 3** option trades from the AI‑optimized 9‑ticker portfolio (Prompt 1) that each target ≥ 33% return and ≥ 65% POP, with max loss ≤ $500, while respecting portfolio Greek and sector limits.  
