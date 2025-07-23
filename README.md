@@ -70,7 +70,7 @@ python fetch_us_tickers.py
 ````
 
 
-### Prompt / Query 
+### Project - Prompt: AI Pick 9 
 
 **Attachment**
 - us_tickers.csv
