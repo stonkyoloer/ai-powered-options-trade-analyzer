@@ -26,7 +26,7 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
 4. Visit: https://www.globalxetfs.com/  
 5. Visit: https://www.ark-funds.com/  
 
-### Prompt Query: Sector-Diversified AI Options Strategy  
+##### Prompt Query: Sector-Diversified AI Options Strategy  
 
 **Attachment**  
 - AIQ  
@@ -76,13 +76,13 @@ Select exactly one ticker per sector (no duplicates), drawn initially from the E
 | Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
 | Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
 
-### Rules  
+##### Rules  
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
 2. Use the attachments as your candidate universe.  
 3. Be resourceful—pull live or most recent data (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
 4. Exclude all tickers not traded on Robinhood.  
 
-### Task  
+##### Task  
 - Shortlist all ETF holdings by sector.  
 - Filter by AI exposure, liquidity, IV & IVR ≥ 30%, OI ≥ 1,000, spread ≤ $0.05/0.10, and RSI+MACD confirmation.  
 - Select the single best ticker per sector.  
@@ -92,7 +92,7 @@ Select exactly one ticker per sector (no duplicates), drawn initially from the E
 - Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
 
-### Output  
+##### Output  
 **Portfolio Metrics Summary**  
 _Optimized AI-Driven Options Portfolio (2025-07-20)_  
 **CHAT GPT SELECTION(S)**
@@ -107,12 +107,12 @@ _Optimized AI-Driven Options Portfolio (2025-07-20)_
 | SYM    | Industrials        | Leading AI-powered robotics provider automating warehouse supply chains    | 114%     | 62%     | 80 (overbought)| Bullish   | 1.7M         | B (acceptable)    |
 | PLTR   | Info. Technology   | Defense & big-data software leader; “indispensable” AI partner for govts   | 66%      | 40%     | 50 (neutral) | Bullish     | 45M          | A (ideal)         |
 ```
-#### GROK SELECTION(S)
+**GROK SELECTION(S)**
 
 
-# ✈️ Workflow 2
+### ✈️ Workflow 2
 
-##  Program a TastyTrade and yfinance Data Pipe
+###  Program a TastyTrade and yfinance Data Pipe
 ## Get the Raw Data
 ### Terminal
 
