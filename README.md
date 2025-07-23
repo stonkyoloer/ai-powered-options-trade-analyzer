@@ -12,7 +12,7 @@ Build and maintain a monthly-refreshed, AI-driven, sector-diversified options po
   - Attach data to ChatGPT/Grok  
   - Run customized prompt to:  
     - Select 1 high-IV, high-liquidity ticker per sector  
-    - Generate monthly portfolio  
+    - Generate AI-Optimized portfolio  
     - Screen daily setups  
 - **Execution**  
   - Review AI-generated ideas each morning  
