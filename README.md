@@ -485,10 +485,9 @@ python3 generate_final_options_report.py
 
 
 ##  Run a Project Prompt to Screen for Trades
-### Attachment: TastyTrade & Yahoo Finance Data (quotes ≤ 10 min old)  
-### Instructions:  
-#### Goal  
-Select **exactly 5** option trades from the AI‑optimized 9‑ticker portfolio (Prompt 1) that each target ≥ 33% return and ≥ 65% POP, with max loss ≤ $500, while respecting portfolio Greek and sector limits.  
+**Attachment**  
+**Instructions**  
+**Goal** Select **exactly 3** option trades from the AI‑optimized 9‑ticker portfolio (Prompt 1) that each target ≥ 33% return and ≥ 65% POP, with max loss ≤ $500, while respecting portfolio Greek and sector limits.  
 
 #### Data Inputs  
 - **Underlying Pool:** 9‑ticker sector‑diversified AI portfolio (from Prompt 1)  
