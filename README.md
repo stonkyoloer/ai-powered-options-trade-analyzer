@@ -1,71 +1,318 @@
 # 🚀 Overview  
 Build and maintain a daily-refreshed, AI-driven, sector-diversified options portfolio—and power a daily screener for high-probability tendies!
 
-# 👨‍🏫 Scope  
-- **Fetch NASDAQ list**  
-  - Download complete list of tickers on NASDAQ  
-- **Data Pipeline**
-  - Ingest options data via TastyTrade API  
-  - Pull market/IV data via yfinance  
-  - Merge TastyTrade and yfinance into a single dataset  
+# 🔍 Scope  
+
+- **Download the Data**  
+
+ 
+
+ 
 - **AI Prompting**  
-  - Attach data to ChatGPT/Grok  
-  - Run customized prompt to:  
-    - Select 1 high-IV, high-liquidity ticker per sector  
-    - Generate AI-Optimized portfolio  
-    - Screen daily setups  
-- **Execution**  
-  - Review AI-generated ideas each morning  
-  - Execute and monitor positions—tendies incoming!
 
-# 📈  Data Pipe: NASDAQ
 
- **Create your project folder and virtual env**
+
+
+
+- **Execution**
+
+
+
+
+
+
+
+# 🗂 Download the Data
+
+**TASTYTRADE**
+
+  **STEP 1 | CREATE A TASTYTRADE FOLDER**
+  ````bash
+  mkdir tastytrade_data
+  ````
+  **STEP 2 | OPEN THE FOLDER**
+  ````bash
+  cd tastytrade_data
+  ````
+  **STEP 3 | INSTALL PACKAGES**
+  ````bash
+  pip3 install pandas requests
+  ````
+  **STEP 4 | CREATE A CONNECTION FILE**
+  ````bash
+  touch test_connection.py
+  ````
+  **STEP 5 | OPEN THE FILE IN A TEXT EDITOR**
+  ````bash
+  open -e test_connection.py
+  ````
+  This should open TextEdit.
+  **STEP 6 | CONNECT TO API**
+  ````bash
+  import requests
+import json
+
+# Test basic connection to TastyTrade
+print("Testing TastyTrade API connection...")
+
+url = "https://api.tastytrade.com/sessions"
+print(f"API URL: {url}")
+print("Ready for authentication test")
+````
+Copy and paste this code into the file
+**STEP 7 | SAVE THE FILE**
 ````bash
-mkdir -p ~/Desktop/US_Tickers && cd ~/Desktop/US_Tickers
-python3 -m venv .venv
-source .venv/bin/activate
+CMD + S
+````
+**STEP 8 | RUN THE TEST**
+````bash
+python3 test_connection.py
+````
+**STEP 9 | CREATE AUTHENTICATION FILE**
+````bash
+touch auth_test.py
+````
+**STEP 10 | OPEN THE FILE**
+````bash
+open -e auth_test.py
+````
+**STEP 11 | SET UP AUTHENTICATION** 
+````bash
+import requests
+import json
+
+# Your TastyTrade credentials
+USERNAME = "your_username_here"
+PASSWORD = "your_password_here"
+
+# Test authentication
+url = "https://api.tastytrade.com/sessions"
+data = {
+    "login": USERNAME,
+    "password": PASSWORD
+}
+
+print("Attempting to authenticate...")
+response = requests.post(url, json=data)
+print(f"Status code: {response.status_code}")
+
+if response.status_code == 201:
+    print("SUCCESS: Authentication worked!")
+    result = response.json()
+    print("Session token received")
+else:
+    print("FAILED: Authentication failed")
+    print(f"Error: {response.text}")
+````
+Remember to enter your user name and password under #your tastytrade credentials
+**STEP 12 | SAVE THE FILE**
+````bash
+CMD + S
+````
+**STEP 13 | RUN THE TEST**
+````bash
+python3 auth_test.py
+````
+**STEP 14 | CREATE ACCOUNT INFO FILE**
+````bash
+touch get_accounts.py
+````
+**STEP 15 | OPEN THE FILE**
+````bash
+open -e get_accounts.py
+````
+**STEP 16 | CONNECT TO TRADING ACCOUNT**
+````bash
+import requests
+import json
+
+# Your credentials
+USERNAME = "your_username_here"
+PASSWORD = "your_password_here"
+
+# Step 1: Get session token
+print("Getting session token...")
+auth_url = "https://api.tastytrade.com/sessions"
+auth_data = {"login": USERNAME, "password": PASSWORD}
+
+response = requests.post(auth_url, json=auth_data)
+session_token = response.json()['data']['session-token']
+print("Got session token")
+
+# Step 2: Get accounts
+print("Getting account info...")
+accounts_url = "https://api.tastytrade.com/customers/me/accounts"
+headers = {"Authorization": session_token}
+
+response = requests.get(accounts_url, headers=headers)
+print(f"Status code: {response.status_code}")
+
+if response.status_code == 200:
+    accounts = response.json()['data']['items']
+    print(f"Found {len(accounts)} account(s)")
+    
+    for account in accounts:
+        account_number = account['account']['account-number']
+        print(f"Account number: {account_number}")
+else:
+    print("Failed to get accounts")
+    print(response.text)
+````
+Remember to enter your username and password
+**STEP 17 | RUN THE TEST**
+````bash
+python3 get_accounts.py
+````
+**STEP 18 | CREATE A POSITIONS FILE**
+````bash
+touch get_positions.py
+````
+**STEP 19 | OPEN THE FILE**
+````bash
+open -e get_positions.py
+````
+**STEP 20 | QUERY FOR OPEN POSITIONS**
+````bash
+import requests
+import json
+
+# Your credentials
+USERNAME = "your_username_here"
+PASSWORD = "your_password_here"
+
+# Use your first account
+ACCOUNT_NUMBER = "123456789"
+
+# Step 1: Get session token
+print("Getting session token...")
+auth_url = "https://api.tastytrade.com/sessions"
+auth_data = {"login": USERNAME, "password": PASSWORD}
+
+response = requests.post(auth_url, json=auth_data)
+session_token = response.json()['data']['session-token']
+print("Got session token")
+
+# Step 2: Get positions
+print(f"Getting positions for account {ACCOUNT_NUMBER}...")
+positions_url = f"https://api.tastytrade.com/accounts/{ACCOUNT_NUMBER}/positions"
+headers = {"Authorization": session_token}
+
+response = requests.get(positions_url, headers=headers)
+print(f"Status code: {response.status_code}")
+
+if response.status_code == 200:
+    positions = response.json()['data']['items']
+    print(f"Found {len(positions)} position(s)")
+    
+    for position in positions:
+        symbol = position['instrument']['symbol']
+        quantity = position['quantity']
+        instrument_type = position['instrument']['instrument-type']
+        print(f"- {symbol}: {quantity} shares/contracts ({instrument_type})")
+else:
+    print("Failed to get positions")
+    print(response.text)
+````
+**STEP 21 | RUN THE QUERY**
+````bash
+python3 get_positions.py
 ````
 
-**Install Pandas**
-````bash
-pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org pandas requests
-````
+JUST IN CASE >>>>
 
-**Download the raw symbol lists**
+**STEP 22 | CREATE OPTIONS CHAIN FILE**
 ````bash
-curl -s -o nasdaqlisted.txt ftp://ftp.nasdaqtrader.com/SymbolDirectory/nasdaqlisted.txt
-curl -s -o otherlisted.txt  ftp://ftp.nasdaqtrader.com/SymbolDirectory/otherlisted.txt
+touch get_options_chain.py
 ````
-
-**Create the parsing script**
+**STEP 23 | OPEN FILE**
 ````bash
-cat > fetch_us_tickers.py << 'EOF'
+open -e get_options_chain.py
+````
+**STEP 24 | QUERY FOR OPTIONS CHAIN**
+````bash
+import requests
+import json
 import pandas as pd
 
-# Load Nasdaq list and drop its footer row
-nas = pd.read_csv('nasdaqlisted.txt', sep='|')
-nas = nas[:-1]
+# Your credentials
+USERNAME = "your_username_here"
+PASSWORD = "your_password_here"
 
-# Load other exchanges list and drop its footer row
-oth = pd.read_csv('otherlisted.txt', sep='|')
-oth = oth[:-1]
+# Ticker to fetch
+TICKER = "AAPL"
 
-# Combine symbols, remove NaNs, dedupe, sort
-symbols = pd.concat([nas['Symbol'], oth['ACT Symbol'].rename('Symbol')])
-symbols = symbols.dropna().unique()
-symbols = sorted(symbols)
+# Step 1: Get session token
+print("Getting session token...")
+auth_url = "https://api.tastytrade.com/sessions"
+auth_data = {"login": USERNAME, "password": PASSWORD}
 
-# Write out to CSV
-pd.Series(symbols, name='Ticker').to_csv('us_all_tickers.csv', index=False)
-print(f"Fetched {len(symbols)} tickers → us_all_tickers.csv")
-EOF
+response = requests.post(auth_url, json=auth_data)
+session_token = response.json()['data']['session-token']
+print("Got session token")
+
+# Step 2: Get options chain
+print(f"Getting options chain for {TICKER}...")
+options_url = f"https://api.tastytrade.com/option-chains/{TICKER}/nested"
+headers = {"Authorization": session_token}
+
+response = requests.get(options_url, headers=headers)
+print(f"Status code: {response.status_code}")
+
+if response.status_code == 200:
+    chain = response.json()['data']['items'][0]  # main chain block
+    expirations = chain['expirations']
+
+    rows = []
+    for expiration in expirations:
+        exp_date = expiration['expiration-date']
+        for strike in expiration['strikes']:
+            rows.append({
+                "expiration": exp_date,
+                "strike_price": strike['strike-price'],
+                "call_symbol": strike['call'],
+                "put_symbol": strike['put']
+            })
+
+    # Convert to DataFrame and save
+    df = pd.DataFrame(rows)
+    output_file = f"{TICKER}_options_chain.csv"
+    df.to_csv(output_file, index=False)
+    print(f"Saved {len(df)} rows to {output_file}")
+
+else:
+    print("Failed to get options chain")
+    print(response.text)
 ````
-
-**Run the parser and generate your master list**
+**STEP 25 | RUN THE QUERY**
 ````bash
-python fetch_us_tickers.py
+python3 get_options_chain.py
 ````
+
+
+
+
+
+
+
+
+
+
+
+
+  -**Save Workflow Steps in a VS notbook**
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 # 🤖 Project Prompt: AI Pick 9 Tickers
