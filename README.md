@@ -46,7 +46,6 @@ Build and maintain a daily-refreshed, AI-driven, sector-diversified options port
   ````bash
   open -e test_connection.py
   ````
-  This should open TextEdit.
   **STEP 6 | CONNECT TO API**
   ````bash
   import requests
