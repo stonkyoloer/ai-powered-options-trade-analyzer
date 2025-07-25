@@ -596,45 +596,41 @@ When you run `select_top_trades.py`, you get a table like this:
 
 # Workflow 4 | Validate Findings 
 
-# 🤖 Project Prompt: AI Pick 3 Trades 
+## 🤖 AI Final Trade Analysis & Risk Check 
 **Attachment**  
+| Ticker | Sector      | Strategy            | Legs                           | POP | Credit/Max-Loss | DTE | Thesis                                |
+|--------|-------------|--------------------|--------------------------------|-----|-----------------|-----|---------------------------------------|
+| NVDA   | Technology  | Credit Put Spread  | Short Put 165.0 / Long Put 160.0 | 0.7 | 0.35            | 28  | AI sector leader NVDA, bullish bias  |
+| ISRG   | Healthcare  | Credit Put Spread  | Short Put 425.0 / Long Put 420.0 | 0.7 | 0.35            | 28  | AI sector leader ISRG, bullish bias  |
+| PLTR   | Financials  | Credit Put Spread  | Short Put 150.0 / Long Put 145.0 | 0.7 | 0.35            | 28  | AI sector leader PLTR, bullish bias  |
+
 **Instructions**  
-**Goal** Select **exactly 3** option trades from the AI‑optimized 9‑ticker portfolio (Prompt 1) that each target ≥ 33% return and ≥ 66% POP, with max loss ≤ $500, while respecting portfolio Greek and sector limits.  
+**Goal** Validate the **3 selected trades** from the AI‑optimized portfolio for execution readiness, including **macro/news risk checks, sector exposure sanity, and portfolio Greek balance**. Provide a final confidence check before trading.  
 
 #### Data Inputs  
-- **Underlying Pool:** 9‑ticker sector‑diversified AI portfolio (from Prompt 1)  
-- **Market Data:** TastyTrade options chains + Yahoo Finance pricing/IV  
+- **Trade Candidates:** 3 top‑scored option trades (from previous prompt)  
+- **Market Data:** POP, Credit/Max‑Loss, DTE, Strategy, Thesis (from attached table)  
+- **Macro Context:** Key upcoming earnings, Fed events, geopolitical risks, sector catalysts  
 
-#### Selection Criteria  
-1. **POP ≥ 0.66**  
-2. **Credit/Max‑Loss ≥ 0.33** (for credit strategies)  
-3. **Max loss ≤ $500** per trade  
-4. **Implied Volatility ≥ 30%**, **IV Rank ≥ 30%**  
-5. **Open Interest ≥ 1,000** per leg  
-6. **Bid/Ask Spread ≤ $0.10**  
-7. **Contract Cost ≤ $500**  
-8. **Quote Age ≤ 10 min**  
+#### Validation Criteria  
+1. **Confirm Trade Quality:** POP ≥ 0.66, Credit/Max‑Loss ≥ 0.33, DTE within strategy target bucket.  
+2. **Portfolio Exposure:** No sector > 2 trades, Net Delta roughly balanced (∈ [–0.30,+0.30] × NAV/100k), Net Vega ≥ –0.05 × NAV/100k.  
+3. **Catalyst Scan:** Flag upcoming earnings, Fed/geo headlines, or sector news that could affect volatility or invalidate thesis.  
+4. **Sentiment & Flow Check:** Consider social sentiment, institutional flow, and analyst rating consensus.  
+5. **Event Risk Tag:** Identify any ticker with a near‑term risk event (earnings, product launch, regulatory ruling).  
 
-#### Portfolio Constraints  
-- **Max 2 trades per GICS sector**  
-- **Net Delta** ∈ [–0.30, +0.30] × (NAV/100k)  
-- **Net Vega ≥ –0.05** × (NAV/100k)  
-
-#### Scoring Weights  
-- **POP:** 40%  
-- **Expected Return:** 30%  
-- **momentum_z:** 20%  
-- **flow_z:** 10%  
-
-#### Trade Buckets & Allowed Strategies  
-- **DTE Buckets:** 0–9 (Day Trades), 9–27 (Short Premium), 18–45 (Directional Swing), Event Plays (earnings/catalyst + up to 9 DTE)  
-- **Strategies:** Vertical spreads, Iron condors, Straddles/strangles, Long calls/puts
-
-#### Output Table Schema
-| Ticker | Strategy | Legs | Thesis (≤ 30 words) | POP | Credit/Max‑Loss | DTE | Sector |  
+#### Output Table Schema  
+| Ticker | Strategy | Legs | Thesis (≤ 30 words) | POP | Credit/Max‑Loss | DTE | Sector | Risk/Event Note | Confidence |  
 
 ---
 
 ### Prompt:  
-Apply **the Instructions** to the attached data. Filter, score (POP 40%, Return 30%, momentum_z 20%, flow_z 10%), rank, enforce sector/Greek limits, and **output only** the clean, markdown‑wrapped table with columns:  
-`Ticker, Strategy, Legs, Thesis (≤ 30 words), POP, Credit/Max‑Loss, DTE, Sector`.  
+Apply **the Instructions** to the attached data.  
+1. **Output only** the clean, markdown‑wrapped table with columns:  
+`Ticker, Strategy, Legs, Thesis (≤ 30 words), POP, Credit/Max‑Loss, DTE, Sector, Risk/Event Note, Confidence`  
+   - **Risk/Event Note:** Short bullet (e.g. “Earnings in 5d”, “Fed risk”, “Sector upgrade momentum”).  
+   - **Confidence:** High / Medium / Low based on combined signals.  
+2. **Then add a brief commentary block** summarizing:  
+   - Why these trades remain valid under current macro/news context  
+   - Any portfolio risk adjustments needed (e.g., sector overweight, delta/vega imbalance)  
+   - Key external catalysts to monitor before entry.  
