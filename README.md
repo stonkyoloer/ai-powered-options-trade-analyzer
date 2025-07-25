@@ -219,70 +219,425 @@ JUST IN CASE >>>>
 
 **STEP 22 | CREATE OPTIONS CHAIN FILE**
 ````bash
-touch get_options_chain.py
+touch get_options_chain_with_dxlink.py
 ````
 **STEP 23 | OPEN FILE**
 ````bash
-open -e get_options_chain.py
+open -e get_options_chain_with_dxlink.py
 ````
 **STEP 24 | QUERY FOR OPTIONS CHAIN**
 ````bash
-import requests
+#!/usr/bin/env python3
+"""
+Fixed version of options chain script with SSL certificate handling and robust error checking
+"""
+
+import asyncio
 import json
+import ssl
+import websockets
 import pandas as pd
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain, Equity
+import httpx
+from typing import List, Dict, Any, Optional
+import certifi
 
-# Your credentials
-USERNAME = "your_username_here"
-PASSWORD = "your_password_here"
-
-# Ticker to fetch
+# ==== USER SETTINGS ====
+USERNAME = "your_username"
+PASSWORD = "your_password"
 TICKER = "AAPL"
 
-# Step 1: Get session token
-print("Getting session token...")
-auth_url = "https://api.tastytrade.com/sessions"
-auth_data = {"login": USERNAME, "password": PASSWORD}
+class TokenManager:
+    def __init__(self, session: Session):
+        self.session = session
+        self._token_cache = {}
+    
+    async def get_dxlink_token(self) -> Optional[tuple]:
+        """Get DXLink token with proper error handling"""
+        try:
+            # Use session token directly without Bearer prefix
+            headers = {"Authorization": self.session.session_token}
+            
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    "https://api.tastytrade.com/api-quote-tokens",
+                    headers=headers
+                )
+                
+                print(f"DXLink token response status: {response.status_code}")
+                
+                if response.status_code == 200:
+                    data = response.json()
+                    if 'data' in data:
+                        token = data['data']['token']
+                        dxlink_url = data['data']['dxlink-url']
+                        print(f"✅ Got DXLink token, URL: {dxlink_url}")
+                        return token, dxlink_url
+                    else:
+                        print(f"❌ Unexpected response format: {data}")
+                        return None
+                else:
+                    print(f"❌ Token request failed: HTTP {response.status_code}: {response.text}")
+                    return None
+                    
+        except Exception as e:
+            print(f"❌ Exception getting DXLink token: {e}")
+            return None
 
-response = requests.post(auth_url, json=auth_data)
-session_token = response.json()['data']['session-token']
-print("Got session token")
+async def get_options_greeks_websocket(symbols: List[str], token: str, dxlink_url: str) -> List[Dict]:
+    """Connect to DXLink WebSocket with SSL certificate verification disabled"""
+    
+    if not symbols:
+        print("⚠️ No symbols provided")
+        return []
+    
+    print(f"🔗 Connecting to DXLink: {dxlink_url}")
+    print(f"📊 Requesting data for {len(symbols)} symbols")
+    
+    # Create SSL context that doesn't verify certificates
+    ssl_context = ssl.create_default_context()
+    ssl_context.check_hostname = False
+    ssl_context.verify_mode = ssl.CERT_NONE
+    
+    # Alternative: Use system certificates
+    # ssl_context = ssl.create_default_context(cafile=certifi.where())
+    
+    try:
+        async with websockets.connect(
+            dxlink_url,
+            ssl=ssl_context,
+            extra_headers={"Authorization": f"Bearer {token}"},
+            ping_interval=20,
+            ping_timeout=10,
+            close_timeout=10
+        ) as websocket:
+            
+            # Send subscription request
+            subscription_message = {
+                "channel": "trades",
+                "symbols": symbols,
+                "types": ["Greeks", "Quote", "Trade"]
+            }
+            
+            await websocket.send(json.dumps(subscription_message))
+            print(f"📤 Sent subscription for {len(symbols)} symbols")
+            
+            # Collect data with timeout
+            data_received = []
+            timeout_seconds = 30
+            
+            try:
+                async with asyncio.timeout(timeout_seconds):
+                    message_count = 0
+                    while message_count < 100:  # Limit messages to avoid infinite loop
+                        try:
+                            message = await websocket.recv()
+                            message_count += 1
+                            
+                            if message_count % 10 == 0:
+                                print(f"📥 Received {message_count} messages...")
+                            
+                            try:
+                                data = json.loads(message)
+                                if isinstance(data, dict):
+                                    data_received.append(data)
+                                elif isinstance(data, list):
+                                    data_received.extend(data)
+                            except json.JSONDecodeError:
+                                continue
+                                
+                        except websockets.exceptions.ConnectionClosed:
+                            print("🔌 WebSocket connection closed")
+                            break
+                        except Exception as e:
+                            print(f"⚠️ Error receiving message: {e}")
+                            continue
+                            
+            except asyncio.TimeoutError:
+                print(f"⏰ Timeout after {timeout_seconds} seconds")
+            
+            print(f"📊 Collected {len(data_received)} total messages")
+            return data_received
+            
+    except ssl.SSLError as e:
+        print(f"❌ SSL Error: {e}")
+        print("💡 Try updating your certificates or using a VPN")
+        return []
+    except Exception as e:
+        print(f"❌ WebSocket connection error: {e}")
+        return []
 
-# Step 2: Get options chain
-print(f"Getting options chain for {TICKER}...")
-options_url = f"https://api.tastytrade.com/option-chains/{TICKER}/nested"
-headers = {"Authorization": session_token}
+def process_websocket_data(raw_data: List[Dict], symbols: List[str]) -> pd.DataFrame:
+    """Process raw websocket data into a structured DataFrame"""
+    
+    if not raw_data:
+        print("⚠️ No raw data to process")
+        return pd.DataFrame()
+    
+    processed_data = []
+    
+    for item in raw_data:
+        if not isinstance(item, dict):
+            continue
+            
+        # Look for Greeks data
+        if 'Greeks' in item or 'greeks' in item:
+            greeks_data = item.get('Greeks') or item.get('greeks', {})
+            symbol = item.get('symbol', '')
+            
+            if symbol in symbols and isinstance(greeks_data, dict):
+                row = {
+                    'symbol': symbol,
+                    'delta': greeks_data.get('delta'),
+                    'gamma': greeks_data.get('gamma'),
+                    'theta': greeks_data.get('theta'),
+                    'vega': greeks_data.get('vega'),
+                    'rho': greeks_data.get('rho'),
+                    'iv': greeks_data.get('impliedVolatility'),
+                    'timestamp': item.get('timestamp')
+                }
+                processed_data.append(row)
+        
+        # Also check for direct data format
+        elif 'symbol' in item and any(greek in item for greek in ['delta', 'gamma', 'theta', 'vega']):
+            if item['symbol'] in symbols:
+                row = {
+                    'symbol': item['symbol'],
+                    'delta': item.get('delta'),
+                    'gamma': item.get('gamma'),
+                    'theta': item.get('theta'),
+                    'vega': item.get('vega'),
+                    'rho': item.get('rho'),
+                    'iv': item.get('impliedVolatility') or item.get('iv'),
+                    'timestamp': item.get('timestamp')
+                }
+                processed_data.append(row)
+    
+    df = pd.DataFrame(processed_data)
+    print(f"📊 Processed {len(df)} rows of Greeks data")
+    
+    if not df.empty:
+        print(f"📊 Available columns: {list(df.columns)}")
+        # Show sample of non-null values
+        for col in ['delta', 'gamma', 'theta', 'vega']:
+            if col in df.columns:
+                non_null_count = df[col].notna().sum()
+                print(f"   {col}: {non_null_count} non-null values")
+    
+    return df
 
-response = requests.get(options_url, headers=headers)
-print(f"Status code: {response.status_code}")
+async def fetch_chain_with_greeks(session: Session, token_manager: TokenManager, ticker: str):
+    """Fetch options chain with Greeks data and robust error handling"""
+    
+    print(f"🔍 Processing {ticker}...")
+    
+    # Get options chain from tastytrade using the correct method
+    try:
+        # First get the underlying equity
+        equity = Equity.get(session, ticker)
+        print(f"📈 Got equity: {equity.symbol} - {equity.description}")
+        
+        # Get the options chain
+        chain = get_option_chain(session, ticker)
+        print(f"📅 Got options chain with {len(chain)} options")
+    except Exception as e:
+        print(f"❌ Failed to get options chain: {e}")
+        import traceback
+        traceback.print_exc()
+        return
+    
+    all_data = []
+    
+    # The chain is already a dictionary with expiration dates as keys
+    print(f"📅 Total expirations: {len(chain)}")
+    print(f"📅 Available expirations: {list(chain.keys())[:5]}...")  # Show first 5 expiration dates
+    
+    # Process each expiration (limit to first 2 for testing)
+    for exp_date, options_list in list(chain.items())[:2]:
+        print(f"\n--- 📊 Expiration: {exp_date} ---")
+        
+        # Limit options for testing (take first 20)
+        options_subset = options_list[:20] if len(options_list) > 20 else options_list
+        
+        # Build streaming symbols and chain rows
+        streaming_symbols = []
+        chain_rows = []
+        
+        for option in options_subset:
+            try:
+                row = {
+                    'expiration': exp_date,
+                    'strike': option.strike_price,
+                    'option_type': 'Call' if option.option_type.value == 'C' else 'Put',
+                    'symbol': option.symbol,
+                    'streamer_symbol': option.streamer_symbol,
+                    'underlying_symbol': option.underlying_symbol
+                }
+                chain_rows.append(row)
+                streaming_symbols.append(option.streamer_symbol)
+            except AttributeError as e:
+                print(f"⚠️ Error processing option {option}: {e}")
+                # Print available attributes for debugging
+                print(f"   Available attributes: {[attr for attr in dir(option) if not attr.startswith('_')]}")
+                continue
+        
+        print(f"🎯 Number of options: {len(options_subset)}")
+        print(f"🔗 Streaming symbols: {len(streaming_symbols)}")
+        
+        if not streaming_symbols:
+            print("⚠️ No streaming symbols found")
+            continue
+        
+        # Get DXLink token
+        print("🔄 Getting DXLink token...")
+        token_result = await token_manager.get_dxlink_token()
+        
+        if not token_result:
+            print(f"❌ Could not get DXLink token for {exp_date}")
+            # Add rows without Greeks data
+            all_data.extend(chain_rows)
+            continue
+        
+        token, dxlink_url = token_result
+        
+        # Get Greeks data via WebSocket
+        try:
+            raw_greeks_data = await get_options_greeks_websocket(
+                streaming_symbols, token, dxlink_url
+            )
+            
+            if raw_greeks_data:
+                greeks_df = process_websocket_data(raw_greeks_data, streaming_symbols)
+                
+                if not greeks_df.empty:
+                    # Merge Greeks data with chain data
+                    chain_df = pd.DataFrame(chain_rows)
+                    merged_df = chain_df.merge(
+                        greeks_df, 
+                        left_on='streamer_symbol', 
+                        right_on='symbol', 
+                        how='left',
+                        suffixes=('', '_greeks')
+                    )
+                    all_data.extend(merged_df.to_dict('records'))
+                    print(f"✅ Added {len(merged_df)} rows with Greeks data")
+                else:
+                    print("⚠️ No Greeks data processed")
+                    all_data.extend(chain_rows)
+            else:
+                print("⚠️ No raw Greeks data received")
+                all_data.extend(chain_rows)
+                
+        except Exception as e:
+            print(f"❌ Error getting data for {exp_date}: {e}")
+            # Add rows without Greeks data
+            all_data.extend(chain_rows)
+    
+    # Save to CSV
+    if all_data:
+        df = pd.DataFrame(all_data)
+        filename = f"{ticker}_options_chain_with_greeks.csv"
+        df.to_csv(filename, index=False)
+        print(f"✅ Saved {len(df)} rows to {filename}")
+        print(f"📊 Columns: {list(df.columns)}")
+        
+        # Check for Greeks data
+        greek_columns = ['delta', 'gamma', 'theta', 'vega', 'rho', 'iv']
+        has_greeks = any(col in df.columns and df[col].notna().any() for col in greek_columns)
+        
+        if has_greeks:
+            print("✅ Greeks data collected successfully!")
+            # Show sample of Greeks data
+            for col in greek_columns:
+                if col in df.columns:
+                    non_null = df[col].notna().sum()
+                    if non_null > 0:
+                        avg_val = df[col].mean()
+                        print(f"   {col}: {non_null} values, avg: {avg_val:.4f}")
+        else:
+            print("⚠️ No Greeks data collected")
+    else:
+        print("❌ No data collected")
 
-if response.status_code == 200:
-    chain = response.json()['data']['items'][0]  # main chain block
-    expirations = chain['expirations']
+async def main():
+    """Main function with comprehensive error handling"""
+    try:
+        print("🔐 Logging in to tastytrade...")
+        session = Session(USERNAME, PASSWORD)
+        print("✅ Login successful!")
+        
+        # Test authentication first
+        print("🧪 Testing authentication methods first...")
+        print("🔍 Testing basic API access...")
+        
+        # Test different auth methods
+        auth_methods = [
+            ("Direct token (no Bearer)", lambda: session.session_token),
+            ("Bearer token", lambda: f"Bearer {session.session_token}"),
+        ]
+        
+        working_auth = None
+        
+        async with httpx.AsyncClient() as client:
+            for method_name, auth_func in auth_methods:
+                try:
+                    print(f"\nTesting {method_name}...")
+                    headers = {"Authorization": auth_func()}
+                    
+                    # Test customer API
+                    response = await client.get(
+                        "https://api.tastytrade.com/customers/me",
+                        headers=headers
+                    )
+                    print(f"Customer API status: {response.status_code}")
+                    
+                    if response.status_code == 200:
+                        print(f"✅ {method_name} works for basic API!")
+                        data = response.json()
+                        if 'data' in data and 'email' in data['data']:
+                            print(f"Customer email: {data['data']['email']}")
+                        
+                        # Test quote tokens
+                        quote_response = await client.get(
+                            "https://api.tastytrade.com/api-quote-tokens",
+                            headers=headers
+                        )
+                        print(f"Quote token status: {quote_response.status_code}")
+                        
+                        if quote_response.status_code == 200:
+                            print(f"✅ Quote tokens work with {method_name}!")
+                            working_auth = method_name
+                            break
+                        else:
+                            print(f"❌ Quote tokens failed with {method_name}")
+                    
+                except Exception as e:
+                    print(f"❌ {method_name} failed: {e}")
+        
+        if not working_auth:
+            print("❌ No working authentication method found")
+            return
+        
+        print(f"\n🚀 Authentication works! Proceeding with options chain...")
+        
+        # Create token manager and fetch data
+        token_manager = TokenManager(session)
+        await fetch_chain_with_greeks(session, token_manager, TICKER)
+        
+    except Exception as e:
+        print(f"❌ Main error: {e}")
+        import traceback
+        traceback.print_exc()
+    
+    print("\n🎉 All done!")
 
-    rows = []
-    for expiration in expirations:
-        exp_date = expiration['expiration-date']
-        for strike in expiration['strikes']:
-            rows.append({
-                "expiration": exp_date,
-                "strike_price": strike['strike-price'],
-                "call_symbol": strike['call'],
-                "put_symbol": strike['put']
-            })
-
-    # Convert to DataFrame and save
-    df = pd.DataFrame(rows)
-    output_file = f"{TICKER}_options_chain.csv"
-    df.to_csv(output_file, index=False)
-    print(f"Saved {len(df)} rows to {output_file}")
-
-else:
-    print("Failed to get options chain")
-    print(response.text)
+if __name__ == "__main__":
+    asyncio.run(main())
 ````
 **STEP 25 | RUN THE QUERY**
 ````bash
-python3 get_options_chain.py
+python3 get_options_chain_with_dxlink.py
 ````
 
 
