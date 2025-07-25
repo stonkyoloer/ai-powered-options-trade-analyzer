@@ -24,7 +24,9 @@ Build and maintain a daily-refreshed, AI-driven, sector-diversified options port
 
 # 🗂 Download the Data
 
-**TASTYTRADE**
+## TASTYTRADE
+
+### CREATE A PROJECT FOLDER
 
   **STEP 1 | CREATE A TASTYTRADE FOLDER**
   ````bash
@@ -38,6 +40,9 @@ Build and maintain a daily-refreshed, AI-driven, sector-diversified options port
   ````bash
   pip install tastytrade websockets pandas httpx certifi
   ````
+
+### CONNECT TO TASTYTRADE
+
   **STEP 4 | CREATE A CONNECTION FILE**
   ````bash
   touch test_connection.py
@@ -160,6 +165,8 @@ Remember to enter your username and password
 ````bash
 python3 get_accounts.py
 ````
+
+### CREATE A POSITIONS TABLE 
 **STEP 18 | CREATE A POSITIONS FILE**
 ````bash
 touch get_positions.py
@@ -215,8 +222,7 @@ else:
 python3 get_positions.py
 ````
 
-JUST IN CASE >>>>
-
+### CREATE A LIVE OPTIONS CHAIN AND GREEKS TABLE
 **STEP 22 | CREATE OPTIONS CHAIN FILE**
 ````bash
 touch get_options_chain_with_dxlink.py
@@ -414,14 +420,6 @@ python3 get_options_chain_with_dxlink.py
 
 
 
-
-
-
-
-
-
-
-  -**Save Workflow Steps in a VS notbook**
 
 
 
