@@ -104,7 +104,6 @@ else:
     print("FAILED: Authentication failed")
     print(f"Error: {response.text}")
 ````
-Remember to enter your user name and password under #your tastytrade credentials
 **STEP 12 | SAVE THE FILE**
 ````bash
 CMD + S
