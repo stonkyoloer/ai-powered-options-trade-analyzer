@@ -18,7 +18,7 @@ aka high‑probability, low‑"oops I blew up my account" setups—wrapped in a 
 
 
 
-# Workflow 1:  Filter for an AI Optimized Trading Portfolio
+# Workflow 1 | Filter for an AI Optimized Trading Portfolio
 
 ## 🤖 AI Pick 9 Ticker Trading Portfolio
 
