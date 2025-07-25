@@ -58,7 +58,6 @@ url = "https://api.tastytrade.com/sessions"
 print(f"API URL: {url}")
 print("Ready for authentication test")
 ````
-Copy and paste this code into the file
 **STEP 7 | SAVE THE FILE**
 ````bash
 CMD + S
