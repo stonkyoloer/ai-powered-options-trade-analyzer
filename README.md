@@ -20,7 +20,7 @@ aka high‑probability, low‑"oops I blew up my account" setups—wrapped in a 
 
 # ⬇️ Workflow 1 | Filter for an AI Optimized Trading Portfolio
 
-## 🤖 AI Pick 9 Ticker Trading Portfolio
+## 🤖 AI Pick 9 Ticker Trading Portfolio Prompt
 
 #### Attachment
 - us_tickers.csv
@@ -596,7 +596,7 @@ When you run `select_top_trades.py`, you get a table like this:
 
 # ⬇️ Workflow 4 | Validate Findings 
 
-## 🤖 AI Final Trade Analysis & Risk Check 
+## 🤖 AI Final Trade Analysis & Risk Check Prompt
 **Attachment**  
 | Ticker | Sector      | Strategy            | Legs                           | POP | Credit/Max-Loss | DTE | Thesis                                |
 |--------|-------------|--------------------|--------------------------------|-----|-----------------|-----|---------------------------------------|
