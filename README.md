@@ -2,21 +2,21 @@
 Build and maintain a daily-refreshed, AI-driven, sector-diversified options portfolio—and power a daily screener for high-probability tendies!
 
 # 🔍 Scope  
-- **Download the Data**  
+**Download the Data**  
 1. NASDAQ
 2. Tasty Trade
-3. yfinance 
-- **AI Prompting**  
+3. yfinance
+**AI Prompting**  
 1. Portfolio Prompt
 2. Daily Trade Suggesion Prompt
-- **Execution**
+**Execution**
 1. AI-Pick-9 Portfolio
 2. AI-Pick-3 Trade Basket
 
 # 🗂 Download the Data
 ## TASTYTRADE
 ### CREATE A PROJECT FOLDER
-  -**STEP 1 | CREATE A TASTYTRADE FOLDER**
+  **STEP 1 | CREATE A TASTYTRADE FOLDER**
   ````bash
   mkdir tastytrade_data
   ````
