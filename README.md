@@ -1,4 +1,4 @@
-# AI Options Portfolio & Daily Trade Screener
+# ⬇️ AI Options Portfolio & Daily Trade Screener
 
 ## 📖 What This Does
 This bad boy is like having a caffeinated Wall Street intern on speed dial.
@@ -18,7 +18,7 @@ aka high‑probability, low‑"oops I blew up my account" setups—wrapped in a 
 
 
 
-# Workflow 1 | Filter for an AI Optimized Trading Portfolio
+# ⬇️ Workflow 1 | Filter for an AI Optimized Trading Portfolio
 
 ## 🤖 AI Pick 9 Ticker Trading Portfolio
 
@@ -99,7 +99,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | CAT    | Industrials        | Robotics, smart infrastructure systems        | 40%      | 70%     | 66     | Positive    | 4M            | B               |
 
 
-# Workflow 2 | Download TastyTrade Data
+# ⬇️ Workflow 2 | Download TastyTrade Data
 
 ## 🛠 Setup & Install
 To use this beast, you gotta armor up your computer with a few tools.  
@@ -594,7 +594,7 @@ When you run `select_top_trades.py`, you get a table like this:
 
 - **What this means:** This shows the best trades for the day, so you can decide if you want to make those trades.
 
-# Workflow 4 | Validate Findings 
+# ⬇️ Workflow 4 | Validate Findings 
 
 ## 🤖 AI Final Trade Analysis & Risk Check 
 **Attachment**  
