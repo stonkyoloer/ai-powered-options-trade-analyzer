@@ -15,9 +15,6 @@ aka high‑probability, low‑"oops I blew up my account" setups—wrapped in a 
 - **Risk control = Don’t nuke the account:** Simple rules keep the losses from looking like your ex’s credit card bill.  
 
 
-
-
-
 # ⬇️ Workflow 1 | Filter for an AI Optimized Trading Portfolio
 
 ## 🤖 AI Pick 9 Ticker Trading Portfolio Prompt
@@ -396,7 +393,7 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-- **Important:** Replace `"your_username"` and `"your_password"` with your actual credentials. Also, set `TICKER` to the stock you want to look at, like "AAPL" for Apple.
+- **Important:** Replace `"your_username"` and `"your_password"` with your actual credentials. Also, set `TICKER` to the stonks you want to look at, like "AAPL" for Apple.
 
 Run the script:
 
@@ -405,7 +402,7 @@ python3 get_options_chain_with_dxlink.py
 ```
 - **Why?** This creates a file called `AAPL_options_chain_with_greeks.csv` (or whatever ticker you chose) that has all the options data with Greeks.
 
-# Workflow 3 | Filter the TastyTrade Data for Trades
+# ⬇️ Workflow 3 | Filter the Options Chain Data for Trades
 
 ## 📈 Filter & Score Top Trades
 Now, we have the data, but we need to pick the best trades from it.
