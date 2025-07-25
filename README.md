@@ -36,7 +36,7 @@ Build and maintain a daily-refreshed, AI-driven, sector-diversified options port
   ````
   **STEP 3 | INSTALL PACKAGES**
   ````bash
-  pip3 install pandas requests
+  pip install tastytrade websockets pandas httpx certifi
   ````
   **STEP 4 | CREATE A CONNECTION FILE**
   ````bash
