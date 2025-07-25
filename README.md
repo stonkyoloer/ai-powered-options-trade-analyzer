@@ -133,22 +133,36 @@ Add this code (it’s a bit long, but it’s all set up for you):
 ```python
 #!/usr/bin/env python3
 """
-Options chain fetch with live Greeks via DXLink WebSocket (fixed headers + protocol)
+Options chain fetch with live Greeks via DXLink WebSocket
+for multiple tickers in the AI portfolio.
 """
 
 import asyncio
 import json
 import ssl
-import websockets
 import pandas as pd
-from tastytrade import Session
-from tastytrade.instruments import get_option_chain, Equity
 import httpx
 import certifi
+import websockets
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain, Equity
 
+# ---- LOGIN ----
 USERNAME = "username"
 PASSWORD = "password"
-TICKER = "AAPL"
+
+# ---- AI Portfolio ----
+AI_PORTFOLIO = [
+    {"Ticker": "NVDA", "Sector": "Technology"},
+    {"Ticker": "ISRG", "Sector": "Healthcare"},
+    {"Ticker": "PLTR", "Sector": "Financials"},
+    {"Ticker": "TSLA", "Sector": "Transportation"},
+    {"Ticker": "AMZN", "Sector": "Consumer Staples"},
+    {"Ticker": "ENPH", "Sector": "Energy (Renewable)"},
+    {"Ticker": "XOM",  "Sector": "Energy (Traditional)"},
+    {"Ticker": "DE",   "Sector": "Agriculture"},
+    {"Ticker": "CAT",  "Sector": "Industrials"}
+]
 
 # -------------------------
 # DXLink Token Manager
@@ -177,41 +191,28 @@ class TokenManager:
 async def get_options_greeks_websocket(symbols, token, dxlink_url):
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     headers = [("Authorization", f"Bearer {token}")]
-
     async with websockets.connect(dxlink_url, ssl=ssl_context, additional_headers=headers) as ws:
-        # SETUP
-        await ws.send(json.dumps({
-            "type": "SETUP", "channel": 0,
-            "version": "0.1-DXF-JS/0.3.0",
-            "keepaliveTimeout": 60,
-            "acceptKeepaliveTimeout": 60
-        }))
-        # AUTH
+        # Setup connection
+        await ws.send(json.dumps({"type": "SETUP", "channel": 0, "version": "0.1", "keepaliveTimeout": 60}))
         await ws.send(json.dumps({"type": "AUTH", "channel": 0, "token": token}))
-        # CHANNEL_REQUEST
         await ws.send(json.dumps({"type": "CHANNEL_REQUEST", "channel": 1,
                                   "service": "FEED", "parameters": {"contract": "AUTO"}}))
-        # FEED_SETUP
         await ws.send(json.dumps({
             "type": "FEED_SETUP", "channel": 1,
-            "acceptAggregationPeriod": 0.1,
-            "acceptDataFormat": "COMPACT",
-            "acceptEventFields": {
-                "Greeks": ["eventType","eventSymbol","delta","gamma","theta","vega","rho","volatility"],
-                "Quote": ["eventType","eventSymbol","bidPrice","askPrice"]
-            }
+            "acceptEventFields": {"Greeks": ["eventType","eventSymbol","delta","gamma","theta","vega","rho","volatility"]},
+            "acceptDataFormat": "COMPACT"
         }))
-        # FEED_SUBSCRIPTION
-        subs = [{"type": "Greeks", "symbol": s} for s in symbols]
-        subs += [{"type": "Quote", "symbol": s} for s in symbols]
-        await ws.send(json.dumps({"type": "FEED_SUBSCRIPTION", "channel": 1, "reset": True, "add": subs}))
+        await ws.send(json.dumps({
+            "type": "FEED_SUBSCRIPTION", "channel": 1,
+            "add": [{"type": "Greeks", "symbol": s} for s in symbols]
+        }))
 
-        # Collect data
         data = []
         try:
             async with asyncio.timeout(5):
                 while True:
-                    msg = json.loads(await ws.recv())
+                    raw_msg = await ws.recv()
+                    msg = json.loads(raw_msg) if isinstance(raw_msg, str) else raw_msg
                     if msg.get("type") == "FEED_DATA":
                         data.append(msg)
         except asyncio.TimeoutError:
@@ -226,18 +227,16 @@ def process_websocket_data(raw_data):
     for packet in raw_data:
         if packet.get("type") == "FEED_DATA":
             for event in packet.get("data", []):
-                if isinstance(event, list):
-                    # COMPACT mode returns lists: ["Greeks","symbol",vol,delta,gamma,theta,vega,rho]
-                    if event and event[0] == "Greeks":
-                        records.append({
-                            "symbol": event[1],
-                            "volatility": event[2],
-                            "delta": event[3],
-                            "gamma": event[4],
-                            "theta": event[5],
-                            "vega": event[6],
-                            "rho": event[7]
-                        })
+                if isinstance(event, list) and event and event[0] == "Greeks":
+                    records.append({
+                        "symbol": event[1],
+                        "volatility": event[2],
+                        "delta": event[3],
+                        "gamma": event[4],
+                        "theta": event[5],
+                        "vega": event[6],
+                        "rho": event[7]
+                    })
     df = pd.DataFrame(records)
     print(f"📊 Processed {len(df)} rows of Greeks data")
     return df
@@ -303,7 +302,9 @@ async def main():
     print("✅ Login successful")
 
     token_manager = TokenManager(session)
-    await fetch_chain_with_greeks(session, token_manager, TICKER)
+    for stock in AI_PORTFOLIO:
+        await fetch_chain_with_greeks(session, token_manager, stock["Ticker"])
+
     print("🎉 Done!")
 
 if __name__ == "__main__":
