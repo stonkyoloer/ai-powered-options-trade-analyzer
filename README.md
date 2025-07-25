@@ -15,6 +15,92 @@ aka high‑probability, low‑"oops I blew up my account" setups—wrapped in a 
 - **Risk control = Don’t nuke the account:** Simple rules keep the losses from looking like your ex’s credit card bill.  
 
 
+
+
+
+# Workflow 1:  Filter for an AI Optimized Trading Portfolio
+
+## 🤖 AI Pick 9 Ticker Trading Portfolio
+
+#### Attachment
+- us_tickers.csv
+
+#### Instructions 
+
+**Goal**  
+Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
+- **High Implied Volatility (IV)** (rich premiums & IV Rank ≥ 30%)  
+- **Deep Liquidity** (OI ≥ 1,000 per leg; spreads ≤ $0.05 for top names, ≤ $0.10 for moderately liquid)  
+- **Strong Short-Term Swings** (same-day to 30 days)  
+- **Industry-Leading AI Exposure** in each sector  
+- **Significant Market Attention** (institutional/retail hype)  
+
+**Selection Criteria (ALL must be met)**  
+1. **AI Leadership**: Core business or initiative is AI-driven.  
+2. **Options Liquidity**: Weekly/monthly chains, ≥ 1,000 OI on each leg, tight spreads.  
+3. **Elevated IV + IV Rank ≥ 30%**: Ensure options are richly priced relative to their history.  
+4. **Public Buzz**: Recent catalysts, heavy newsflow, or social/institutional interest.  
+5. **Robinhood-Available**: U.S.-listed and accessible to retail traders.  
+
+**Technical & Risk Filters**  
+- **Primary Signal (RSI(5))**: Confirm short-term momentum (oversold/overbought swings).  
+- **Secondary Signal (MACD Crossover)**: Validate momentum for directional plays (debit spreads, straddles).  
+
+**Rebalance Triggers**  
+- **IV Rank < 30%** → remove/replace  
+- **Stop-Loss Hit** → exit and free capital  
+- **Profit Target Hit** → lock in gains  
+- **Rebalance Cadence**: Event-driven only (no routine weekly unless a trigger fires)  
+
+**Portfolio Construction**  
+Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  include any high-IV recent IPOs or AI spin-outs that meet all criteria.
+
+| Sector                  | AI Theme                                                   |
+|-------------------------|------------------------------------------------------------|
+| Agriculture             | Precision farming, ag-biotech, automation                  |
+| Technology              | AI chips, semiconductors, cloud/LLM infrastructure         |
+| Industrials             | Robotics, smart infrastructure, automation systems         |
+| Biotechnology           | ML drug discovery (oncology, antivirals, genomics, psychedelics) |
+| Energy (Traditional)    | AI in oil/gas ops, predictive maintenance, commodities algos |
+| Energy (Renewable)      | AI-optimized solar/wind/hydro, grid/storage analytics      |
+| Financials              | AI for risk models, fraud detection, quant trading         |
+| Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
+| Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
+
+#### Prompt
+**Goal**
+1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
+2. Use the attachments as your candidate universe.  
+3. Be resourceful—pull live or most recent data (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
+4. Exclude all tickers not traded on Robinhood.  
+
+**Task**  
+- Shortlist all holdings by sector.  
+- Filter by AI exposure, liquidity, IV & IVR ≥ 30%, OI ≥ 1,000, spread ≤ $0.05/0.10, and RSI+MACD confirmation.  
+- Select the single best ticker per sector.  
+- Output a markdown table with columns:  
+  `| Ticker | Sector | AI Leadership Summary | Avg IV % | IV Rank | RSI(5) | MACD Signal | Daily Volume | Liquidity Grade |`  
+  - Liquidity Grade: A (ideal), B (acceptable), C (avoid).  
+- Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
+- Include rebalancing triggers and signal filters in your commentary block below the table.  
+
+#### Prompt Output
+
+| Ticker | Sector             | AI Leadership Summary                          | Avg IV % | IV Rank | RSI(5) | MACD Signal | Daily Volume | Liquidity Grade |
+|--------|--------------------|-----------------------------------------------|----------|---------|--------|-------------|---------------|-----------------|
+| NVDA   | Technology         | Leader in AI chips, GPUs for data centers     | 50%      | 80%     | 70     | Positive    | 45M           | A               |
+| ISRG   | Healthcare         | ML in surgical robotics, precision healthcare | 40%      | 75%     | 65     | Positive    | 2M            | B               |
+| PLTR   | Financials         | AI for risk models, fraud detection           | 45%      | 78%     | 68     | Positive    | 15M           | A               |
+| TSLA   | Transportation     | Autonomous vehicles, predictive logistics     | 55%      | 85%     | 72     | Positive    | 70M           | A               |
+| AMZN   | Consumer Staples   | AI-driven forecasting, supply chain           | 49%      | 75%     | 67     | Positive    | 40M           | A               |
+| ENPH   | Energy (Renewable) | AI-optimized solar, grid analytics            | 42%      | 70%     | 64     | Positive    | 5M            | B               |
+| XOM    | Energy (Traditional)| AI in oil/gas ops, predictive maintenance    | 38%      | 65%     | 62     | Positive    | 20M           | A               |
+| DE     | Agriculture        | Precision farming, ag-biotech automation      | 35%      | 60%     | 60     | Positive    | 3M            | B               |
+| CAT    | Industrials        | Robotics, smart infrastructure systems        | 40%      | 70%     | 66     | Positive    | 4M            | B               |
+
+
+# Workflow 2 | Download TastyTrade Data
+
 ## 🛠 Setup & Install
 To use this beast, you gotta armor up your computer with a few tools.  
 Don’t sweat it—this ain’t rocket surgery, just some basic setup so you can flex like a pro trader.
@@ -319,6 +405,8 @@ python3 get_options_chain_with_dxlink.py
 ```
 - **Why?** This creates a file called `AAPL_options_chain_with_greeks.csv` (or whatever ticker you chose) that has all the options data with Greeks.
 
+# Workflow 3 | Filter the TastyTrade Data for Trades
+
 ## 📈 Filter & Score Top Trades
 Now, we have the data, but we need to pick the best trades from it.
 
@@ -506,86 +594,7 @@ When you run `select_top_trades.py`, you get a table like this:
 
 - **What this means:** This shows the best trades for the day, so you can decide if you want to make those trades.
 
-
-
-
-
-
-
-
-
-
-
-
-# 🤖 Project Prompt: AI Pick 9 Tickers
-
-#### Attachment
-- us_tickers.csv
-
-#### Instructions 
-
-**Goal**  
-Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
-- **High Implied Volatility (IV)** (rich premiums & IV Rank ≥ 30%)  
-- **Deep Liquidity** (OI ≥ 1,000 per leg; spreads ≤ $0.05 for top names, ≤ $0.10 for moderately liquid)  
-- **Strong Short-Term Swings** (same-day to 30 days)  
-- **Industry-Leading AI Exposure** in each sector  
-- **Significant Market Attention** (institutional/retail hype)  
-
-**Selection Criteria (ALL must be met)**  
-1. **AI Leadership**: Core business or initiative is AI-driven.  
-2. **Options Liquidity**: Weekly/monthly chains, ≥ 1,000 OI on each leg, tight spreads.  
-3. **Elevated IV + IV Rank ≥ 30%**: Ensure options are richly priced relative to their history.  
-4. **Public Buzz**: Recent catalysts, heavy newsflow, or social/institutional interest.  
-5. **Robinhood-Available**: U.S.-listed and accessible to retail traders.  
-
-**Technical & Risk Filters**  
-- **Primary Signal (RSI(5))**: Confirm short-term momentum (oversold/overbought swings).  
-- **Secondary Signal (MACD Crossover)**: Validate momentum for directional plays (debit spreads, straddles).  
-
-**Rebalance Triggers**  
-- **IV Rank < 30%** → remove/replace  
-- **Stop-Loss Hit** → exit and free capital  
-- **Profit Target Hit** → lock in gains  
-- **Rebalance Cadence**: Event-driven only (no routine weekly unless a trigger fires)  
-
-**Portfolio Construction**  
-Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  include any high-IV recent IPOs or AI spin-outs that meet all criteria.
-
-| Sector                  | AI Theme                                                   |
-|-------------------------|------------------------------------------------------------|
-| Agriculture             | Precision farming, ag-biotech, automation                  |
-| Technology              | AI chips, semiconductors, cloud/LLM infrastructure         |
-| Industrials             | Robotics, smart infrastructure, automation systems         |
-| Biotechnology           | ML drug discovery (oncology, antivirals, genomics, psychedelics) |
-| Energy (Traditional)    | AI in oil/gas ops, predictive maintenance, commodities algos |
-| Energy (Renewable)      | AI-optimized solar/wind/hydro, grid/storage analytics      |
-| Financials              | AI for risk models, fraud detection, quant trading         |
-| Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
-| Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
-
-#### Prompt
-**Goal**
-1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
-2. Use the attachments as your candidate universe.  
-3. Be resourceful—pull live or most recent data (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
-4. Exclude all tickers not traded on Robinhood.  
-
-**Task**  
-- Shortlist all holdings by sector.  
-- Filter by AI exposure, liquidity, IV & IVR ≥ 30%, OI ≥ 1,000, spread ≤ $0.05/0.10, and RSI+MACD confirmation.  
-- Select the single best ticker per sector.  
-- Output a markdown table with columns:  
-  `| Ticker | Sector | AI Leadership Summary | Avg IV % | IV Rank | RSI(5) | MACD Signal | Daily Volume | Liquidity Grade |`  
-  - Liquidity Grade: A (ideal), B (acceptable), C (avoid).  
-- Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
-- Include rebalancing triggers and signal filters in your commentary block below the table.  
-
-#### Prompt Output
-
-
-
-
+# Workflow 4 | Validate Findings 
 
 # 🤖 Project Prompt: AI Pick 3 Trades 
 **Attachment**  
