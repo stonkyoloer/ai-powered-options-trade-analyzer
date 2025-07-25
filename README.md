@@ -483,45 +483,29 @@ python3 select_top_trades.py
 ```
 - **Why?** This prints out the top 3 trades based on some dummy data (since the actual filtering logic isn’t implemented here).
 
-## 📐 How the Math Works
-Let’s talk about how we decide which trades are the best. It’s like a game where we score each trade based on how likely it is to win, how much we can win, and other cool factors.
+## 📐 How the Model Works
 
-### POP (Probability of Profit)
-- **What it is:** The chance that the trade will make at least $0 profit.
-- **How it’s calculated:** Tastytrade gives us this number.
-- **Why it’s important:** We only pick trades with a POP of at least 66%, which means winning 2 out of 3 times.
-
-### Credit / Max Loss
-- **What it is:** How much money we get for selling the option compared to how much we could lose.
-- **Example:** If we sell an option for $1 and could lose up to $3, then Credit / Max Loss = 1 ÷ 3 = 0.33 (33%).
-- **Why it’s important:** We want trades where this is at least 33%, so we’re getting a good return for the risk.
-
-### Delta 30 Rule
-- **What it is:** Delta tells us how much the option price changes when the stock price changes. We sell options with a delta around 30.
-- **Why it’s important:** This gives us about a 70% chance that the option will expire worthless, which is good if we’re selling options.
-
-### Portfolio Limits
-- **Max 2 trades per sector:** So we don’t put all our money in one area.
-- **Max loss per trade ≤ $500:** To make sure we don’t lose too much on any single trade.
-
-### Final Score
-- We give each trade a score based on:
-  - POP: 40% of the score
-  - Return (Credit / Max Loss): 30% of the score
-  - Momentum (how the stock is moving): 20% of the score
-  - Flow (how much trading is happening): 10% of the score
-- Then, we rank the trades by their score and pick the top 3.
+```mermaid
+flowchart TD
+    A["Select AI Stock Portfolio - 9 sector leaders"] --> B["Pull Options Chain and Greeks - Tastytrade API"]
+    B --> C["Filter for 30 Delta Options - Bullish = Put Spread, Bearish = Call Spread"]
+    C --> D["Calculate Metrics: POP, Credit/Max Loss, Momentum, Flow"]
+    D --> E["Score Each Trade - POP 40% + Return 30% + Momentum 20% + Flow 10%"]
+    E --> F["Rank Trades"]
+    F --> G["Output Top 3 Trades - Clean Table"]
+```
 
 ## 🎯 Final Output
 When you run `select_top_trades.py`, you get a table like this:
 
-| Ticker | Sector     | Strategy          | Legs                       | Thesis             | POP | Credit/Max-Loss | DTE |
-|--------|------------|-------------------|----------------------------|--------------------|-----|-----------------|-----|
-| NVDA   | Technology | Credit Put Spread | Short Put 55 / Long Put 50 | AI leader NVDA     | 0.7 | 0.35            | 28  |
-| ISRG   | Healthcare | Credit Put Spread | Short Put 425 / Long Put 420 | AI leader ISRG | 0.7 | 0.35            | 28  |
-| PLTR   | Financials | Credit Put Spread | Short Put 138 / Long Put 133 | AI leader PLTR | 0.7 | 0.35            | 28  |
+| Ticker | Sector      | Strategy            | Legs                           | POP | Credit/Max-Loss | DTE | Thesis                                |
+|--------|-------------|--------------------|--------------------------------|-----|-----------------|-----|---------------------------------------|
+| NVDA   | Technology  | Credit Put Spread  | Short Put 165.0 / Long Put 160.0 | 0.7 | 0.35            | 28  | AI sector leader NVDA, bullish bias  |
+| ISRG   | Healthcare  | Credit Put Spread  | Short Put 425.0 / Long Put 420.0 | 0.7 | 0.35            | 28  | AI sector leader ISRG, bullish bias  |
+| PLTR   | Financials  | Credit Put Spread  | Short Put 150.0 / Long Put 145.0 | 0.7 | 0.35            | 28  | AI sector leader PLTR, bullish bias  |
 
 - **What this means:** This shows the best trades for the day, so you can decide if you want to make those trades.
+
 
 
 
