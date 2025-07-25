@@ -631,3 +631,27 @@ Apply **the Instructions** to the attached data.
    - Why these trades remain valid under current macro/news context  
    - Any portfolio risk adjustments needed (e.g., sector overweight, delta/vega imbalance)  
    - Key external catalysts to monitor before entry.  
+
+---
+
+### Output:
+
+| Ticker | Strategy          | Legs                           | Thesis (≤ 30 words)                  | POP  | Credit/Max‑Loss | DTE | Sector      | Risk/Event Note             | Confidence |
+|--------|-------------------|--------------------------------|--------------------------------------|------|-----------------|-----|-------------|-----------------------------|------------|
+| NVDA   | Credit Put Spread | Short Put 165.0 / Long Put 160.0 | AI chip leader; bullish bias          | 0.70 | 0.35            | 28  | Technology  | Earnings 8/27 (post-expiry) | High       |
+| ISRG   | Credit Put Spread | Short Put 435.0 / Long Put 430.0 | Robotic surgery leader; bullish bias  | 0.70 | 0.35            | 28  | Healthcare  | Post-earnings (strong Q2)    | High       |
+| PLTR   | Credit Put Spread | Short Put 140.0 / Long Put 135.0 | AI software platform leader; bullish bias | 0.70 | 0.35            | 28  | Financials  | Earnings 8/4 (in 10d)       | Medium     |
+
+## Commentary
+
+**Macro/News Context:**  
+The broader backdrop remains supportive of these bullish trades. The Federal Reserve is holding interest rates steady for now, and tech-heavy indexes continue to hit record highs amid the AI boom. Nvidia (NVDA) has resumed sales of advanced AI chips to China, boosting its stock, and analysts reaffirm it as a top pick with clear growth visibility. Intuitive Surgical (ISRG) just delivered strong quarterly results, confirming its growth thesis. Palantir (PLTR) secured a new $30 million Army AI contract, underscoring its momentum. No adverse news threatens these trade theses.
+
+**Portfolio Risk Adjustments:**  
+All three positions are bullish credit put spreads in AI-centric names, creating thematic concentration. This adds positive **delta** (bullish bias) and short **vega** (volatility risk). Consider balancing with non-tech or defensive positions if needed. Position sizing and diversification are key, though the ∼70% POP for each trade keeps risk manageable.
+
+**Key Catalysts to Monitor:**  
+- **Federal Reserve meeting (July 31)** – potential macro volatility  
+- **Palantir earnings (Aug 4)** – within trade duration, may cause swings  
+- **Nvidia earnings (late August)** – post-expiry but may influence sentiment  
+- Broader tech earnings and economic data (jobs, inflation) – could shift market momentum
