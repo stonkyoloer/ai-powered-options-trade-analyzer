@@ -203,20 +203,17 @@ python3 auth_test.py
 
 # 4️⃣ |TastyTrade Data Download
 
-**Here’s what happens step by step:**
-1. **Login to Tastytrade** – Uses your username and password to access the trading account, just like logging into a game or shopping app.
-2. **Choose Stocks** – Works from a pre-set list of 9 AI-focused stocks (like NVDA, TSLA, AMZN).
-3. **Grab the Options Chain** – Downloads every available option (strike prices and expiration dates) for each stock, similar to looking at a menu of all choices.
-4. **Filter Short-Term Options** – Focuses on contracts expiring within 30 days, so you only see near-term opportunities.
-5. **Pull Live Market Data** – Connects to a live data feed to get:
-   - Current stock prices
-   - Bid/ask prices (what buyers and sellers want)
-   - Greeks (risk and sensitivity numbers)
-6. **Calculate Key Stats** – Figures out things like days to expiration, how close each strike is to the stock price (“moneyness”), mid-price, and intrinsic value.
-7. **Highlight “At-the-Money” Options** – Flags options closest to the current stock price (often the most relevant for trading).
-8. **Combine All Data** – Organizes everything into a single, easy-to-read table for each stock.
-9. **Mark Ready-for-Analysis Options** – Adds a “bs_ready” checkmark showing which options have all data for your Black-Scholes model.
-10. **Save to Files** – Creates a clean spreadsheet for each stock with all relevant columns (prices, Greeks, volatility, time left, etc.).
+| Stage                                | Purpose for the PM                                                                                            | What Actually Happens (1‑sentence tech view)                                                                                  |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
+| **1. Session bootstrap**             | Authenticate once so we can hit Tastytrade’s real‑time market feed.                                           | `Session(USERNAME, PASSWORD)` returns an auth token reused everywhere.                                                        |
+| **2. DXLink token handshake**        | Secure, short‑lived streaming key; avoids REST latency so Greeks are effectively live ticks.                  | `TokenManager.get_dxlink_token()` calls `/api-quote-tokens`, captures token + WebSocket URL.                                  |
+| **3. WebSocket feed spin‑up**        | Pull Greeks, bid/ask, last trade for ≤ 20 option strikes **and** the underlying in a single wire.             | `get_underlying_and_options_data_websocket()` opens TLS socket, sends SETUP → AUTH → FEED\_SUBSCRIPTION, then listens \~15 s. |
+| **4. Chain pre‑filter (REST)**       | Limit scope to the first two expiries; keeps the debug run light while still covering near‑dated risk.        | `get_option_chain()` returns the full book; script slices after two maturities.                                               |
+| **5. ATM focus & Greek/quote merge** | Concentrates on strikes within \$50 of spot where liquidity is deepest and delta‑hedge risk is most relevant. | Combines WebSocket Greeks/quotes with the sliced chain via `streamer_symbol` keys.                                            |
+| **6. Black‑Scholes readiness flag**  | Marks rows that have *all* inputs (spot, strike, T‑exp, σ, r, mid) so downstream pricers can run instantly.   | Adds boolean `bs_ready` column.                                                                                               |
+| **7. Persistence & preview**         | Pushes a clean `.csv` per ticker for batch analytics or ingestion into a pricing engine / data lake.          | Writes `TICKER_enhanced_options_chain.csv`, logs sample rows for QC.                                                          |
+| **8. Loop across watch‑list**        | Automates the nine AI‑centric names; 2‑second pause to stay under vendor throttles.                           | `asyncio` orchestrates sequential ticker calls.                                                                               |
+
 
 ## 📊 Pull Live Options Chains + Live Greeks
 
