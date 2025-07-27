@@ -140,7 +140,6 @@ python3 test_connection.py
 
 
 ## 🔑 Authenticate & Get Account Info
-Now, we need to log in to your Tastytrade account so the project can get data for you.
 
 ### Create a File
 ```bash
@@ -175,7 +174,6 @@ else:
     print("FAILED: Authentication failed")
     print(f"Error: {response.text}")
 ```
-- **Important:** Replace `"your_username_here"` and `"your_password_here"` with your actual Tastytrade username and password.
 
 ### Run the Script
 ```bash
