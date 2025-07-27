@@ -17,12 +17,10 @@
 
 # 2️⃣ | Prompt AI
 
-## 🤖 AI Pick 9 Ticker Trading Portfolio Prompt
-
-#### Attachment
+## 🗂 Attachment
 - us_tickers.csv
 
-#### Instructions 
+## 👨‍🏫 Instructions 
 
 **Goal**  
 Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
@@ -64,7 +62,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
 | Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
 
-#### Prompt
+## 🤖 Prompt
 **Goal**
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
 2. Use the attachments as your candidate universe.  
@@ -126,7 +124,7 @@ pip install tastytrade websockets pandas httpx certifi
 ## 🔐 Test Your Tastytrade Login
 Before we can get any data, we need to make sure your computer can connect to Tastytrade.
 
-### Step 3 – Create & Run Login Test
+### Create & Run Login Test
 Create a new file called `test_connection.py` by typing:
 
 ```bash
@@ -156,7 +154,7 @@ python3 test_connection.py
 ## 🔑 Authenticate & Get Account Info
 Now, we need to log in to your Tastytrade account so the project can get data for you.
 
-### Step 4 – Create Authentication Test
+### Create Authentication Test
 Create another file called `auth_test.py`:
 
 ```bash
@@ -218,7 +216,7 @@ python3 auth_test.py
 ## 📊 Pull Live Options Chains + Live Greeks
 
 
-### Step 1 – Create a File
+### Create a File
 Create a new file called `get_options_chain_with_dxlink.py`:
 
 ```bash
@@ -226,7 +224,7 @@ touch get_options_chain_with_dxlink.py
 open -e get_options_chain_with_dxlink.py
 ```
 
-### Step 2 - Save Script
+### Save Script
 ```bash
 #!/usr/bin/env python3
 """
@@ -791,14 +789,15 @@ Instead of digging through thousands of contracts, you instantly get a short lis
 ## 📈 Filter & Score Top Trades
 Now, we have the data, but we need to pick the best trades from it.
 
-### Step 6 – Create the Trade Selector
+### Create a File
 Create another file called `select_top_trades.py`:
 
 ```bash
 touch select_top_trades.py
 open -e select_top_trades.py
 ```
-Add this code:
+
+### Save the Script
 
 ```python
 #!/usr/bin/env python3
@@ -1103,17 +1102,6 @@ python3 select_top_trades.py
 ```
 - **Why?** This prints out the top 3 trades based on some dummy data (since the actual filtering logic isn’t implemented here).
 
-## 📐 How the Model Works
-
-```mermaid
-flowchart TD
-    A["Select AI Stock Portfolio - 9 sector leaders"] --> B["Pull Options Chain and Greeks - Tastytrade API"]
-    B --> C["Filter for 30 Delta Options - Bullish = Put Spread, Bearish = Call Spread"]
-    C --> D["Calculate Metrics: POP, Credit/Max Loss, Momentum, Flow"]
-    D --> E["Score Each Trade - POP 40% + Return 30% + Momentum 20% + Flow 10%"]
-    E --> F["Rank Trades"]
-    F --> G["Output Top 3 Trades - Clean Table"]
-```
 
 ## 🎯 Final Output
 When you run `select_top_trades.py`, you get a table like this:
@@ -1128,15 +1116,14 @@ When you run `select_top_trades.py`, you get a table like this:
 
 # 6️⃣ | Prompt AI 
 
-## 🤖 AI Final Trade Analysis & Risk Check Prompt
-**Attachment**  
+## 🗂 Attachment
 | Ticker | Sector      | Strategy            | Legs                           | POP | Credit/Max-Loss | DTE | Thesis                                |
 |--------|-------------|--------------------|--------------------------------|-----|-----------------|-----|---------------------------------------|
 | NVDA   | Technology  | Credit Put Spread  | Short Put 165.0 / Long Put 160.0 | 0.7 | 0.35            | 28  | AI sector leader NVDA, bullish bias  |
 | ISRG   | Healthcare  | Credit Put Spread  | Short Put 425.0 / Long Put 420.0 | 0.7 | 0.35            | 28  | AI sector leader ISRG, bullish bias  |
 | PLTR   | Financials  | Credit Put Spread  | Short Put 150.0 / Long Put 145.0 | 0.7 | 0.35            | 28  | AI sector leader PLTR, bullish bias  |
 
-**Instructions**  
+## 👨‍🏫 Instructions 
 **Goal** Validate the **3 selected trades** from the AI‑optimized portfolio for execution readiness, including **macro/news risk checks, sector exposure sanity, and portfolio Greek balance**. Provide a final confidence check before trading.  
 
 #### Data Inputs  
@@ -1156,7 +1143,7 @@ When you run `select_top_trades.py`, you get a table like this:
 
 ---
 
-### Prompt:  
+## Prompt:  
 Apply **the Instructions** to the attached data.  
 1. **Output only** the clean, markdown‑wrapped table with columns:  
 `Ticker, Strategy, Legs, Thesis (≤ 30 words), POP, Credit/Max‑Loss, DTE, Sector, Risk/Event Note, Confidence`  
