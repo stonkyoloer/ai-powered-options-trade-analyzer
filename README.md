@@ -781,7 +781,7 @@ python3 get_options_chain_with_dxlink.py
 ```
 - **Why?** This creates a file called `AAPL_options_chain_with_greeks.csv` (or whatever ticker you chose) that has all the options data with Greeks.
 
-# ⬇️ Workflow 3 | Filter the Options Chain Data for Trades
+# ⬇️ Workflow 4 | Filter the Options Chain Data for Trades
 
 ## 📈 Filter & Score Top Trades
 Now, we have the data, but we need to pick the best trades from it.
@@ -1121,7 +1121,7 @@ When you run `select_top_trades.py`, you get a table like this:
 
 - **What this means:** This shows the best trades for the day, so you can decide if you want to make those trades.
 
-# ⬇️ Workflow 4 | Validate Findings 
+# ⬇️ Workflow 5 | Validate Findings 
 
 ## 🤖 AI Final Trade Analysis & Risk Check Prompt
 **Attachment**  
