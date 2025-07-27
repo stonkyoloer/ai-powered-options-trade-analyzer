@@ -12,10 +12,10 @@
 
 
 
-# 1️⃣ | Collect Data
+# 1️⃣  Collect Data
 
 
-# 2️⃣ | Prompt AI
+# 2️⃣  Prompt AI
 
 ## 🗂 Attachment
 - us_tickers.csv
@@ -84,15 +84,13 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
 
 
-# 3️⃣ |TastyTrade API Connection 
+# 3️⃣ TastyTrade API Connection 
 
 ## 🛠 Setup & Install
 To use this beast, you gotta armor up your computer with a few tools.  
 Don’t sweat it—this ain’t rocket surgery, just some basic setup so you can flex like a pro trader.
 
-### Step 1 – Make a Home for Your Tendies Code
-First, create a new folder where you’ll keep all the files for this project. Open a terminal (a program where you can type commands to your computer) and type:
-
+### Create a Folder
 ```bash
 mkdir tastytrade_data
 cd tastytrade_data
@@ -185,7 +183,7 @@ python3 auth_test.py
 ```
 - **Why?** If it says "SUCCESS: Authentication worked!", then we’re ready to go.
 
-# 4️⃣ |TastyTrade Data Download
+# 4️⃣ TastyTrade Data Download
 
 | Step                             | What We’re Doing                                              | What’s Actually Happening (Simple Tech Talk)                                                                        |
 | -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
@@ -203,8 +201,6 @@ python3 auth_test.py
 
 
 ### Create a File
-Create a new file called `get_options_chain_with_dxlink.py`:
-
 ```bash
 touch get_options_chain_with_dxlink.py
 open -e get_options_chain_with_dxlink.py
@@ -755,7 +751,7 @@ python3 get_options_chain_with_dxlink.py
 ```
 - **Why?** This creates a file called `AAPL_options_chain_with_greeks.csv` (or whatever ticker you chose) that has all the options data with Greeks.
 
-# 5️⃣ | TastyTrade Data Filter
+# 5️⃣  TastyTrade Data Filter
 
 **What the script does:**
 1. **Load data** – Opens the CSV files created in Step 4 for each stock.  
@@ -1081,14 +1077,13 @@ if __name__ == "__main__":
 ```
 - **Important:** Replace the username and password.
 
-Run it:
-
+### Run the Script
 ```bash
 python3 select_top_trades.py
 ```
 
 
-# 6️⃣ | Prompt AI 
+# 6️⃣ Prompt AI 
 
 ## 🗂 Attachment
 | Ticker | Sector      | Strategy            | Legs                           | POP | Credit/Max-Loss | DTE | Thesis                                |
@@ -1119,7 +1114,7 @@ python3 select_top_trades.py
 
 ---
 
-## Prompt:  
+## 🤖 Prompt  
 Apply **the Instructions** to the attached data.  
 1. **Output only** the clean, markdown‑wrapped table with columns:  
 `Ticker, Strategy, Legs, Thesis (≤ 30 words), POP, Credit/Max‑Loss, DTE, Sector, Risk/Event Note, Confidence`  
