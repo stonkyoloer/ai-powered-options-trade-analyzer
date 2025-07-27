@@ -200,7 +200,7 @@ open -e get_options_chain_with_dxlink.py
 #!/usr/bin/env python3
 """
 Enhanced options chain fetch with live Greeks and pricing data
-for Black-Scholes model preparation - DEBUG VERSION
+for Black-Scholes model preparation - ENHANCED VERSION
 """
 
 import asyncio
@@ -251,6 +251,34 @@ class TokenManager:
             else:
                 print(f"❌ Failed to get quote token: {r.text}")
                 return None, None
+
+async def get_dividend_yield(session, symbol):
+    """Fetch dividend yield for the underlying stock"""
+    try:
+        # This is a placeholder - you'll need to implement actual dividend fetching
+        # from your broker API or use a financial data service
+        equity = Equity.get(session, symbol)
+        
+        # For now, use sector-based estimates (you should replace with actual data)
+        dividend_estimates = {
+            "NVDA": 0.0,    # Tech stocks often don't pay dividends
+            "ISRG": 0.0,
+            "PLTR": 0.0,
+            "TSLA": 0.0,
+            "AMZN": 0.0,
+            "ENPH": 0.0,
+            "XOM": 0.055,   # Energy companies often pay higher dividends
+            "DE": 0.021,    # Industrial dividend
+            "CAT": 0.025    # Industrial dividend
+        }
+        
+        dividend_yield = dividend_estimates.get(symbol, 0.0)
+        print(f"📊 Using dividend yield estimate for {symbol}: {dividend_yield:.3f}")
+        return dividend_yield
+        
+    except Exception as e:
+        print(f"⚠️ Could not fetch dividend for {symbol}: {e}")
+        return 0.0  # Default to no dividend
 
 async def get_underlying_and_options_data_websocket(underlying_symbol, option_symbols, token, dxlink_url):
     """Get underlying stock price, Greeks, and Quote data"""
@@ -426,6 +454,9 @@ async def fetch_enhanced_chain_with_greeks(session, token_manager, ticker):
     except Exception as e:
         print(f"❌ Error getting equity for {ticker}: {e}")
         return
+
+    # Get dividend yield
+    dividend_yield = await get_dividend_yield(session, ticker)
 
     try:
         chain = get_option_chain(session, ticker)
@@ -638,7 +669,7 @@ async def fetch_enhanced_chain_with_greeks(session, token_manager, ticker):
                 "underlying_price": underlying_price,
                 "time_to_expiration": time_to_exp,
                 "risk_free_rate": RISK_FREE_RATE,
-                "dividend_yield": 0.0,  # You may want to fetch this dynamically
+                "dividend_yield": dividend_yield,  # Now using fetched dividend yield
                 "moneyness": float(o.strike_price) / underlying_price,  # Convert Decimal to float
             } for o in final_options]
 
@@ -681,12 +712,13 @@ async def fetch_enhanced_chain_with_greeks(session, token_manager, ticker):
     df = pd.DataFrame(all_data)
     print(f"📋 Final DataFrame has {len(df)} rows")
     
-    # Add Black-Scholes readiness indicator
+    # Add Black-Scholes readiness indicator (now includes dividend yield)
     df['bs_ready'] = (
         df['underlying_price'].notna() & 
         df['strike'].notna() & 
         df['time_to_expiration'].notna() & 
         df['risk_free_rate'].notna() & 
+        df['dividend_yield'].notna() &  # Added dividend yield check
         (df['volatility'].notna() | df['mid_price'].notna())
     )
     
@@ -702,10 +734,11 @@ async def fetch_enhanced_chain_with_greeks(session, token_manager, ticker):
     print(f"✅ Saved {len(df)} rows to {filename}")
     print(f"📊 {bs_ready_count}/{len(df)} options ready for Black-Scholes calculation")
     print(f"💰 Final underlying price used: ${underlying_price:.2f}")
+    print(f"💰 Dividend yield used: {dividend_yield:.3f}")
     
     # Show a sample of the data
     print(f"\n📋 Sample data:")
-    print(df[['expiration', 'strike', 'option_type', 'underlying_price', 'mid_price', 'delta', 'volatility']].head())
+    print(df[['expiration', 'strike', 'option_type', 'underlying_price', 'mid_price', 'delta', 'volatility', 'dividend_yield']].head())
 
     return df
 
