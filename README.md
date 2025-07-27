@@ -783,6 +783,21 @@ python3 get_options_chain_with_dxlink.py
 
 # 5️⃣ | TastyTrade Data Filter
 
+**What the script does:**
+1. **Load data** – Opens the CSV files created in Step 4 for each stock.  
+2. **Filter short‑term options** – Keeps only contracts expiring within 30 days.  
+3. **Check market mood** – Looks at call/put activity and deltas to guess if the stock leans bullish, bearish, or neutral.  
+4. **Build credit spreads** – Pairs options into:  
+   - **Credit Put Spreads** (bullish)  
+   - **Credit Call Spreads** (bearish)  
+   Calculates credit, max loss, risk/reward, and probability of profit (POP, estimated from delta).  
+5. **Rank trades** – Sorts by best risk/reward ratio so the top setups float to the top.  
+6. **Output results** – Prints top trades in the terminal and saves them all to `profitable_options_trades.csv`.
+
+**Why it matters:**  
+Instead of digging through thousands of contracts, you instantly get a short list of trades with defined risk, upfront credit, and a favorable probability of success.
+
+
 ## 📈 Filter & Score Top Trades
 Now, we have the data, but we need to pick the best trades from it.
 
