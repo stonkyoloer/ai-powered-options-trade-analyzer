@@ -203,30 +203,22 @@ python3 auth_test.py
 
 # 4️⃣ |TastyTrade Data Download
 
-| Stage                                | Purpose for the PM                                                                                            | What Actually Happens (1‑sentence tech view)                                                                                  |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| **1. Session bootstrap**             | Authenticate once so we can hit Tastytrade’s real‑time market feed.                                           | `Session(USERNAME, PASSWORD)` returns an auth token reused everywhere.                                                        |
-| **2. DXLink token handshake**        | Secure, short‑lived streaming key; avoids REST latency so Greeks are effectively live ticks.                  | `TokenManager.get_dxlink_token()` calls `/api-quote-tokens`, captures token + WebSocket URL.                                  |
-| **3. WebSocket feed spin‑up**        | Pull Greeks, bid/ask, last trade for ≤ 20 option strikes **and** the underlying in a single wire.             | `get_underlying_and_options_data_websocket()` opens TLS socket, sends SETUP → AUTH → FEED\_SUBSCRIPTION, then listens \~15 s. |
-| **4. Chain pre‑filter (REST)**       | Limit scope to the first two expiries; keeps the debug run light while still covering near‑dated risk.        | `get_option_chain()` returns the full book; script slices after two maturities.                                               |
-| **5. ATM focus & Greek/quote merge** | Concentrates on strikes within \$50 of spot where liquidity is deepest and delta‑hedge risk is most relevant. | Combines WebSocket Greeks/quotes with the sliced chain via `streamer_symbol` keys.                                            |
-| **6. Black‑Scholes readiness flag**  | Marks rows that have *all* inputs (spot, strike, T‑exp, σ, r, mid) so downstream pricers can run instantly.   | Adds boolean `bs_ready` column.                                                                                               |
-| **7. Persistence & preview**         | Pushes a clean `.csv` per ticker for batch analytics or ingestion into a pricing engine / data lake.          | Writes `TICKER_enhanced_options_chain.csv`, logs sample rows for QC.                                                          |
-| **8. Loop across watch‑list**        | Automates the nine AI‑centric names; 2‑second pause to stay under vendor throttles.                           | `asyncio` orchestrates sequential ticker calls.                                                                               |
+| Step                             | What We’re Doing                                              | What’s Actually Happening (Simple Tech Talk)                                                                        |
+| -------------------------------- | ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **1. Log In**                    | We need a key to grab real-time data.                         | We log into Tastytrade with `Session(USERNAME, PASSWORD)` to get an access token.                                   |
+| **2. Get Streaming Pass**        | Think of this as our “all-access concert pass” to live data.  | We ask Tastytrade for a *DXLink token* and a special WebSocket URL.                                                 |
+| **3. Open Live Feed**            | We connect to the firehose of live prices and Greeks.         | We open a secure WebSocket, say “Hi, I’m allowed here,” and start streaming prices and Greeks for up to 20 options. |
+| **4. Grab Option List**          | We need to know all the option choices before picking.        | We pull the full list of expirations from Tastytrade but only look at the first 2 (keeps it fast).                  |
+| **5. Focus on the Action**       | We don’t care about random strikes \$500 away.                | We filter to options within \$50 of the current stock price and merge their Greeks and quotes.                      |
+| **6. Check Black‑Scholes Ready** | We mark which rows have all the data we need to run our math. | If spot price, strike, volatility, time to expiration, and rates are present → mark `bs_ready = True`.              |
+| **7. Save Everything**           | We store it so anyone can use it later.                       | We dump it all into `TICKER_enhanced_options_chain.csv` and show a preview.                                         |
+| **8. Do It for All 9 Stocks**    | We rinse and repeat for NVDA, TSLA, etc.                      | `asyncio` runs this step-by-step with 2-second breaks so we don’t get blocked.                                      |
 
 
 ## 📊 Pull Live Options Chains + Live Greeks
 
-This program pulls live stock option data for 9 AI-related stocks from Tastytrade and organizes it into spreadsheets, ready for deeper analysis like the Black-Scholes model. 
 
-### What You Get
-Each stock has a CSV file ready for analysis, so you can quickly:
-1. Spot mispriced options
-2. Run fair-value checks with Black-Scholes
-3. Focus on the best short-term trading opportunities
-
-
-### Step 1 – Create the Script
+### Step 1 – Create a File
 Create a new file called `get_options_chain_with_dxlink.py`:
 
 ```bash
@@ -234,6 +226,7 @@ touch get_options_chain_with_dxlink.py
 open -e get_options_chain_with_dxlink.py
 ```
 
+### Step 2 - Save Script
 ```bash
 #!/usr/bin/env python3
 """
