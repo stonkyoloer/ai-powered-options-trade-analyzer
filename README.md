@@ -231,6 +231,11 @@ Each stock has a CSV file ready for analysis, so you can quickly:
 Create a new file called `get_options_chain_with_dxlink.py`:
 
 ```bash
+touch get_options_chain_with_dxlink.py
+open -e get_options_chain_with_dxlink.py
+```
+
+```bash
 #!/usr/bin/env python3
 """
 Enhanced options chain fetch with live Greeks and pricing data
