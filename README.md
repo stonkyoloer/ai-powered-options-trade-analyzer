@@ -87,32 +87,25 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 # 3️⃣ TastyTrade API Connection 
 
 ## 🛠 Setup & Install
-To use this beast, you gotta armor up your computer with a few tools.  
-Don’t sweat it—this ain’t rocket surgery, just some basic setup so you can flex like a pro trader.
 
 ### Create a Folder
 ```bash
 mkdir tastytrade_data
 cd tastytrade_data
 ```
-- **Why?** This keeps all your scripts and data in one place, like organizing your tendies in a box.
 
-### Step 2 – Install Required Packages
-Next, you need to install some packages that the project needs to work. These are like tools that help the project do its job. Type this in the terminal:
-
+### Install Required Packages
 ```bash
 pip install tastytrade websockets pandas httpx certifi
 ```
-- **Why?**
   - `tastytrade`: Lets the project talk to the Tastytrade website to get data.
   - `websockets`: Helps get live updates on the Greeks.
   - `pandas`: Handles and calculates with the data.
   - `httpx` and `certifi`: Make secure connections to the internet.
 
-## 🔐 Test Your Tastytrade Login
+## 🔐 Test Tastytrade Login
 
 ### Create a File
-
 ```bash
 touch test_connection.py
 open -e test_connection.py
@@ -130,7 +123,6 @@ print(f"API URL: {url}")
 print("Ready for authentication test")
 ```
 ### Run the Script
-
 ```bash
 python3 test_connection.py
 ```
@@ -140,13 +132,11 @@ python3 test_connection.py
 Now, we need to log in to your Tastytrade account so the project can get data for you.
 
 ### Create a File
-
 ```bash
 touch auth_test.py
 open -e auth_test.py
 ```
 ### Save the Script
-
 ```python
 import requests
 import json
@@ -177,11 +167,10 @@ else:
 - **Important:** Replace `"your_username_here"` and `"your_password_here"` with your actual Tastytrade username and password.
 
 ### Run the Script
-
 ```bash
 python3 auth_test.py
 ```
-- **Why?** If it says "SUCCESS: Authentication worked!", then we’re ready to go.
+
 
 # 4️⃣ TastyTrade Data Download
 
@@ -744,35 +733,16 @@ if __name__ == "__main__":
 ```
 - **Important:** Replace `"your_username"` and `"your_password"` with your actual credentials. Also, set `TICKER` to the stonks you want to look at, like "AAPL" for Apple.
 
-Run the script:
-
+## Run the Script
 ```bash
 python3 get_options_chain_with_dxlink.py
 ```
-- **Why?** This creates a file called `AAPL_options_chain_with_greeks.csv` (or whatever ticker you chose) that has all the options data with Greeks.
 
 # 5️⃣  TastyTrade Data Filter
 
-**What the script does:**
-1. **Load data** – Opens the CSV files created in Step 4 for each stock.  
-2. **Filter short‑term options** – Keeps only contracts expiring within 30 days.  
-3. **Check market mood** – Looks at call/put activity and deltas to guess if the stock leans bullish, bearish, or neutral.  
-4. **Build credit spreads** – Pairs options into:  
-   - **Credit Put Spreads** (bullish)  
-   - **Credit Call Spreads** (bearish)  
-   Calculates credit, max loss, risk/reward, and probability of profit (POP, estimated from delta).  
-5. **Rank trades** – Sorts by best risk/reward ratio so the top setups float to the top.  
-6. **Output results** – Prints top trades in the terminal and saves them all to `profitable_options_trades.csv`.
-
-**Why it matters:**  
-Instead of digging through thousands of contracts, you instantly get a short list of trades with defined risk, upfront credit, and a favorable probability of success.
-
-
 ## 📈 Filter & Score Top Trades
-Now, we have the data, but we need to pick the best trades from it.
 
 ### Create a File
-Create another file called `select_top_trades.py`:
 
 ```bash
 touch select_top_trades.py
@@ -1075,7 +1045,6 @@ def main():
 if __name__ == "__main__":
     main()
 ```
-- **Important:** Replace the username and password.
 
 ### Run the Script
 ```bash
