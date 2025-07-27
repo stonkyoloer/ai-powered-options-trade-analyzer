@@ -797,146 +797,297 @@ Add this code:
 
 ```python
 #!/usr/bin/env python3
-import asyncio
-import ssl
-import json
 import pandas as pd
 import numpy as np
-import websockets
-import httpx
-from tastytrade import Session
-from tastytrade.instruments import get_option_chain, Equity
+from datetime import datetime, timedelta
+import os
 
-# ---- LOGIN ----
-USERNAME = "username"
-PASSWORD = "password"
-
-# ---- AI Portfolio ----
-AI_PORTFOLIO = [
-    {"Ticker": "NVDA", "Sector": "Technology"},
-    {"Ticker": "ISRG", "Sector": "Healthcare"},
-    {"Ticker": "PLTR", "Sector": "Financials"},
-    {"Ticker": "TSLA", "Sector": "Transportation"},
-    {"Ticker": "AMZN", "Sector": "Consumer Staples"},
-    {"Ticker": "ENPH", "Sector": "Energy (Renewable)"},
-    {"Ticker": "XOM",  "Sector": "Energy (Traditional)"},
-    {"Ticker": "DE",   "Sector": "Agriculture"},
-    {"Ticker": "CAT",  "Sector": "Industrials"}
-]
-
-# ---- Momentum sentiment (placeholder) ----
-MOMENTUM = {
-    "NVDA": "bullish", "ISRG": "bullish", "PLTR": "bullish",
-    "TSLA": "neutral", "AMZN": "bullish", "ENPH": "bearish",
-    "XOM": "neutral", "DE": "neutral", "CAT": "bearish"
-}
-
-async def get_dxlink_token(session):
-    async with httpx.AsyncClient() as client:
-        r = await client.get("https://api.tastytrade.com/api-quote-tokens",
-                             headers={"Authorization": session.session_token})
-        data = r.json()
-        return data["data"]["token"], data["data"]["dxlink-url"]
-
-async def get_greeks(symbols, token, url):
-    ssl_context = ssl.create_default_context()
-    async with websockets.connect(url, ssl=ssl_context) as ws:
-        await ws.send(json.dumps({"type": "SETUP", "channel": 0,
-                                  "version": "0.1", "keepaliveTimeout": 60}))
-        await ws.send(json.dumps({"type": "AUTH", "channel": 0, "token": token}))
-        await ws.send(json.dumps({"type": "CHANNEL_REQUEST", "channel": 1,
-                                  "service": "FEED", "parameters": {"contract": "AUTO"}}))
-        await ws.send(json.dumps({
-            "type": "FEED_SETUP", "channel": 1,
-            "acceptEventFields": {"Greeks": ["eventType","eventSymbol","delta"]},
-            "acceptDataFormat": "COMPACT"
-        }))
-        await ws.send(json.dumps({
-            "type": "FEED_SUBSCRIPTION","channel":1,
-            "add":[{"type":"Greeks","symbol":s} for s in symbols]
-        }))
-        data = []
-        try:
-            async with asyncio.timeout(3):
-                while True:
-                    msg = json.loads(await ws.recv())
-                    if msg.get("type") == "FEED_DATA":
-                        for event in msg["data"]:
-                            if event[0] == "Greeks":
-                                data.append({"symbol": event[1], "delta": event[2]})
-        except asyncio.TimeoutError:
-            pass
-        return pd.DataFrame(data)
-
-def pick_30_delta_spread(chain_df, greeks_df, sentiment):
-    df = chain_df.merge(greeks_df, left_on="streamer_symbol", right_on="symbol", how="left")
+def load_options_data(ticker):
+    """Load the CSV data created by the first script"""
+    filename = f"{ticker}_enhanced_options_chain.csv"
+    if not os.path.exists(filename):
+        print(f"❌ File {filename} not found. Run the data collection script first.")
+        return None
     
-    # If no deltas at all → fallback
-    if df["delta"].isna().all():
-        return {"Strategy": "No Trade", "Legs": "-", "POP": 0,
-                "Credit/Max-Loss": 0, "DTE": 0}
+    df = pd.read_csv(filename)
+    print(f"📊 Loaded {len(df)} options for {ticker}")
+    
+    # Debug: Show what columns we have
+    print(f"🔍 Columns: {list(df.columns)}")
+    
+    # Debug: Show first row of pricing data
+    if not df.empty:
+        first_row = df.iloc[0]
+        print(f"🔍 Sample row pricing: bid_price={first_row.get('bid_price', 'N/A')}, ask_price={first_row.get('ask_price', 'N/A')}, mid_price={first_row.get('mid_price', 'N/A')}")
+    
+    return df
 
-    if sentiment == "bullish":
-        puts = df[df["option_type"] == "Put"].dropna(subset=["delta"])
-        if puts.empty:
-            return {"Strategy": "No Trade", "Legs": "-", "POP": 0,
-                    "Credit/Max-Loss": 0, "DTE": 0}
-        idx = (puts["delta"].abs()-0.30).abs().idxmin()
-        target = puts.loc[idx]
-        spread = f"Short Put {target['strike']} / Long Put {target['strike']-5}"
-        return {"Strategy": "Credit Put Spread", "Legs": spread, "POP": 0.7,
-                "Credit/Max-Loss": 0.35, "DTE": target['dte']}
-    else:
-        calls = df[df["option_type"] == "Call"].dropna(subset=["delta"])
-        if calls.empty:
-            return {"Strategy": "No Trade", "Legs": "-", "POP": 0,
-                    "Credit/Max-Loss": 0, "DTE": 0}
-        idx = (calls["delta"].abs()-0.30).abs().idxmin()
-        target = calls.loc[idx]
-        spread = f"Short Call {target['strike']} / Long Call {target['strike']+5}"
-        return {"Strategy": "Credit Call Spread", "Legs": spread, "POP": 0.7,
-                "Credit/Max-Loss": 0.35, "DTE": target['dte']}
+def filter_30_day_options(df):
+    """Filter for options with 30 days or less to expiration"""
+    if df is None or df.empty:
+        return df
+    
+    # Calculate DTE if not already present
+    if 'dte' not in df.columns:
+        df['expiration'] = pd.to_datetime(df['expiration'])
+        df['dte'] = (df['expiration'] - pd.Timestamp.now()).dt.days
+    
+    # Filter for 30 days or less
+    filtered = df[df['dte'] <= 30].copy()
+    print(f"🕒 Found {len(filtered)} options with DTE ≤ 30 days")
+    return filtered
 
-def build_chain(session, ticker):
-    chain = get_option_chain(session, ticker)
-    expirations = list(chain.keys())
-    closest = min(expirations, key=lambda x: abs((x - pd.Timestamp.now().date()).days - 30))
-    rows = []
-    for o in chain[closest]:
-        rows.append({
-            "expiration": closest,
-            "strike": o.strike_price,
-            "option_type": "Call" if o.option_type.value == "C" else "Put",
-            "streamer_symbol": o.streamer_symbol,
-            "dte": (closest - pd.Timestamp.now().date()).days
-        })
-    return pd.DataFrame(rows)
+def determine_market_direction(df):
+    """Determine market direction from the actual options data"""
+    if df is None or df.empty:
+        return "neutral"
+    
+    # Get put/call volume or open interest if available
+    calls = df[df['option_type'] == 'Call']
+    puts = df[df['option_type'] == 'Put']
+    
+    if calls.empty and puts.empty:
+        return "neutral"
+    elif calls.empty:
+        return "bearish"  # Only puts available suggests bearish sentiment
+    elif puts.empty:
+        return "bullish"  # Only calls available suggests bullish sentiment
+    
+    # Look at implied volatility or delta to gauge sentiment
+    # Higher call deltas suggest more bullish positioning
+    call_deltas = calls['delta'].dropna()
+    put_deltas = puts['delta'].dropna()
+    
+    if not call_deltas.empty and not put_deltas.empty:
+        avg_call_delta = abs(call_deltas.mean())
+        avg_put_delta = abs(put_deltas.mean())
+        
+        if avg_call_delta > avg_put_delta:
+            return "bullish"
+        elif avg_put_delta > avg_call_delta:
+            return "bearish"
+    
+    return "neutral"
 
-async def main():
-    print("🔐 Logging in...")
-    session = Session(USERNAME, PASSWORD)
-    print("✅ Login OK")
-    token, dxlink_url = await get_dxlink_token(session)
-    print(f"✅ DXLink token: {dxlink_url}")
+def find_profitable_spreads(df, min_credit=0.10):
+    """Find all profitable spread opportunities"""
+    if df is None or df.empty:
+        return []
+    
+    profitable_spreads = []
+    
+    # Get options with pricing data
+    priced_options = df.dropna(subset=['bid_price', 'ask_price']).copy()
+    if priced_options.empty:
+        # Try with mid_price if bid/ask not available
+        priced_options = df.dropna(subset=['mid_price']).copy()
+        if priced_options.empty:
+            print("⚠️ No options with pricing data found")
+            return []
+    
+    print(f"💰 Found {len(priced_options)} options with pricing data")
+    
+    # Group by expiration and option type
+    for expiration in priced_options['expiration'].unique():
+        exp_options = priced_options[priced_options['expiration'] == expiration]
+        
+        # Get DTE for this expiration
+        if 'dte' in exp_options.columns:
+            dte = exp_options['dte'].iloc[0]
+        else:
+            exp_date = pd.to_datetime(expiration)
+            dte = (exp_date - pd.Timestamp.now()).days
+        
+        # Try call spreads (bearish strategy)
+        calls = exp_options[exp_options['option_type'] == 'Call'].copy()
+        if len(calls) >= 2:
+            calls = calls.sort_values('strike')
+            
+            for i in range(len(calls)-1):
+                short_call = calls.iloc[i]  # Lower strike (short)
+                long_call = calls.iloc[i+1]  # Higher strike (long)
+                
+                # Calculate credit
+                short_price = get_option_price(short_call)
+                long_price = get_option_price(long_call)
+                
+                if short_price > 0 and long_price > 0:
+                    credit = short_price - long_price
+                    strike_diff = long_call['strike'] - short_call['strike']
+                    max_loss = strike_diff - credit
+                    
+                    if credit >= min_credit and max_loss > 0:
+                        ratio = credit / max_loss
+                        pop = 1 - abs(short_call.get('delta', 0.5))
+                        
+                        profitable_spreads.append({
+                            'type': 'Credit Call Spread',
+                            'ticker': short_call.get('underlying_symbol', ''),
+                            'short_strike': short_call['strike'],
+                            'long_strike': long_call['strike'],
+                            'expiration': expiration,
+                            'dte': dte,
+                            'credit': credit,
+                            'max_loss': max_loss,
+                            'ratio': ratio,
+                            'pop': pop,
+                            'short_delta': short_call.get('delta', 0),
+                            'legs': f"Short Call ${short_call['strike']:.0f} / Long Call ${long_call['strike']:.0f}"
+                        })
+        
+        # Try put spreads (bullish strategy)
+        puts = exp_options[exp_options['option_type'] == 'Put'].copy()
+        if len(puts) >= 2:
+            puts = puts.sort_values('strike', ascending=False)  # Higher strikes first
+            
+            for i in range(len(puts)-1):
+                short_put = puts.iloc[i]  # Higher strike (short)
+                long_put = puts.iloc[i+1]  # Lower strike (long)
+                
+                # Calculate credit
+                short_price = get_option_price(short_put)
+                long_price = get_option_price(long_put)
+                
+                if short_price > 0 and long_price > 0:
+                    credit = short_price - long_price
+                    strike_diff = short_put['strike'] - long_put['strike']
+                    max_loss = strike_diff - credit
+                    
+                    if credit >= min_credit and max_loss > 0:
+                        ratio = credit / max_loss
+                        pop = 1 - abs(short_put.get('delta', 0.5))
+                        
+                        profitable_spreads.append({
+                            'type': 'Credit Put Spread',
+                            'ticker': short_put.get('underlying_symbol', ''),
+                            'short_strike': short_put['strike'],
+                            'long_strike': long_put['strike'],
+                            'expiration': expiration,
+                            'dte': dte,
+                            'credit': credit,
+                            'max_loss': max_loss,
+                            'ratio': ratio,
+                            'pop': pop,
+                            'short_delta': short_put.get('delta', 0),
+                            'legs': f"Short Put ${short_put['strike']:.0f} / Long Put ${long_put['strike']:.0f}"
+                        })
+    
+    print(f"💰 Found {len(profitable_spreads)} profitable spreads")
+    return profitable_spreads
 
-    trades = []
-    for stock in AI_PORTFOLIO:
-        ticker = stock["Ticker"]
-        sector = stock["Sector"]
-        print(f"📊 Processing {ticker}...")
-        chain_df = build_chain(session, ticker)
-        greeks = await get_greeks(chain_df["streamer_symbol"].tolist(), token, dxlink_url)
-        sentiment = MOMENTUM.get(ticker, "neutral")
-        trade = pick_30_delta_spread(chain_df, greeks, sentiment)
-        trades.append({"Ticker": ticker, "Sector": sector, **trade,
-                       "Thesis": f"AI sector leader {ticker}, {sentiment} bias"})
+def get_option_price(option_row):
+    """Get the best available price for an option"""
+    # Try mid_price first
+    if pd.notna(option_row.get('mid_price')) and option_row.get('mid_price') > 0:
+        return float(option_row['mid_price'])
+    
+    # Try to calculate from bid/ask
+    bid = option_row.get('bid_price')
+    ask = option_row.get('ask_price')
+    
+    if pd.notna(bid) and pd.notna(ask) and bid > 0 and ask > 0:
+        return (float(bid) + float(ask)) / 2
+    
+    # Try individual bid or ask
+    if pd.notna(ask) and ask > 0:
+        return float(ask)
+    if pd.notna(bid) and bid > 0:
+        return float(bid)
+    
+    return 0
 
-    df = pd.DataFrame(trades)
-    print("\n### Top 3 Trades")
-    print(df.head(3).to_string(index=False))
+def analyze_ticker(ticker, sector):
+    """Analyze a single ticker for profitable trades"""
+    print(f"\n📊 Analyzing {ticker} ({sector})...")
+    
+    # Load the data from your first script
+    options_df = load_options_data(ticker)
+    if options_df is None:
+        return []
+    
+    # Filter for 30 days or less
+    short_term_options = filter_30_day_options(options_df)
+    if short_term_options.empty:
+        print(f"❌ No short-term options for {ticker}")
+        return []
+    
+    # Determine market direction from data
+    direction = determine_market_direction(short_term_options)
+    print(f"📈 Data-driven direction: {direction}")
+    
+    # Find all profitable spreads
+    spreads = find_profitable_spreads(short_term_options, min_credit=0.05)  # Minimum 5 cents credit
+    
+    # Add ticker and sector info
+    for spread in spreads:
+        spread['ticker'] = ticker
+        spread['sector'] = sector
+        spread['direction'] = direction
+    
+    return spreads
+
+def main():
+    print("🚀 Starting Profitable Options Strategy Analysis...")
+    print("📁 Looking for CSV files from data collection script...\n")
+    
+    tickers = [
+        {"Ticker": "NVDA", "Sector": "Technology"},
+        {"Ticker": "ISRG", "Sector": "Healthcare"},
+        {"Ticker": "PLTR", "Sector": "Financials"},
+        {"Ticker": "TSLA", "Sector": "Transportation"},
+        {"Ticker": "AMZN", "Sector": "Consumer Staples"},
+        {"Ticker": "ENPH", "Sector": "Energy (Renewable)"},
+        {"Ticker": "XOM",  "Sector": "Energy (Traditional)"},
+        {"Ticker": "DE",   "Sector": "Agriculture"},
+        {"Ticker": "CAT",  "Sector": "Industrials"}
+    ]
+    
+    all_spreads = []
+    
+    # Analyze each ticker
+    for stock_info in tickers:
+        ticker = stock_info["Ticker"]
+        sector = stock_info["Sector"]
+        
+        spreads = analyze_ticker(ticker, sector)
+        all_spreads.extend(spreads)
+    
+    if not all_spreads:
+        print("\n❌ No profitable trades found!")
+        print("   This could be because:")
+        print("   • No pricing data in your CSV files")
+        print("   • All spreads have credit < $0.05")
+        print("   • Need to run the data collection script first")
+        return
+    
+    # Convert to DataFrame and sort by ratio
+    spreads_df = pd.DataFrame(all_spreads)
+    spreads_df = spreads_df.sort_values('ratio', ascending=False)
+    
+    print(f"\n🏆 TOP PROFITABLE TRADES (Found {len(spreads_df)} total)")
+    print("=" * 90)
+    
+    # Show top 10 trades
+    for idx, trade in spreads_df.head(10).iterrows():
+        print(f"{trade['ticker']}: {trade['type']}")
+        print(f"  {trade['legs']}")
+        print(f"  Credit: ${trade['credit']:.2f} | Max Loss: ${trade['max_loss']:.2f} | Ratio: {trade['ratio']:.2f}")
+        print(f"  POP: {trade['pop']:.1%} | DTE: {trade['dte']} days | Delta: {trade['short_delta']:.2f}")
+        print()
+    
+    # Save results
+    spreads_df.to_csv('profitable_options_trades.csv', index=False)
+    print("💾 Results saved to 'profitable_options_trades.csv'")
+    
+    # Summary stats
+    print(f"\n📊 SUMMARY:")
+    print(f"   • Found {len(spreads_df)} profitable spreads")
+    print(f"   • Average credit: ${spreads_df['credit'].mean():.2f}")
+    print(f"   • Average ratio: {spreads_df['ratio'].mean():.2f}")
+    print(f"   • Best ratio: {spreads_df['ratio'].max():.2f}")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
 ```
 - **Important:** Replace the username and password.
 
