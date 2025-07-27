@@ -731,7 +731,6 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-- **Important:** Replace `"your_username"` and `"your_password"` with your actual credentials. Also, set `TICKER` to the stonks you want to look at, like "AAPL" for Apple.
 
 ## Run the Script
 ```bash
