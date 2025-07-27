@@ -1,13 +1,24 @@
-# 🚀 AI Options Trading Portfolio & Daily Trade Screener
+# ⬇️ AI Options Portfolio & Daily Trade Screener
 
 ## 📖 What This Does
+This workflow builds an **AI‑driven trading portfolio** and screens for the day’s top option trades.  
+It:
+1. Selects **9 AI-focused stocks** across multiple sectors.
+2. Pulls **live option chain and Greeks data** from Tastytrade.
+3. Filters and ranks option trades using **defined rules and real‑time risk metrics**.
+4. Outputs the **Top 3 highest‑probability trades** in a clean table.
 
+The goal is to remove noise, automate the heavy data lifting, and focus only on **high‑quality trades with clear probabilities and defined risk**.
 
+---
 
 ## 🧠 Why Build This?
+- **Massive option universe:** Thousands of tickers and millions of option combinations exist daily. This workflow narrows focus to **AI sector leaders only**.
+- **Objective filtering:** Uses liquidity, volatility, and momentum rules to eliminate weak setups.
+- **Greeks integration:** Delta, Gamma, Theta, Vega are pulled live so trades are grounded in real risk data.
+- **Risk control:** Only trades with high probability of profit and defined max loss are shown.
 
-
-
+---
 
 
 
