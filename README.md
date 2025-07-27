@@ -96,7 +96,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | CAT    | Industrials        | Robotics, smart infrastructure systems        | 40%      | 70%     | 66     | Positive    | 4M            | B               |
 
 
-# ⬇️ Workflow 2 | Download TastyTrade Data
+# ⬇️ Workflow 2 |Setup TastyTrade Login 
 
 ## 🛠 Setup & Install
 To use this beast, you gotta armor up your computer with a few tools.  
@@ -201,7 +201,9 @@ python3 auth_test.py
 ```
 - **Why?** If it says "SUCCESS: Authentication worked!", then we’re ready to go.
 
-## 📊 Pull Options Chains + Greeks
+# ⬇️ Workflow 3 |TastyTrade Data Download
+
+## 📊 Pull Live Options Chains + Live Greeks
 
 This program pulls live stock option data for 9 AI-related stocks from Tastytrade and organizes it into spreadsheets, ready for deeper analysis like the Black-Scholes model. 
 
@@ -227,7 +229,7 @@ Each stock has a CSV file ready for analysis, so you can quickly:
 3. Focus on the best short-term trading opportunities
 
 
-### Step 5 – Create the Script
+### Step 1 – Create the Script
 Create a new file called `get_options_chain_with_dxlink.py`:
 
 ```bash
