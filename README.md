@@ -202,7 +202,30 @@ python3 auth_test.py
 - **Why?** If it says "SUCCESS: Authentication worked!", then we’re ready to go.
 
 ## 📊 Pull Options Chains + Greeks
-Now, we can start getting the actual data. This script will fetch the options chain (all the available options) for a stock, along with their Greeks.
+
+This program pulls live stock option data for 9 AI-related stocks from Tastytrade and organizes it into spreadsheets, ready for deeper analysis like the Black-Scholes model. 
+
+### Here’s what happens step by step:
+1. Login to Tastytrade – Uses your username and password to access the trading account, just like logging into a game or shopping app.
+2. Choose Stocks – Works from a pre-set list of 9 AI-focused stocks (like NVDA, TSLA, AMZN).
+3. Grab the Options Chain – Downloads every available option (strike prices and expiration dates) for each stock, similar to looking at a menu of all choices.
+4. Filter Short-Term Options – Focuses on contracts expiring within 30 days, so you only see near-term opportunities.
+5. Pull Live Market Data – Connects to a live data feed to get:
+   - Current stock prices
+   - Bid/ask prices (what buyers and sellers want)
+   - Greeks (risk and sensitivity numbers)
+6. Calculate Key Stats – Figures out things like days to expiration, how close each strike is to the stock price (“moneyness”), mid-price, and intrinsic value.
+7. Highlight “At-the-Money” Options – Flags options closest to the current stock price (often the most relevant for trading).
+8. Combine All Data – Organizes everything into a single, easy-to-read table for each stock.
+9. Mark Ready-for-Analysis Options – Adds a “bs_ready” checkmark showing which options have all data for your Black-Scholes model.
+10. Save to Files – Creates a clean spreadsheet for each stock with all relevant columns (prices, Greeks, volatility, time left, etc.).
+
+### What You Get
+Each stock has a CSV file ready for analysis, so you can quickly:
+1. Spot mispriced options
+2. Run fair-value checks with Black-Scholes
+3. Focus on the best short-term trading opportunities
+
 
 ### Step 5 – Create the Script
 Create a new file called `get_options_chain_with_dxlink.py`:
