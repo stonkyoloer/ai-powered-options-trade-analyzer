@@ -20,6 +20,8 @@
 ## 🗂 Attachment
 - us_tickers.csv
 
+---
+
 ## 👨‍🏫 Instructions 
 
 **Goal**  
@@ -62,6 +64,8 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
 | Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
 
+---
+
 ## 🤖 Prompt
 **Goal**
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
@@ -78,20 +82,6 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
   - Liquidity Grade: A (ideal), B (acceptable), C (avoid).  
 - Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
-
-#### Prompt Output
-
-| Ticker | Sector             | AI Leadership Summary                          | Avg IV % | IV Rank | RSI(5) | MACD Signal | Daily Volume | Liquidity Grade |
-|--------|--------------------|-----------------------------------------------|----------|---------|--------|-------------|---------------|-----------------|
-| NVDA   | Technology         | Leader in AI chips, GPUs for data centers     | 50%      | 80%     | 70     | Positive    | 45M           | A               |
-| ISRG   | Healthcare         | ML in surgical robotics, precision healthcare | 40%      | 75%     | 65     | Positive    | 2M            | B               |
-| PLTR   | Financials         | AI for risk models, fraud detection           | 45%      | 78%     | 68     | Positive    | 15M           | A               |
-| TSLA   | Transportation     | Autonomous vehicles, predictive logistics     | 55%      | 85%     | 72     | Positive    | 70M           | A               |
-| AMZN   | Consumer Staples   | AI-driven forecasting, supply chain           | 49%      | 75%     | 67     | Positive    | 40M           | A               |
-| ENPH   | Energy (Renewable) | AI-optimized solar, grid analytics            | 42%      | 70%     | 64     | Positive    | 5M            | B               |
-| XOM    | Energy (Traditional)| AI in oil/gas ops, predictive maintenance    | 38%      | 65%     | 62     | Positive    | 20M           | A               |
-| DE     | Agriculture        | Precision farming, ag-biotech automation      | 35%      | 60%     | 60     | Positive    | 3M            | B               |
-| CAT    | Industrials        | Robotics, smart infrastructure systems        | 40%      | 70%     | 66     | Positive    | 4M            | B               |
 
 
 # 3️⃣ |TastyTrade API Connection 
@@ -122,17 +112,14 @@ pip install tastytrade websockets pandas httpx certifi
   - `httpx` and `certifi`: Make secure connections to the internet.
 
 ## 🔐 Test Your Tastytrade Login
-Before we can get any data, we need to make sure your computer can connect to Tastytrade.
 
-### Create & Run Login Test
-Create a new file called `test_connection.py` by typing:
+### Create a File
 
 ```bash
 touch test_connection.py
 open -e test_connection.py
 ```
-Add this code to the file:
-
+### Save the Script
 ```python
 import requests
 import json
@@ -144,24 +131,23 @@ url = "https://api.tastytrade.com/sessions"
 print(f"API URL: {url}")
 print("Ready for authentication test")
 ```
-Save the file and run it by typing:
+### Run the Script
 
 ```bash
 python3 test_connection.py
 ```
-- **Why?** If it prints without any errors, it means the connection is working.
+
 
 ## 🔑 Authenticate & Get Account Info
 Now, we need to log in to your Tastytrade account so the project can get data for you.
 
-### Create Authentication Test
-Create another file called `auth_test.py`:
+### Create a File
 
 ```bash
 touch auth_test.py
 open -e auth_test.py
 ```
-Add this code:
+### Save the Script
 
 ```python
 import requests
@@ -192,7 +178,7 @@ else:
 ```
 - **Important:** Replace `"your_username_here"` and `"your_password_here"` with your actual Tastytrade username and password.
 
-Run the file:
+### Run the Script
 
 ```bash
 python3 auth_test.py
@@ -1100,19 +1086,7 @@ Run it:
 ```bash
 python3 select_top_trades.py
 ```
-- **Why?** This prints out the top 3 trades based on some dummy data (since the actual filtering logic isn’t implemented here).
 
-
-## 🎯 Final Output
-When you run `select_top_trades.py`, you get a table like this:
-
-| Ticker | Sector      | Strategy            | Legs                           | POP | Credit/Max-Loss | DTE | Thesis                                |
-|--------|-------------|--------------------|--------------------------------|-----|-----------------|-----|---------------------------------------|
-| NVDA   | Technology  | Credit Put Spread  | Short Put 165.0 / Long Put 160.0 | 0.7 | 0.35            | 28  | AI sector leader NVDA, bullish bias  |
-| ISRG   | Healthcare  | Credit Put Spread  | Short Put 425.0 / Long Put 420.0 | 0.7 | 0.35            | 28  | AI sector leader ISRG, bullish bias  |
-| PLTR   | Financials  | Credit Put Spread  | Short Put 150.0 / Long Put 145.0 | 0.7 | 0.35            | 28  | AI sector leader PLTR, bullish bias  |
-
-- **What this means:** This shows the best trades for the day, so you can decide if you want to make those trades.
 
 # 6️⃣ | Prompt AI 
 
@@ -1122,6 +1096,8 @@ When you run `select_top_trades.py`, you get a table like this:
 | NVDA   | Technology  | Credit Put Spread  | Short Put 165.0 / Long Put 160.0 | 0.7 | 0.35            | 28  | AI sector leader NVDA, bullish bias  |
 | ISRG   | Healthcare  | Credit Put Spread  | Short Put 425.0 / Long Put 420.0 | 0.7 | 0.35            | 28  | AI sector leader ISRG, bullish bias  |
 | PLTR   | Financials  | Credit Put Spread  | Short Put 150.0 / Long Put 145.0 | 0.7 | 0.35            | 28  | AI sector leader PLTR, bullish bias  |
+
+---
 
 ## 👨‍🏫 Instructions 
 **Goal** Validate the **3 selected trades** from the AI‑optimized portfolio for execution readiness, including **macro/news risk checks, sector exposure sanity, and portfolio Greek balance**. Provide a final confidence check before trading.  
@@ -1154,26 +1130,3 @@ Apply **the Instructions** to the attached data.
    - Any portfolio risk adjustments needed (e.g., sector overweight, delta/vega imbalance)  
    - Key external catalysts to monitor before entry.  
 
----
-
-### Output:
-
-| Ticker | Strategy          | Legs                           | Thesis (≤ 30 words)                  | POP  | Credit/Max‑Loss | DTE | Sector      | Risk/Event Note             | Confidence |
-|--------|-------------------|--------------------------------|--------------------------------------|------|-----------------|-----|-------------|-----------------------------|------------|
-| NVDA   | Credit Put Spread | Short Put 165.0 / Long Put 160.0 | AI chip leader; bullish bias          | 0.70 | 0.35            | 28  | Technology  | Earnings 8/27 (post-expiry) | High       |
-| ISRG   | Credit Put Spread | Short Put 435.0 / Long Put 430.0 | Robotic surgery leader; bullish bias  | 0.70 | 0.35            | 28  | Healthcare  | Post-earnings (strong Q2)    | High       |
-| PLTR   | Credit Put Spread | Short Put 140.0 / Long Put 135.0 | AI software platform leader; bullish bias | 0.70 | 0.35            | 28  | Financials  | Earnings 8/4 (in 10d)       | Medium     |
-
-## Commentary
-
-**Macro/News Context:**  
-The broader backdrop remains supportive of these bullish trades. The Federal Reserve is holding interest rates steady for now, and tech-heavy indexes continue to hit record highs amid the AI boom. Nvidia (NVDA) has resumed sales of advanced AI chips to China, boosting its stock, and analysts reaffirm it as a top pick with clear growth visibility. Intuitive Surgical (ISRG) just delivered strong quarterly results, confirming its growth thesis. Palantir (PLTR) secured a new $30 million Army AI contract, underscoring its momentum. No adverse news threatens these trade theses.
-
-**Portfolio Risk Adjustments:**  
-All three positions are bullish credit put spreads in AI-centric names, creating thematic concentration. This adds positive **delta** (bullish bias) and short **vega** (volatility risk). Consider balancing with non-tech or defensive positions if needed. Position sizing and diversification are key, though the ∼70% POP for each trade keeps risk manageable.
-
-**Key Catalysts to Monitor:**  
-- **Federal Reserve meeting (July 31)** – potential macro volatility  
-- **Palantir earnings (Aug 4)** – within trade duration, may cause swings  
-- **Nvidia earnings (late August)** – post-expiry but may influence sentiment  
-- Broader tech earnings and economic data (jobs, inflation) – could shift market momentum
