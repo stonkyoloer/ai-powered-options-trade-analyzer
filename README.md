@@ -208,16 +208,10 @@ Now, we can start getting the actual data. This script will fetch the options ch
 Create a new file called `get_options_chain_with_dxlink.py`:
 
 ```bash
-touch get_options_chain_with_dxlink.py
-open -e get_options_chain_with_dxlink.py
-```
-Add this code (it’s a bit long, but it’s all set up for you):
-
-```python
 #!/usr/bin/env python3
 """
-Options chain fetch with live Greeks via DXLink WebSocket
-for multiple tickers in the AI portfolio.
+Enhanced options chain fetch with live Greeks and pricing data
+for Black-Scholes model preparation - DEBUG VERSION
 """
 
 import asyncio
@@ -227,6 +221,7 @@ import pandas as pd
 import httpx
 import certifi
 import websockets
+from datetime import datetime
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain, Equity
 
@@ -247,9 +242,9 @@ AI_PORTFOLIO = [
     {"Ticker": "CAT",  "Sector": "Industrials"}
 ]
 
-# -------------------------
-# DXLink Token Manager
-# -------------------------
+# Risk-free rate proxy (you may want to fetch this dynamically)
+RISK_FREE_RATE = 0.045  # Current 3-month Treasury rate approximation
+
 class TokenManager:
     def __init__(self, session):
         self.session = session
@@ -268,125 +263,479 @@ class TokenManager:
                 print(f"❌ Failed to get quote token: {r.text}")
                 return None, None
 
-# -------------------------
-# DXLink WebSocket Client
-# -------------------------
-async def get_options_greeks_websocket(symbols, token, dxlink_url):
+async def get_underlying_and_options_data_websocket(underlying_symbol, option_symbols, token, dxlink_url):
+    """Get underlying stock price, Greeks, and Quote data"""
+    print(f"🔗 Connecting to WebSocket for {underlying_symbol} with {len(option_symbols)} options...")
+    
     ssl_context = ssl.create_default_context(cafile=certifi.where())
     headers = [("Authorization", f"Bearer {token}")]
-    async with websockets.connect(dxlink_url, ssl=ssl_context, additional_headers=headers) as ws:
-        # Setup connection
-        await ws.send(json.dumps({"type": "SETUP", "channel": 0, "version": "0.1", "keepaliveTimeout": 60}))
-        await ws.send(json.dumps({"type": "AUTH", "channel": 0, "token": token}))
-        await ws.send(json.dumps({"type": "CHANNEL_REQUEST", "channel": 1,
-                                  "service": "FEED", "parameters": {"contract": "AUTO"}}))
-        await ws.send(json.dumps({
-            "type": "FEED_SETUP", "channel": 1,
-            "acceptEventFields": {"Greeks": ["eventType","eventSymbol","delta","gamma","theta","vega","rho","volatility"]},
-            "acceptDataFormat": "COMPACT"
-        }))
-        await ws.send(json.dumps({
-            "type": "FEED_SUBSCRIPTION", "channel": 1,
-            "add": [{"type": "Greeks", "symbol": s} for s in symbols]
-        }))
+    
+    try:
+        async with websockets.connect(dxlink_url, ssl=ssl_context, additional_headers=headers) as ws:
+            print("✅ WebSocket connected")
+            
+            # Setup connection
+            await ws.send(json.dumps({"type": "SETUP", "channel": 0, "version": "0.1", "keepaliveTimeout": 60}))
+            setup_response = await ws.recv()
+            print(f"📞 Setup response: {setup_response}")
+            
+            await ws.send(json.dumps({"type": "AUTH", "channel": 0, "token": token}))
+            auth_response = await ws.recv()
+            print(f"🔐 Auth response: {auth_response}")
+            
+            await ws.send(json.dumps({"type": "CHANNEL_REQUEST", "channel": 1,
+                                      "service": "FEED", "parameters": {"contract": "AUTO"}}))
+            channel_response = await ws.recv()
+            print(f"📺 Channel response: {channel_response}")
+            
+            # Request Greeks, Quote, and Trade data
+            feed_setup = {
+                "type": "FEED_SETUP", "channel": 1,
+                "acceptEventFields": {
+                    "Greeks": ["eventType","eventSymbol","delta","gamma","theta","vega","rho","volatility"],
+                    "Quote": ["eventType","eventSymbol","bidPrice","askPrice","bidSize","askSize"],
+                    "Trade": ["eventType","eventSymbol","price","size","time"]
+                },
+                "acceptDataFormat": "COMPACT"
+            }
+            await ws.send(json.dumps(feed_setup))
+            
+            # Wait for setup confirmation
+            for i in range(3):
+                try:
+                    response = await asyncio.wait_for(ws.recv(), timeout=2)
+                    print(f"📊 Feed setup response {i+1}: {response}")
+                except asyncio.TimeoutError:
+                    break
+            
+            # Subscribe to underlying stock and options
+            subscription_list = [
+                {"type": "Quote", "symbol": underlying_symbol},
+                {"type": "Trade", "symbol": underlying_symbol}
+            ]
+            
+            # Limit option symbols to avoid overwhelming the connection
+            limited_options = option_symbols[:20]  # Start with fewer options
+            print(f"📈 Subscribing to {len(limited_options)} options...")
+            
+            for s in limited_options:
+                subscription_list.extend([
+                    {"type": "Greeks", "symbol": s},
+                    {"type": "Quote", "symbol": s}
+                ])
+            
+            subscription_msg = {
+                "type": "FEED_SUBSCRIPTION", "channel": 1,
+                "add": subscription_list
+            }
+            await ws.send(json.dumps(subscription_msg))
+            print(f"📡 Sent subscription for {len(subscription_list)} symbols")
 
-        data = []
-        try:
-            async with asyncio.timeout(5):
-                while True:
-                    raw_msg = await ws.recv()
-                    msg = json.loads(raw_msg) if isinstance(raw_msg, str) else raw_msg
-                    if msg.get("type") == "FEED_DATA":
-                        data.append(msg)
-        except asyncio.TimeoutError:
-            pass
-        return data
+            data = []
+            message_count = 0
+            try:
+                async with asyncio.timeout(15):  # Increased timeout
+                    while True:
+                        raw_msg = await ws.recv()
+                        message_count += 1
+                        msg = json.loads(raw_msg) if isinstance(raw_msg, str) else raw_msg
+                        
+                        if message_count <= 5:  # Show first few messages for debugging
+                            print(f"📨 Message {message_count}: {msg}")
+                        
+                        if msg.get("type") == "FEED_DATA":
+                            data.append(msg)
+                            if len(data) >= 20:  # Stop after collecting some data
+                                print(f"✅ Collected {len(data)} data packets")
+                                break
+                                
+            except asyncio.TimeoutError:
+                print(f"⏰ Timeout reached. Collected {len(data)} data packets from {message_count} total messages")
+                
+            return data, limited_options
+            
+    except Exception as e:
+        print(f"❌ WebSocket error: {e}")
+        return [], []
 
-# -------------------------
-# Process Greeks Data
-# -------------------------
-def process_websocket_data(raw_data):
-    records = []
+def process_enhanced_websocket_data(raw_data, underlying_symbol):
+    """Process Greeks, Quote, and underlying price data"""
+    greeks_records = []
+    quote_records = []
+    underlying_price = None
+    
     for packet in raw_data:
         if packet.get("type") == "FEED_DATA":
             for event in packet.get("data", []):
-                if isinstance(event, list) and event and event[0] == "Greeks":
-                    records.append({
-                        "symbol": event[1],
-                        "volatility": event[2],
-                        "delta": event[3],
-                        "gamma": event[4],
-                        "theta": event[5],
-                        "vega": event[6],
-                        "rho": event[7]
-                    })
-    df = pd.DataFrame(records)
-    print(f"📊 Processed {len(df)} rows of Greeks data")
-    return df
+                if isinstance(event, list) and event:
+                    event_symbol = event[1]
+                    
+                    if event[0] == "Greeks":
+                        greeks_records.append({
+                            "symbol": event_symbol,
+                            "volatility": event[2],
+                            "delta": event[3],
+                            "gamma": event[4],
+                            "theta": event[5],
+                            "vega": event[6],
+                            "rho": event[7]
+                        })
+                    elif event[0] == "Quote":
+                        if event_symbol == underlying_symbol:
+                            # This is the underlying stock quote
+                            bid_price = event[2] if len(event) > 2 else None
+                            ask_price = event[3] if len(event) > 3 else None
+                            if bid_price and ask_price:
+                                underlying_price = (float(bid_price) + float(ask_price)) / 2
+                        else:
+                            # This is an option quote
+                            quote_records.append({
+                                "symbol": event_symbol,
+                                "bid_price": event[2] if len(event) > 2 else None,
+                                "ask_price": event[3] if len(event) > 3 else None,
+                                "bid_size": event[4] if len(event) > 4 else None,
+                                "ask_size": event[5] if len(event) > 5 else None
+                            })
+                    elif event[0] == "Trade" and event_symbol == underlying_symbol:
+                        # Get last trade price as backup for underlying price
+                        if len(event) > 2 and event[2] and not underlying_price:
+                            underlying_price = float(event[2])
+    
+    greeks_df = pd.DataFrame(greeks_records)
+    quote_df = pd.DataFrame(quote_records)
+    
+    print(f"📊 Processed {len(greeks_df)} Greeks records, {len(quote_df)} Quote records")
+    if underlying_price:
+        print(f"💰 Underlying price: ${underlying_price:.2f}")
+    
+    return greeks_df, quote_df, underlying_price
 
-# -------------------------
-# Fetch Chain with Greeks
-# -------------------------
-async def fetch_chain_with_greeks(session, token_manager, ticker):
-    print(f"🔍 Processing {ticker}...")
-    equity = Equity.get(session, ticker)
-    print(f"📈 Got equity: {equity.symbol} - {equity.description}")
+def calculate_time_to_expiration(expiration_date):
+    """Calculate time to expiration in years"""
+    try:
+        # Handle both datetime.date objects and strings
+        if isinstance(expiration_date, str):
+            exp_dt = datetime.strptime(expiration_date, "%Y-%m-%d")
+        else:
+            # Already a date object, convert to datetime
+            exp_dt = datetime.combine(expiration_date, datetime.min.time())
+        
+        now = datetime.now()
+        days_to_exp = (exp_dt - now).days
+        print(f"⏰ Days to expiration for {expiration_date}: {days_to_exp}")
+        return max(days_to_exp / 365.0, 1/365)  # Minimum 1 day
+    except Exception as e:
+        print(f"❌ Error calculating time to expiration for {expiration_date}: {e}")
+        return None
 
-    chain = get_option_chain(session, ticker)
-    print(f"📅 Total expirations: {len(chain)}")
+async def fetch_enhanced_chain_with_greeks(session, token_manager, ticker):
+    print(f"\n🔍 Processing {ticker}...")
+    
+    try:
+        equity = Equity.get(session, ticker)
+        print(f"📈 Got equity: {equity.symbol} - {equity.description}")
+    except Exception as e:
+        print(f"❌ Error getting equity for {ticker}: {e}")
+        return
+
+    try:
+        chain = get_option_chain(session, ticker)
+        print(f"📅 Total expirations: {len(chain)}")
+        print(f"📋 Expiration dates: {list(chain.keys())[:5]}...")  # Show first 5
+    except Exception as e:
+        print(f"❌ Error getting option chain for {ticker}: {e}")
+        return
 
     all_data = []
+    underlying_price = None
 
-    for exp_date, options_list in list(chain.items())[:2]:  # limit to 2 expirations
-        print(f"--- Expiration: {exp_date} ---")
-        options_subset = options_list[:20]
-
-        streaming_symbols = [o.streamer_symbol for o in options_subset if hasattr(o, "streamer_symbol")]
-        chain_rows = [{
-            "expiration": exp_date,
-            "strike": o.strike_price,
-            "option_type": "Call" if o.option_type.value == "C" else "Put",
-            "symbol": o.symbol,
-            "streamer_symbol": o.streamer_symbol,
-            "underlying_symbol": o.underlying_symbol
-        } for o in options_subset]
-
-        if not streaming_symbols:
-            print("⚠️ No streaming symbols found")
-            all_data.extend(chain_rows)
+    # Process fewer expirations initially for testing
+    exp_count = 0
+    for exp_date, options_list in chain.items():
+        exp_count += 1
+        if exp_count > 2:  # Only process first 2 expirations
+            break
+            
+        print(f"\n--- Expiration {exp_count}: {exp_date} ---")
+        print(f"📊 Raw options list length: {len(options_list)}")
+        print(f"📊 Options list type: {type(options_list)}")
+        
+        # Calculate time to expiration
+        time_to_exp = calculate_time_to_expiration(exp_date)
+        if not time_to_exp:
+            print(f"⏭️ Skipping {exp_date} - couldn't calculate time to expiration")
             continue
-
-        token, dxlink_url = await token_manager.get_dxlink_token()
-        if not token:
-            all_data.extend(chain_rows)
+            
+        # Debug the options_list structure
+        if not options_list:
+            print(f"❌ Empty options list for {exp_date}")
             continue
-
-        raw_greeks = await get_options_greeks_websocket(streaming_symbols, token, dxlink_url)
-        greeks_df = process_websocket_data(raw_greeks)
-
-        chain_df = pd.DataFrame(chain_rows)
-        if not greeks_df.empty:
-            merged = chain_df.merge(greeks_df, left_on="streamer_symbol", right_on="symbol", how="left")
-            all_data.extend(merged.to_dict("records"))
+            
+        print(f"📊 Got {len(options_list)} options for this expiration")
+        
+        # Start with a reasonable subset for initial WebSocket request
+        # We'll filter for ATM options after we get the underlying price
+        options_subset = options_list[:30]  # Get initial subset for WebSocket
+        
+        # Debug: Check what attributes the first option has
+        if options_subset:
+            sample_option = options_subset[0]
+            print(f"🔍 Sample option type: {type(sample_option)}")
+            print(f"🔍 Sample option attributes: {[attr for attr in dir(sample_option) if not attr.startswith('_')]}")
+            
+            # Try to access basic attributes
+            try:
+                print(f"🎯 Sample option: strike={sample_option.strike_price}, type={sample_option.option_type}")
+            except Exception as e:
+                print(f"❌ Error accessing basic option attributes: {e}")
+                continue
+                
+            # Check for streamer_symbol
+            if hasattr(sample_option, 'streamer_symbol'):
+                print(f"📡 Sample streamer_symbol: {sample_option.streamer_symbol}")
+            else:
+                print("❌ No streamer_symbol attribute found!")
+                # Let's see what symbol-related attributes exist
+                symbol_attrs = [attr for attr in dir(sample_option) if 'symbol' in attr.lower()]
+                print(f"🔍 Symbol-related attributes: {symbol_attrs}")
+                continue
         else:
-            all_data.extend(chain_rows)
+            print(f"❌ No options in subset for {exp_date}")
+            continue
+        
+        # Extract streaming symbols
+        streaming_symbols = []
+        for i, opt in enumerate(options_subset):
+            try:
+                if hasattr(opt, "streamer_symbol") and opt.streamer_symbol:
+                    streaming_symbols.append(opt.streamer_symbol)
+                elif hasattr(opt, "symbol") and opt.symbol:
+                    # Fallback to regular symbol if streamer_symbol doesn't exist
+                    streaming_symbols.append(opt.symbol)
+                    print(f"⚠️ Using regular symbol instead of streamer_symbol for option {i}")
+            except Exception as e:
+                print(f"❌ Error getting symbol for option {i}: {e}")
+                
+        print(f"🔗 Found {len(streaming_symbols)} streaming symbols")
+        
+        # Debug: Show first few streaming symbols
+        if streaming_symbols:
+            print(f"📋 Sample symbols: {streaming_symbols[:3]}")
+        else:
+            print("❌ No streaming symbols found - cannot proceed with WebSocket")
+            continue
+
+        print("🎫 Getting DXLink token...")
+        try:
+            token, dxlink_url = await token_manager.get_dxlink_token()
+            if not token:
+                print("❌ Could not get DXLink token")
+                continue
+        except Exception as e:
+            print(f"❌ Error getting DXLink token: {e}")
+            continue
+        
+        print(f"✅ Got token and URL: {dxlink_url[:50]}...")
+
+        # Get data including underlying price
+        try:
+            raw_data, used_symbols = await get_underlying_and_options_data_websocket(ticker, streaming_symbols, token, dxlink_url)
+            greeks_df, quote_df, fetched_underlying_price = process_enhanced_websocket_data(raw_data, ticker)
+        except Exception as e:
+            print(f"❌ Error in WebSocket data fetch: {e}")
+            continue
+        
+        # Use the fetched underlying price for all expirations
+        if fetched_underlying_price and not underlying_price:
+            underlying_price = fetched_underlying_price
+        elif fetched_underlying_price:
+            underlying_price = fetched_underlying_price  # Update with latest price
+            
+        # If we still don't have underlying price, try to estimate from option chain
+        if not underlying_price:
+            print(f"⚠️ No underlying price from WebSocket, attempting to estimate...")
+            # Find ATM options to estimate underlying price
+            strikes = [o.strike_price for o in options_subset]
+            if strikes:
+                underlying_price = sum(strikes) / len(strikes)  # Rough estimate
+                print(f"📊 Estimated underlying price: ${underlying_price:.2f}")
+            
+        if not underlying_price:
+            print(f"❌ Could not determine underlying price for {ticker}")
+            continue
+            
+        print(f"💰 Using underlying price: ${underlying_price:.2f}")
+        
+        # Now filter the full options list to focus around the money (within $50)
+        atm_options = [opt for opt in options_list if abs(float(opt.strike_price) - underlying_price) <= 50]
+        print(f"🎯 Found {len(atm_options)} options within $50 of ATM (${underlying_price:.2f})")
+        
+        # If we have ATM options, use those; otherwise use the original subset
+        working_options = atm_options if atm_options else options_subset
+        print(f"📊 Working with {len(working_options)} options for Greek/Quote matching")
+            
+        # Process the Greeks data to see which options actually have data
+        print(f"🔍 Greeks symbols received: {greeks_df['symbol'].tolist() if not greeks_df.empty else 'None'}")
+        print(f"🔍 Quote symbols received: {quote_df['symbol'].tolist() if not quote_df.empty else 'None'}")
+        
+        # If we have Greeks data, prioritize options that have Greeks
+        if not greeks_df.empty:
+            symbols_with_greeks = set(greeks_df['symbol'].tolist())
+            options_with_greeks = [opt for opt in working_options if opt.streamer_symbol in symbols_with_greeks]
+            
+            if options_with_greeks:
+                print(f"📊 Found {len(options_with_greeks)} ATM options with Greeks data")
+                # Use options that have Greeks data, but still focus around the money
+                options_with_distance = []
+                for option in options_with_greeks:
+                    distance = abs(float(option.strike_price) - underlying_price)
+                    options_with_distance.append((distance, option))
+                
+                options_with_distance.sort(key=lambda x: x[0])
+                final_options = [opt[1] for opt in options_with_distance[:20]]
+            else:
+                print("⚠️ No ATM options match Greeks symbols, checking original subset")
+                # Fallback to original subset if ATM options don't have Greeks
+                options_with_greeks = [opt for opt in options_subset if opt.streamer_symbol in symbols_with_greeks]
+                if options_with_greeks:
+                    print(f"📊 Found {len(options_with_greeks)} options with Greeks data from original subset")
+                    options_with_distance = []
+                    for option in options_with_greeks:
+                        distance = abs(float(option.strike_price) - underlying_price)
+                        options_with_distance.append((distance, option))
+                    
+                    options_with_distance.sort(key=lambda x: x[0])
+                    final_options = [opt[1] for opt in options_with_distance[:20]]
+                else:
+                    print("⚠️ No options match Greeks symbols, using closest ATM options")
+                    options_with_distance = []
+                    for option in working_options:
+                        distance = abs(float(option.strike_price) - underlying_price)
+                        options_with_distance.append((distance, option))
+                    
+                    options_with_distance.sort(key=lambda x: x[0])
+                    final_options = [opt[1] for opt in options_with_distance[:20]]
+        else:
+            print("⚠️ No Greeks data, using closest ATM options")
+            # No Greeks data, use closest ATM options
+            options_with_distance = []
+            for option in working_options:
+                distance = abs(float(option.strike_price) - underlying_price)
+                options_with_distance.append((distance, option))
+            
+            options_with_distance.sort(key=lambda x: x[0])
+            final_options = [opt[1] for opt in options_with_distance[:20]]
+            
+        # Filter final_options to only include those we actually subscribed to
+        if used_symbols:
+            # Map back to the options we actually used
+            used_option_map = {sym: True for sym in used_symbols}
+            final_options = [opt for opt in final_options if getattr(opt, 'streamer_symbol', getattr(opt, 'symbol', None)) in used_option_map]
+        
+        if not final_options:
+            print("⚠️ No final options after filtering, using original subset")
+            final_options = options_subset[:10]  # Fallback to first 10 options
+        
+        print(f"📋 Processing {len(final_options)} final options")
+        
+        try:
+            chain_rows = [{
+                "expiration": exp_date,
+                "strike": float(o.strike_price),  # Convert Decimal to float
+                "option_type": "Call" if o.option_type.value == "C" else "Put",
+                "symbol": o.symbol,
+                "streamer_symbol": getattr(o, 'streamer_symbol', o.symbol),
+                "underlying_symbol": o.underlying_symbol,
+                "underlying_price": underlying_price,
+                "time_to_expiration": time_to_exp,
+                "risk_free_rate": RISK_FREE_RATE,
+                "dividend_yield": 0.0,  # You may want to fetch this dynamically
+                "moneyness": float(o.strike_price) / underlying_price,  # Convert Decimal to float
+            } for o in final_options]
+
+            chain_df = pd.DataFrame(chain_rows)
+            print(f"📊 Created DataFrame with {len(chain_df)} rows")
+        except Exception as e:
+            print(f"❌ Error creating DataFrame: {e}")
+            continue
+        
+        # Merge Greeks data
+        if not greeks_df.empty:
+            print(f"🔗 Merging {len(greeks_df)} Greeks records")
+            print(f"🔍 Before merge - DataFrame symbols: {chain_df['streamer_symbol'].tolist()[:5]}...")
+            print(f"🔍 Greeks symbols to merge: {greeks_df['symbol'].tolist()}")
+            chain_df = chain_df.merge(greeks_df, left_on="streamer_symbol", right_on="symbol", how="left", suffixes=("", "_greeks"))
+            print(f"✅ After merge - Greeks columns: {[col for col in chain_df.columns if col in ['delta', 'gamma', 'theta', 'vega', 'volatility']]}")
+            print(f"📊 Options with Greeks: {chain_df['delta'].notna().sum()}/{len(chain_df)}")
+        else:
+            print("⚠️ No Greeks data to merge")
+        
+        # Merge Quote data
+        if not quote_df.empty:
+            print(f"💰 Merging {len(quote_df)} Quote records")
+            print(f"🔍 Quote symbols to merge: {quote_df['symbol'].tolist()}")
+            chain_df = chain_df.merge(quote_df, left_on="streamer_symbol", right_on="symbol", how="left", suffixes=("", "_quote"))
+            # Calculate mid price
+            chain_df['mid_price'] = (pd.to_numeric(chain_df['bid_price'], errors='coerce') + 
+                                   pd.to_numeric(chain_df['ask_price'], errors='coerce')) / 2
+            print(f"📊 Options with quotes: {chain_df['bid_price'].notna().sum()}/{len(chain_df)}")
+        else:
+            print("⚠️ No Quote data to merge")
+        
+        all_data.extend(chain_df.to_dict("records"))
+        print(f"✅ Added {len(chain_df)} rows to all_data (total: {len(all_data)})")
+
+    if not all_data:
+        print(f"❌ No data collected for {ticker}")
+        return
 
     df = pd.DataFrame(all_data)
-    filename = f"{ticker}_options_chain_with_greeks.csv"
+    print(f"📋 Final DataFrame has {len(df)} rows")
+    
+    # Add Black-Scholes readiness indicator
+    df['bs_ready'] = (
+        df['underlying_price'].notna() & 
+        df['strike'].notna() & 
+        df['time_to_expiration'].notna() & 
+        df['risk_free_rate'].notna() & 
+        (df['volatility'].notna() | df['mid_price'].notna())
+    )
+    
+    # Add intrinsic value calculation
+    df['intrinsic_value'] = df.apply(lambda row: 
+        max(0, row['underlying_price'] - row['strike']) if row['option_type'] == 'Call' 
+        else max(0, row['strike'] - row['underlying_price']), axis=1)
+    
+    filename = f"{ticker}_enhanced_options_chain.csv"
     df.to_csv(filename, index=False)
+    
+    bs_ready_count = df['bs_ready'].sum()
     print(f"✅ Saved {len(df)} rows to {filename}")
+    print(f"📊 {bs_ready_count}/{len(df)} options ready for Black-Scholes calculation")
+    print(f"💰 Final underlying price used: ${underlying_price:.2f}")
+    
+    # Show a sample of the data
+    print(f"\n📋 Sample data:")
+    print(df[['expiration', 'strike', 'option_type', 'underlying_price', 'mid_price', 'delta', 'volatility']].head())
 
-# -------------------------
-# Main
-# -------------------------
+    return df
+
 async def main():
     print("🔐 Logging in...")
-    session = Session(USERNAME, PASSWORD)
-    print("✅ Login successful")
+    try:
+        session = Session(USERNAME, PASSWORD)
+        print("✅ Login successful")
+    except Exception as e:
+        print(f"❌ Login failed: {e}")
+        return
 
     token_manager = TokenManager(session)
     for stock in AI_PORTFOLIO:
-        await fetch_chain_with_greeks(session, token_manager, stock["Ticker"])
+        try:
+            await fetch_enhanced_chain_with_greeks(session, token_manager, stock["Ticker"])
+            await asyncio.sleep(2)  # Rate limiting
+        except Exception as e:
+            print(f"❌ Error processing {stock['Ticker']}: {e}")
 
     print("🎉 Done!")
 
