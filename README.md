@@ -1,21 +1,21 @@
-# ⬇️ AI Options Portfolio & Daily Trade Screener
+# 🚀 AI Options Trading Portfolio & Daily Trade Screener
 
 ## 📖 What This Does
-This bad boy is like having a caffeinated Wall Street intern on speed dial.
-It picks 9 AI-chad stocks (tech, healthcare, energy—you name it) and sniffs out every spicy options play on them.
-We pipe in live Tastytrade data (yes, real-time tendies intel), including those mysterious things called Greeks—basically the nerd math behind option prices.
 
-Then it cranks the numbers, filters out the trash, and spits out the Top 3 YOLO‑but‑not‑too‑YOLO trades of the day—
-aka high‑probability, low‑"oops I blew up my account" setups—wrapped in a clean little table so you don’t have to think too hard.
+
 
 ## 🧠 Why Build This?
-- **Too many stonks, too little brainpower:** Thousands of stocks, millions of option combos—ain’t nobody got time for that. We laser focus on **AI big dogs only**.  
-- **Option overload:** Instead of eyeballing 50,000 trades till your eyes bleed, we run the math and serve the **juicy ones only**.  
-- **Greeks? Bruh.** Delta, Gamma, Theta, Vega? Sounds like a frat house. Don’t worry—we pull those numbers for you.  
-- **Risk control = Don’t nuke the account:** Simple rules keep the losses from looking like your ex’s credit card bill.  
 
 
-# ⬇️ Workflow 1 | Filter for an AI Optimized Trading Portfolio
+
+
+
+
+
+# 1️⃣ | Collect Data
+
+
+# 2️⃣ | Prompt AI
 
 ## 🤖 AI Pick 9 Ticker Trading Portfolio Prompt
 
@@ -96,7 +96,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | CAT    | Industrials        | Robotics, smart infrastructure systems        | 40%      | 70%     | 66     | Positive    | 4M            | B               |
 
 
-# ⬇️ Workflow 2 |Setup TastyTrade Login 
+# 3️⃣ |TastyTrade API Connection 
 
 ## 🛠 Setup & Install
 To use this beast, you gotta armor up your computer with a few tools.  
@@ -201,7 +201,7 @@ python3 auth_test.py
 ```
 - **Why?** If it says "SUCCESS: Authentication worked!", then we’re ready to go.
 
-# ⬇️ Workflow 3 |TastyTrade Data Download
+# 4️⃣ |TastyTrade Data Download
 
 ## 📊 Pull Live Options Chains + Live Greeks
 
@@ -781,7 +781,7 @@ python3 get_options_chain_with_dxlink.py
 ```
 - **Why?** This creates a file called `AAPL_options_chain_with_greeks.csv` (or whatever ticker you chose) that has all the options data with Greeks.
 
-# ⬇️ Workflow 4 | Filter the Options Chain Data for Trades
+# 5️⃣ | TastyTrade Data Filter
 
 ## 📈 Filter & Score Top Trades
 Now, we have the data, but we need to pick the best trades from it.
@@ -1121,7 +1121,7 @@ When you run `select_top_trades.py`, you get a table like this:
 
 - **What this means:** This shows the best trades for the day, so you can decide if you want to make those trades.
 
-# ⬇️ Workflow 5 | Validate Findings 
+# 6️⃣ | Prompt AI 
 
 ## 🤖 AI Final Trade Analysis & Risk Check Prompt
 **Attachment**  
