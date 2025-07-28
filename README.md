@@ -182,7 +182,728 @@ python3 auth_test.py
 
 # 4️⃣ TastyTrade Data Import & Analysis
 
-## 📈 Fetch Real-Time Data, Calculate PoP, Rank Trades
+## Fetch Delated Data From TastyTrade
+```bash
+#!/usr/bin/env python3
+"""
+TASTYTRADE DELAYED DATA ANALYZER
+Optimized for unfunded accounts with delayed quotes
+
+What delayed data is PERFECT for:
+1. End-of-day analysis and backtesting
+2. Identifying option pricing patterns
+3. Building systematic trading strategies
+4. Historical volatility analysis
+5. Strategy development and testing
+
+This script maximizes what you can get from delayed data!
+
+Created: 2025-07-28
+"""
+
+import pandas as pd
+from datetime import datetime, timedelta, time
+import asyncio
+import warnings
+import time as time_module
+from decimal import Decimal
+import numpy as np
+
+# Core TastyTrade imports
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain, Equity
+
+# Optional Black-Scholes (install with: pip install py-vollib)
+try:
+    from py_vollib.black_scholes.greeks.analytical import delta, gamma, theta, vega
+    from py_vollib.black_scholes import black_scholes
+    VOLLIB_AVAILABLE = True
+except ImportError:
+    VOLLIB_AVAILABLE = False
+
+warnings.filterwarnings('ignore')
+
+class Settings:
+    """Settings optimized for delayed data analysis"""
+    
+    # Your TastyTrade login
+    USERNAME = "username"
+    PASSWORD = "password"
+    
+    # Stocks for analysis
+    STOCKS = [
+        {"ticker": "NVDA", "name": "NVIDIA"},
+        {"ticker": "TSLA", "name": "Tesla"},
+        {"ticker": "AMZN", "name": "Amazon"},
+        {"ticker": "SPY", "name": "SPDR S&P 500"},
+        {"ticker": "QQQ", "name": "Invesco QQQ"},
+        {"ticker": "AAPL", "name": "Apple"},
+        {"ticker": "MSFT", "name": "Microsoft"},
+    ]
+    
+    # Analysis parameters (broader range for delayed data)
+    MIN_DAYS_TO_EXPIRATION = 1
+    MAX_DAYS_TO_EXPIRATION = 90
+    
+    # Risk-free rate for calculations
+    RISK_FREE_RATE = 0.045
+    
+    # Focus on liquid strikes (within this % of current price)
+    STRIKE_RANGE_PERCENT = 0.20  # +/- 20% from current price
+
+def convert_decimal(value):
+    """Convert Decimal to float safely"""
+    if value is None:
+        return None
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
+
+def calculate_moneyness(stock_price, strike_price):
+    """Calculate option moneyness"""
+    if not stock_price or not strike_price:
+        return None
+    return stock_price / strike_price
+
+def estimate_historical_volatility(prices, days=30):
+    """Estimate historical volatility from price series"""
+    if len(prices) < 2:
+        return 0.20  # Default 20% if no history
+    
+    returns = np.diff(np.log(prices))
+    return np.std(returns) * np.sqrt(252)  # Annualized volatility
+
+class DelayedDataAnalyzer:
+    """Analyzer optimized for delayed data from unfunded accounts"""
+    
+    def __init__(self):
+        self.session = None
+        self.session_token = None
+        
+    async def connect(self):
+        """Connect and verify delayed data access"""
+        print("🔌 Connecting to TastyTrade (Delayed Data Mode)...")
+        
+        try:
+            self.session = Session(Settings.USERNAME, Settings.PASSWORD)
+            self.session_token = self.session.session_token
+            print(f"✅ Connected successfully")
+            
+            # Check account status
+            try:
+                customer = self.session.get_customer()
+                accounts = customer.accounts
+                
+                total_value = sum(convert_decimal(acc.net_liquidating_value) or 0 for acc in accounts)
+                
+                if total_value > 0:
+                    print(f"💰 Account funded: ${total_value:,.2f}")
+                    print(f"🔄 Note: Running in delayed data mode anyway for comparison")
+                else:
+                    print(f"⏳ Account unfunded - perfect for delayed data analysis")
+                    print(f"💡 Delayed data is excellent for strategy development!")
+                
+            except Exception as e:
+                print(f"⚠️  Account check: {e}")
+            
+            return True
+            
+        except Exception as e:
+            print(f"❌ Connection failed: {e}")
+            return False
+    
+    def get_enhanced_stock_data(self, ticker):
+        """Get comprehensive stock data optimized for delayed analysis"""
+        try:
+            stock = Equity.get(self.session, ticker)
+            
+            # Get stock price data
+            current_price = None
+            previous_close = None
+            
+            # Try multiple endpoints for delayed data
+            try:
+                # Market metrics endpoint
+                quote_data = self.session.get(f'/market-metrics?symbols={ticker}')
+                if quote_data and 'data' in quote_data and quote_data['data']['items']:
+                    market_data = quote_data['data']['items'][0]
+                    current_price = convert_decimal(market_data.get('last-price'))
+                    previous_close = convert_decimal(market_data.get('previous-close-price'))
+            except:
+                pass
+            
+            # Try instruments endpoint if first fails
+            if not current_price:
+                try:
+                    stock_quote = self.session.get(f'/instruments/equities/{ticker}')
+                    if stock_quote and 'data' in stock_quote:
+                        current_price = convert_decimal(stock_quote['data'].get('close-price'))
+                except:
+                    pass
+            
+            # Calculate daily change if we have both prices
+            daily_change = None
+            daily_change_percent = None
+            if current_price and previous_close and previous_close > 0:
+                daily_change = current_price - previous_close
+                daily_change_percent = (daily_change / previous_close) * 100
+            
+            return {
+                "ticker": stock.symbol,
+                "company_name": stock.description,
+                "exchange": stock.listed_market,
+                "current_price": current_price,
+                "previous_close": previous_close,
+                "daily_change": daily_change,
+                "daily_change_percent": daily_change_percent,
+                "active": stock.active
+            }
+            
+        except Exception as e:
+            print(f"❌ Error getting stock data for {ticker}: {e}")
+            return None
+    
+    def analyze_delayed_options(self, ticker, stock_data):
+        """Analyze options using delayed data approach"""
+        print(f"\n📊 Analyzing {ticker} options (Delayed Data Focus)...")
+        
+        if not stock_data['current_price']:
+            print(f"⚠️  No price data for {ticker} - skipping")
+            return pd.DataFrame()
+        
+        try:
+            chain = get_option_chain(self.session, ticker)
+            print(f"📈 Found {len(chain)} expiration dates")
+            
+            current_price = stock_data['current_price']
+            analysis_data = []
+            
+            # Calculate strike range for liquid options
+            min_strike = current_price * (1 - Settings.STRIKE_RANGE_PERCENT)
+            max_strike = current_price * (1 + Settings.STRIKE_RANGE_PERCENT)
+            
+            for exp_date, option_list in chain.items():
+                # Date calculations
+                if isinstance(exp_date, str):
+                    exp_dt = datetime.strptime(exp_date, "%Y-%m-%d")
+                else:
+                    exp_dt = exp_date
+                exp_dt = datetime.combine(exp_dt, datetime.min.time())
+                days_left = (exp_dt - datetime.now()).days
+                
+                # Filter by expiration
+                if Settings.MIN_DAYS_TO_EXPIRATION <= days_left <= Settings.MAX_DAYS_TO_EXPIRATION:
+                    print(f"  📅 {exp_date}: {days_left} days, {len(option_list)} options")
+                    
+                    # Focus on liquid strikes
+                    liquid_options = [opt for opt in option_list 
+                                    if min_strike <= convert_decimal(opt.strike_price) <= max_strike]
+                    
+                    print(f"    🎯 {len(liquid_options)} liquid options (${min_strike:.0f}-${max_strike:.0f})")
+                    
+                    for option in liquid_options:
+                        contract_data = self._analyze_delayed_contract(
+                            option, exp_date, days_left, stock_data
+                        )
+                        if contract_data:
+                            analysis_data.append(contract_data)
+            
+            df = pd.DataFrame(analysis_data)
+            print(f"✅ Analyzed {len(df)} liquid option contracts")
+            return df
+            
+        except Exception as e:
+            print(f"❌ Error analyzing options for {ticker}: {e}")
+            return pd.DataFrame()
+    
+    def _analyze_delayed_contract(self, option, exp_date, days_left, stock_data):
+        """Analyze single contract optimized for delayed data"""
+        try:
+            strike = convert_decimal(option.strike_price)
+            option_type = "Call" if option.option_type.value == "C" else "Put"
+            time_to_expiration = max(days_left / 365.0, 1/365)
+            
+            # Extract available delayed data
+            bid = convert_decimal(getattr(option, 'bid', None))
+            ask = convert_decimal(getattr(option, 'ask', None))
+            last = convert_decimal(getattr(option, 'last', None))
+            mark = convert_decimal(getattr(option, 'mark', None))
+            volume = convert_decimal(getattr(option, 'volume', None))
+            open_interest = convert_decimal(getattr(option, 'open_interest', None))
+            
+            # Delayed Greeks (may be from previous close)
+            delayed_delta = convert_decimal(getattr(option, 'delta', None))
+            delayed_gamma = convert_decimal(getattr(option, 'gamma', None))
+            delayed_theta = convert_decimal(getattr(option, 'theta', None))
+            delayed_vega = convert_decimal(getattr(option, 'vega', None))
+            delayed_iv = convert_decimal(getattr(option, 'implied_volatility', None))
+            
+            # Use last price as primary delayed price
+            delayed_price = last or mark or ((bid + ask) / 2 if bid and ask else None)
+            
+            # Calculate key metrics
+            moneyness = calculate_moneyness(stock_data['current_price'], strike)
+            intrinsic_value = None
+            time_value = None
+            
+            if stock_data['current_price'] and strike:
+                if option_type == "Call":
+                    intrinsic_value = max(0, stock_data['current_price'] - strike)
+                else:
+                    intrinsic_value = max(0, strike - stock_data['current_price'])
+                
+                if delayed_price:
+                    time_value = delayed_price - intrinsic_value
+            
+            # Estimate current IV using delayed price (if available)
+            estimated_iv = delayed_iv or 0.25  # Default to 25% if no IV available
+            
+            # Calculate theoretical values using Black-Scholes
+            theoretical_data = {}
+            if VOLLIB_AVAILABLE and estimated_iv:
+                try:
+                    flag = 'c' if option_type == "Call" else 'p'
+                    theoretical_data = {
+                        'theoretical_price': black_scholes(flag, stock_data['current_price'], strike, 
+                                                         time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv),
+                        'theoretical_delta': delta(flag, stock_data['current_price'], strike, 
+                                                 time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv),
+                        'theoretical_gamma': gamma(flag, stock_data['current_price'], strike, 
+                                                 time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv),
+                        'theoretical_theta': theta(flag, stock_data['current_price'], strike, 
+                                                 time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv) / 365,
+                        'theoretical_vega': vega(flag, stock_data['current_price'], strike, 
+                                               time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv) / 100
+                    }
+                except:
+                    theoretical_data = {
+                        'theoretical_price': None, 'theoretical_delta': None,
+                        'theoretical_gamma': None, 'theoretical_theta': None, 'theoretical_vega': None
+                    }
+            
+            # Calculate price deviation if we have both delayed and theoretical
+            price_deviation = None
+            if delayed_price and theoretical_data.get('theoretical_price'):
+                price_deviation = delayed_price - theoretical_data['theoretical_price']
+            
+            # Liquidity scoring based on available data
+            liquidity_score = 0
+            if bid and ask:
+                spread = ask - bid
+                mid_price = (bid + ask) / 2
+                if mid_price > 0:
+                    spread_percent = (spread / mid_price) * 100
+                    liquidity_score += 3 if spread_percent < 5 else 1  # Tight spread = liquid
+            
+            if volume and volume > 10:
+                liquidity_score += 2
+            if open_interest and open_interest > 100:
+                liquidity_score += 1
+            
+            return {
+                # Basic info
+                'ticker': stock_data['ticker'],
+                'symbol': option.symbol,
+                'expiration_date': str(exp_date),
+                'days_to_expiration': days_left,
+                'time_to_expiration_years': time_to_expiration,
+                'strike_price': strike,
+                'option_type': option_type,
+                'underlying_price': stock_data['current_price'],
+                'moneyness': moneyness,
+                
+                # Delayed market data
+                'delayed_bid': bid,
+                'delayed_ask': ask,
+                'delayed_last': last,
+                'delayed_mark': mark,
+                'delayed_price': delayed_price,
+                'volume': volume,
+                'open_interest': open_interest,
+                
+                # Delayed Greeks
+                'delayed_delta': delayed_delta,
+                'delayed_gamma': delayed_gamma,
+                'delayed_theta': delayed_theta,
+                'delayed_vega': delayed_vega,
+                'delayed_iv': delayed_iv,
+                
+                # Calculated values
+                'intrinsic_value': intrinsic_value,
+                'time_value': time_value,
+                'estimated_iv': estimated_iv,
+                
+                # Theoretical comparison
+                **theoretical_data,
+                'price_deviation': price_deviation,
+                
+                # Analysis metrics
+                'liquidity_score': liquidity_score,
+                'data_quality_score': sum([bool(delayed_price), bool(delayed_delta), bool(volume)]),
+                
+                # Flags for filtering
+                'has_delayed_pricing': bool(delayed_price),
+                'has_delayed_greeks': bool(delayed_delta),
+                'has_volume_data': bool(volume),
+                'is_liquid': liquidity_score >= 3,
+                
+                # Metadata
+                'analysis_timestamp': datetime.now().isoformat(),
+                'data_type': 'delayed'
+            }
+            
+        except Exception as e:
+            print(f"❌ Error analyzing {option.symbol}: {e}")
+            return None
+    
+    def generate_delayed_analysis_report(self, df, ticker, stock_data):
+        """Generate comprehensive delayed data analysis report"""
+        if df.empty:
+            return f"No data available for {ticker}"
+        
+        # Data quality metrics
+        total_contracts = len(df)
+        with_pricing = df['has_delayed_pricing'].sum()
+        with_greeks = df['has_delayed_greeks'].sum()
+        with_volume = df['has_volume_data'].sum()
+        liquid_options = df['is_liquid'].sum()
+        
+        report = f"""
+{'='*80}
+DELAYED DATA ANALYSIS REPORT: {ticker}
+{'='*80}
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Stock: {stock_data['company_name']} (${stock_data['current_price']:.2f})
+Daily Change: {stock_data['daily_change_percent']:.2f}% (${stock_data['daily_change']:.2f})
+
+📊 DATA SUMMARY:
+─────────────────────────────────────────────────────────────────────────────
+Total Liquid Contracts: {total_contracts:,}
+With Delayed Pricing: {with_pricing:,} ({with_pricing/total_contracts*100:.1f}%)
+With Delayed Greeks: {with_greeks:,} ({with_greeks/total_contracts*100:.1f}%)
+With Volume Data: {with_volume:,} ({with_volume/total_contracts*100:.1f}%)
+High Liquidity Options: {liquid_options:,} ({liquid_options/total_contracts*100:.1f}%)
+
+🎯 DELAYED DATA QUALITY ASSESSMENT:
+─────────────────────────────────────────────────────────────────────────────"""
+        
+        if with_pricing > total_contracts * 0.7:
+            report += """
+✅ EXCELLENT delayed pricing coverage
+🎯 Perfect for end-of-day analysis and backtesting"""
+        elif with_pricing > total_contracts * 0.3:
+            report += """
+✅ GOOD delayed pricing coverage
+📊 Suitable for strategy development"""
+        else:
+            report += """
+⚠️  LIMITED delayed pricing coverage
+🔄 May need alternative data sources"""
+        
+        # Price analysis
+        pricing_data = df.dropna(subset=['delayed_price'])
+        if not pricing_data.empty:
+            avg_price = pricing_data['delayed_price'].mean()
+            report += f"""
+
+💰 OPTION PRICING ANALYSIS:
+─────────────────────────────────────────────────────────────────────────────
+Average Option Price: ${avg_price:.2f}
+Price Range: ${pricing_data['delayed_price'].min():.2f} - ${pricing_data['delayed_price'].max():.2f}
+Options Under $1: {(pricing_data['delayed_price'] < 1.0).sum():,}
+Options $1-$5: {((pricing_data['delayed_price'] >= 1.0) & (pricing_data['delayed_price'] < 5.0)).sum():,}
+Options Over $5: {(pricing_data['delayed_price'] >= 5.0).sum():,}"""
+        
+        # Greeks analysis (if available)
+        greeks_data = df.dropna(subset=['delayed_delta'])
+        if not greeks_data.empty:
+            report += f"""
+
+🔢 DELAYED GREEKS ANALYSIS:
+─────────────────────────────────────────────────────────────────────────────
+Average Delta: {greeks_data['delayed_delta'].mean():.3f}
+Delta Range: {greeks_data['delayed_delta'].min():.3f} to {greeks_data['delayed_delta'].max():.3f}
+High Delta Options (>0.7): {(greeks_data['delayed_delta'] > 0.7).sum():,}
+Medium Delta Options (0.3-0.7): {((greeks_data['delayed_delta'] >= 0.3) & (greeks_data['delayed_delta'] <= 0.7)).sum():,}
+Low Delta Options (<0.3): {(greeks_data['delayed_delta'] < 0.3).sum():,}"""
+        
+        # Liquidity analysis
+        if liquid_options > 0:
+            liquid_df = df[df['is_liquid']]
+            report += f"""
+
+💧 LIQUIDITY ANALYSIS:
+─────────────────────────────────────────────────────────────────────────────
+High Liquidity Options: {liquid_options:,}
+Avg Volume (Liquid): {liquid_df['volume'].mean():.0f}
+Avg Open Interest (Liquid): {liquid_df['open_interest'].mean():.0f}"""
+        
+        # Theoretical comparison (if available)
+        if VOLLIB_AVAILABLE:
+            theoretical_data = df.dropna(subset=['theoretical_price', 'delayed_price'])
+            if not theoretical_data.empty:
+                price_diffs = theoretical_data['price_deviation']
+                report += f"""
+
+🧮 THEORETICAL vs DELAYED COMPARISON:
+─────────────────────────────────────────────────────────────────────────────
+Contracts with Both Prices: {len(theoretical_data):,}
+Avg Price Difference: ${price_diffs.mean():.3f}
+Overvalued Options: {(price_diffs > 0.50).sum():,}
+Undervalued Options: {(price_diffs < -0.50).sum():,}"""
+        
+        # Top opportunities
+        if not pricing_data.empty:
+            # Sort by various criteria for opportunities
+            high_volume = pricing_data[pricing_data['volume'] > 100].nlargest(5, 'volume') if 'volume' in pricing_data.columns else pd.DataFrame()
+            
+            if not high_volume.empty:
+                report += f"""
+
+🔥 TOP VOLUME OPTIONS (for liquidity):
+─────────────────────────────────────────────────────────────────────────────"""
+                for _, row in high_volume.iterrows():
+                    report += f"""
+{row['symbol']} | ${row['strike_price']:.0f} {row['option_type']} | Price: ${row['delayed_price']:.2f} | Vol: {row['volume']:.0f}"""
+        
+        report += f"""
+
+💡 DELAYED DATA INSIGHTS:
+─────────────────────────────────────────────────────────────────────────────
+✅ Delayed data is PERFECT for:
+  • End-of-day strategy analysis
+  • Historical backtesting
+  • Pattern recognition
+  • Risk management planning
+  • Options selection and filtering
+
+🎯 STRATEGIC ADVANTAGES:
+  • No emotional market noise
+  • Consistent data for systematic analysis
+  • Perfect for building and testing strategies
+  • Great for identifying long-term opportunities
+
+📈 RECOMMENDED ANALYSIS:
+  • Focus on high-volume, liquid options
+  • Use theoretical prices for fair value estimates
+  • Build watchlists for when you get real-time data
+  • Develop systematic selection criteria
+
+{'='*80}
+"""
+        
+        return report
+
+async def main():
+    """Main delayed data analysis program"""
+    
+    print("📊 TASTYTRADE DELAYED DATA ANALYZER")
+    print("=" * 60)
+    print(f"🎯 Optimized for unfunded account analysis")
+    print(f"📈 Analyzing {len(Settings.STOCKS)} stocks")
+    print(f"📅 Expiration range: {Settings.MIN_DAYS_TO_EXPIRATION}-{Settings.MAX_DAYS_TO_EXPIRATION} days")
+    print(f"🧮 Black-Scholes available: {VOLLIB_AVAILABLE}")
+    print("=" * 60)
+    
+    analyzer = DelayedDataAnalyzer()
+    if not await analyzer.connect():
+        return
+    
+    all_data = []
+    
+    for stock_config in Settings.STOCKS:
+        ticker = stock_config["ticker"]
+        
+        print(f"\n{'='*50}")
+        print(f"📊 ANALYZING: {ticker} ({stock_config['name']})")
+        print("="*50)
+        
+        # Get enhanced stock data
+        stock_data = analyzer.get_enhanced_stock_data(ticker)
+        if not stock_data:
+            continue
+        
+        print(f"🏢 Company: {stock_data['company_name']}")
+        print(f"📈 Price: ${stock_data.get('current_price', 'N/A')}")
+        if stock_data.get('daily_change_percent'):
+            print(f"📊 Daily Change: {stock_data['daily_change_percent']:.2f}%")
+        
+        # Analyze options with delayed data focus
+        df = analyzer.analyze_delayed_options(ticker, stock_data)
+        if df.empty:
+            continue
+        
+        # Generate comprehensive analysis
+        report = analyzer.generate_delayed_analysis_report(df, ticker, stock_data)
+        print(report)
+        
+        # Save detailed data
+        csv_filename = f"{ticker}_delayed_analysis.csv"
+        df.to_csv(csv_filename, index=False)
+        print(f"💾 Saved detailed analysis: {csv_filename}")
+        
+        # Save report
+        report_filename = f"{ticker}_delayed_report.txt"
+        with open(report_filename, 'w') as f:
+            f.write(report)
+        print(f"📄 Saved report: {report_filename}")
+        
+        all_data.append(df)
+        
+        # Small delay between stocks
+        time_module.sleep(1)
+    
+    # Combined analysis
+    if all_data:
+        combined_df = pd.concat(all_data, ignore_index=True)
+        
+        print(f"\n{'='*60}")
+        print(f"🌟 COMBINED DELAYED DATA ANALYSIS")
+        print("="*60)
+        
+        total_contracts = len(combined_df)
+        total_with_pricing = combined_df['has_delayed_pricing'].sum()
+        total_liquid = combined_df['is_liquid'].sum()
+        
+        print(f"📊 Total contracts analyzed: {total_contracts:,}")
+        print(f"💰 With delayed pricing: {total_with_pricing:,} ({total_with_pricing/total_contracts*100:.1f}%)")
+        print(f"💧 High liquidity options: {total_liquid:,} ({total_liquid/total_contracts*100:.1f}%)")
+        
+        # Save combined dataset
+        combined_filename = "combined_delayed_analysis.csv"
+        combined_df.to_csv(combined_filename, index=False)
+        print(f"💾 Combined dataset: {combined_filename}")
+        
+        print(f"\n🎯 DELAYED DATA SUCCESS!")
+        print(f"✅ You now have comprehensive delayed data for strategy development")
+        print(f"📈 Perfect for backtesting and systematic analysis")
+        print(f"🚀 When real-time funding activates, you'll have both datasets to compare!")
+        
+        if not VOLLIB_AVAILABLE:
+            print(f"\n💡 ENHANCEMENT OPPORTUNITY:")
+            print(f"Install py-vollib for theoretical pricing comparison:")
+            print(f"  pip install py-vollib")
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+
+
+
+## 📈 Fetch Real Time Data From TastyTrade 
+
+```bash
+#!/usr/bin/env python3
+"""
+TASTYTRADE REAL-TIME DATA ANALYZER
+Optimized for funded accounts with live market data
+
+What real-time data gives you:
+1. Live bid/ask spreads for precise entry/exit
+2. Real-time Greeks for dynamic hedging
+3. Current implied volatility for volatility trading
+4. Live volume for momentum analysis
+5. Instant market efficiency detection
+
+Run this when your $25 deposit clears!
+
+Created: 2025-07-28
+"""
+
+import pandas as pd
+from datetime import datetime, time
+import asyncio
+import warnings
+import time as time_module
+from decimal import Decimal
+import numpy as np
+
+# Core TastyTrade imports
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain, Equity
+
+# Optional streaming imports (for advanced real-time)
+try:
+    from tastytrade import DXLinkStreamer
+    from tastytrade.dxfeed import Greeks, Quote, Trade
+    STREAMING_AVAILABLE = True
+except ImportError:
+    STREAMING_AVAILABLE = False
+
+# Optional Black-Scholes for comparison
+try:
+    from py_vollib.black_scholes.greeks.analytical import delta, gamma, theta, vega
+    from py_vollib.black_scholes import black_scholes
+    from py_vollib.black_scholes.implied_volatility import implied_volatility
+    VOLLIB_AVAILABLE = True
+except ImportError:
+    VOLLIB_AVAILABLE = False
+
+warnings.filterwarnings('ignore')
+
+class Settings:
+    """Settings optimized for real-time data analysis"""
+    
+    # Your TastyTrade login
+    USERNAME = "stonkyoloer"
+    PASSWORD = "@!3X3R!kkamiles"
+    
+    # Focus on highly liquid stocks for real-time analysis
+    STOCKS = [
+        {"ticker": "SPY", "name": "SPDR S&P 500"},      # Highest liquidity
+        {"ticker": "QQQ", "name": "Invesco QQQ"},       # High tech liquidity
+        {"ticker": "NVDA", "name": "NVIDIA"},           # Your favorite
+        {"ticker": "TSLA", "name": "Tesla"},            # High volatility
+        {"ticker": "AAPL", "name": "Apple"},            # Consistent liquidity
+        {"ticker": "AMZN", "name": "Amazon"},           # Large options market
+    ]
+    
+    # Real-time analysis parameters (focus on near-term for best data)
+    MIN_DAYS_TO_EXPIRATION = 1
+    MAX_DAYS_TO_EXPIRATION = 45
+    
+    # Real-time thresholds
+    MIN_VOLUME = 50                    # Focus on active options
+    MIN_OPEN_INTEREST = 100           # Ensure liquidity
+    MAX_BID_ASK_SPREAD_PERCENT = 10   # Filter out illiquid options
+    
+    # Risk-free rate
+    RISK_FREE_RATE = 0.045
+    
+    # Market hours
+    MARKET_OPEN = time(9, 30)
+    MARKET_CLOSE = time(16, 0)
+
+def convert_decimal(value):
+    """Convert Decimal to float safely"""
+    if value is None:
+        return None
+    if isinstance(value, Decimal):
+        return float(value)
+    return value
+
+def is_market_hours():
+    """Check if markets are currently open"""
+    now = datetime.now().time()
+    return Settings.MARKET_OPEN <= now <= Settings.MARKET_CLOSE
+
+def calculate_bid_ask_spread(bid, ask):
+    """Calculate bid-ask spread percentage"""
+    if not bid or not ask or ask <= 0:
+        return None
+    return ((ask - bid) / ask) * 100
+
+def calculate_implied_vol_from_price(market_price, stock_price, strike, time_to_exp, risk_free_rate, option_type):
+    """Calculate implied volatility from market price"""
+    if not VOLLIB_AVAILABLE or not all([market_price, stock_price, strike, time_to_exp]):
+        return None
+    
+    try:
+```
+
+
+
+
 
 ### Create a File
 ```bash
@@ -514,7 +1235,12 @@ python3 select_top_trades.py
 ```
 
 
-# 6️⃣ Prompt AI 
+# 6️⃣ Calculate Percent Chance of Profit
+
+
+
+
+# 6️⃣ Prompt AI
 
 ## 🗂 Attachment
 select_top_trades.csv
