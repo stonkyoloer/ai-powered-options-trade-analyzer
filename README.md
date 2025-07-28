@@ -186,603 +186,408 @@ python3 auth_test.py
 ```bash
 #!/usr/bin/env python3
 """
-TASTYTRADE DELAYED DATA ANALYZER
-Optimized for unfunded accounts with delayed quotes
+TASTYTRADE PRODUCTION DATA EXTRACTOR
+SUCCESS: Now extracts real delayed market data from TastyTrade!
 
-What delayed data is PERFECT for:
-1. End-of-day analysis and backtesting
-2. Identifying option pricing patterns
-3. Building systematic trading strategies
-4. Historical volatility analysis
-5. Strategy development and testing
+✅ Working Features:
+- DXLink WebSocket protocol
+- COMPACT data format parsing
+- Real delayed quotes (15-min delay)
+- Quote data: bid/ask/spreads
+- Trade data: last/change/volume
+- Multiple symbols support
 
-This script maximizes what you can get from delayed data!
-
-Created: 2025-07-28
+Data Sources:
+- Market metrics (IV, liquidity)
+- WebSocket quotes (bid/ask/last)
+- Option chains
+- All saved to JSON
 """
 
-import pandas as pd
-from datetime import datetime, timedelta, time
 import asyncio
-import warnings
-import time as time_module
+import json
+import websockets
+from datetime import datetime
 from decimal import Decimal
-import numpy as np
-
-# Core TastyTrade imports
+import warnings
 from tastytrade import Session
-from tastytrade.instruments import get_option_chain, Equity
-
-# Optional Black-Scholes (install with: pip install py-vollib)
-try:
-    from py_vollib.black_scholes.greeks.analytical import delta, gamma, theta, vega
-    from py_vollib.black_scholes import black_scholes
-    VOLLIB_AVAILABLE = True
-except ImportError:
-    VOLLIB_AVAILABLE = False
+from tastytrade.instruments import get_option_chain, Option, Equity
 
 warnings.filterwarnings('ignore')
 
-class Settings:
-    """Settings optimized for delayed data analysis"""
-    
-    # Your TastyTrade login
-    USERNAME = "username"
-    PASSWORD = "password"
-    
-    # Stocks for analysis
-    STOCKS = [
-        {"ticker": "NVDA", "name": "NVIDIA"},
-        {"ticker": "TSLA", "name": "Tesla"},
-        {"ticker": "AMZN", "name": "Amazon"},
-        {"ticker": "SPY", "name": "SPDR S&P 500"},
-        {"ticker": "QQQ", "name": "Invesco QQQ"},
-        {"ticker": "AAPL", "name": "Apple"},
-        {"ticker": "MSFT", "name": "Microsoft"},
-    ]
-    
-    # Analysis parameters (broader range for delayed data)
-    MIN_DAYS_TO_EXPIRATION = 1
-    MAX_DAYS_TO_EXPIRATION = 90
-    
-    # Risk-free rate for calculations
-    RISK_FREE_RATE = 0.045
-    
-    # Focus on liquid strikes (within this % of current price)
-    STRIKE_RANGE_PERCENT = 0.20  # +/- 20% from current price
-
-def convert_decimal(value):
-    """Convert Decimal to float safely"""
-    if value is None:
-        return None
-    if isinstance(value, Decimal):
-        return float(value)
-    return value
-
-def calculate_moneyness(stock_price, strike_price):
-    """Calculate option moneyness"""
-    if not stock_price or not strike_price:
-        return None
-    return stock_price / strike_price
-
-def estimate_historical_volatility(prices, days=30):
-    """Estimate historical volatility from price series"""
-    if len(prices) < 2:
-        return 0.20  # Default 20% if no history
-    
-    returns = np.diff(np.log(prices))
-    return np.std(returns) * np.sqrt(252)  # Annualized volatility
-
-class DelayedDataAnalyzer:
-    """Analyzer optimized for delayed data from unfunded accounts"""
-    
-    def __init__(self):
-        self.session = None
-        self.session_token = None
+class TastyTradeProductionExtractor:
+    def __init__(self, username: str, password: str):
+        self.session = Session(username, password)
+        self.websocket_token = None
         
-    async def connect(self):
-        """Connect and verify delayed data access"""
-        print("🔌 Connecting to TastyTrade (Delayed Data Mode)...")
+    async def get_websocket_token(self, symbols: list):
+        """Retrieve WebSocket token from /api-quote-tokens"""
+        try:
+            symbol_str = ','.join(symbols)
+            response = await self.session.async_client.get(f"https://api.tastyworks.com/api-quote-tokens?symbols={symbol_str}")
+            if response.status_code == 200:
+                data = response.json()
+                if 'data' in data and 'token' in data['data']:
+                    self.websocket_token = data['data']['token']
+                    print(f"🎫 WebSocket token retrieved")
+                    return True
+            print(f"❌ Failed to get WebSocket token")
+            return False
+        except Exception as e:
+            print(f"⚠️ Token error: {e}")
+            return False
+
+    async def get_market_data(self, symbols: list):
+        """Get market metrics and instrument data"""
+        print(f"📊 Fetching market data for {len(symbols)} symbols...")
+        
+        market_data = {}
+        for symbol in symbols:
+            market_data[symbol] = {
+                'market_metrics': {},
+                'instrument_info': {}
+            }
+            
+            # Market metrics
+            try:
+                response = await self.session.async_client.get(f"https://api.tastyworks.com/market-metrics?symbols={symbol}")
+                if response.status_code == 200:
+                    data = response.json()
+                    market_data[symbol]['market_metrics'] = data
+                    if 'data' in data and 'items' in data['data']:
+                        for item in data['data']['items']:
+                            if item.get('symbol') == symbol:
+                                iv = item.get('implied-volatility-index', 0)
+                                liquidity = item.get('liquidity-rating', 0)
+                                iv_pct = float(iv) * 100 if iv else 0
+                                print(f"   {symbol}: IV={iv_pct:.1f}%, Liquidity={liquidity}")
+            except Exception as e:
+                print(f"   ⚠️ {symbol} market metrics error: {e}")
+            
+            # Instrument info
+            try:
+                response = await self.session.async_client.get(f"https://api.tastyworks.com/instruments/equities/{symbol}")
+                if response.status_code == 200:
+                    data = response.json()
+                    market_data[symbol]['instrument_info'] = data
+            except Exception as e:
+                print(f"   ⚠️ {symbol} instrument error: {e}")
+            
+            await asyncio.sleep(0.1)  # Rate limiting
+        
+        return market_data
+
+    async def stream_delayed_quotes(self, symbols: list, duration_seconds: int = 30):
+        """Stream delayed quotes using DXLink WebSocket with COMPACT format parsing"""
+        print(f"\n📺 Streaming delayed quotes for {duration_seconds} seconds...")
+        
+        # Get WebSocket token
+        if not await self.get_websocket_token(symbols):
+            return {}
+        
+        collected_data = {symbol: {'quotes': [], 'trades': []} for symbol in symbols}
         
         try:
-            self.session = Session(Settings.USERNAME, Settings.PASSWORD)
-            self.session_token = self.session.session_token
-            print(f"✅ Connected successfully")
+            dxlink_url = self.session.dxlink_url
+            headers = [('Authorization', f'Bearer {self.websocket_token}')]
             
-            # Check account status
+            async with websockets.connect(dxlink_url, additional_headers=headers) as websocket:
+                print(f"✅ Connected to delayed feed")
+                
+                # DXLink Protocol Flow
+                
+                # 1. SETUP
+                setup_msg = {
+                    "type": "SETUP",
+                    "channel": 0,
+                    "keepaliveTimeout": 60,
+                    "acceptKeepaliveTimeout": 5,
+                    "version": "0.1-DXLink-JS/8.0.0"
+                }
+                await websocket.send(json.dumps(setup_msg))
+                await websocket.recv()  # Setup response
+                
+                # 2. AUTHENTICATE
+                auth_msg = {
+                    "type": "AUTH",
+                    "channel": 0,
+                    "token": self.websocket_token
+                }
+                await websocket.send(json.dumps(auth_msg))
+                
+                # Wait for AUTHORIZED state
+                auth_success = False
+                for _ in range(3):
+                    auth_response = await websocket.recv()
+                    auth_data = json.loads(auth_response)
+                    if auth_data.get('type') == 'AUTH_STATE' and auth_data.get('state') == 'AUTHORIZED':
+                        auth_success = True
+                        print(f"🔑 Authentication successful")
+                        break
+                
+                if not auth_success:
+                    print(f"❌ Authentication failed")
+                    return collected_data
+                
+                # 3. OPEN CHANNEL
+                channel_msg = {
+                    "type": "CHANNEL_REQUEST",
+                    "channel": 1,
+                    "service": "FEED",
+                    "parameters": {"contract": "TICKER"}
+                }
+                await websocket.send(json.dumps(channel_msg))
+                await websocket.recv()  # Channel opened response
+                
+                # 4. SUBSCRIBE TO SYMBOLS
+                for symbol in symbols:
+                    sub_msg = {
+                        "type": "FEED_SUBSCRIPTION",
+                        "channel": 1,
+                        "add": [
+                            {"symbol": symbol, "type": "Quote"},
+                            {"symbol": symbol, "type": "Trade"}
+                        ]
+                    }
+                    await websocket.send(json.dumps(sub_msg))
+                    await asyncio.sleep(0.05)
+                
+                print(f"📤 Subscribed to {', '.join(symbols)}")
+                
+                # 5. COLLECT DATA
+                start_time = datetime.now()
+                quote_count = 0
+                trade_count = 0
+                
+                while (datetime.now() - start_time).total_seconds() < duration_seconds:
+                    try:
+                        message = await asyncio.wait_for(websocket.recv(), timeout=1.0)
+                        parsed = json.loads(message)
+                        
+                        if parsed.get('type') == 'FEED_DATA':
+                            data_items = parsed.get('data', [])
+                            
+                            if len(data_items) >= 2:
+                                event_type = data_items[0]
+                                event_data = data_items[1]
+                                
+                                if event_type == "Quote" and len(event_data) >= 13:
+                                    # COMPACT Quote: [eventType, symbol, eventTime, sequence, timeNanoPart, bidTime, bidExchangeCode, bidPrice, bidSize, askTime, askExchangeCode, askPrice, askSize]
+                                    symbol = event_data[1]
+                                    bid_price = event_data[7]
+                                    bid_size = event_data[8]
+                                    ask_price = event_data[11]
+                                    ask_size = event_data[12]
+                                    
+                                    quote_data = {
+                                        'timestamp': datetime.now().isoformat(),
+                                        'symbol': symbol,
+                                        'bid': bid_price,
+                                        'ask': ask_price,
+                                        'bid_size': bid_size,
+                                        'ask_size': ask_size,
+                                        'spread': round(ask_price - bid_price, 2) if ask_price and bid_price else None,
+                                        'mid': round((ask_price + bid_price) / 2, 2) if ask_price and bid_price else None
+                                    }
+                                    
+                                    if symbol in symbols:
+                                        collected_data[symbol]['quotes'].append(quote_data)
+                                        quote_count += 1
+                                        if quote_count % 10 == 1:  # Print every 10th quote
+                                            print(f"📊 {symbol}: Bid=${bid_price}, Ask=${ask_price}, Spread=${quote_data['spread']}")
+                                
+                                elif event_type == "Trade" and len(event_data) >= 12:
+                                    # COMPACT Trade: [eventType, symbol, eventTime, time, timeNanoPart, sequence, exchangeCode, price, change, size, dayId, dayVolume, dayTurnover, ...]
+                                    symbol = event_data[1]
+                                    price = event_data[7]
+                                    change = event_data[8]
+                                    day_volume = event_data[11]
+                                    
+                                    trade_data = {
+                                        'timestamp': datetime.now().isoformat(),
+                                        'symbol': symbol,
+                                        'last': price,
+                                        'change': change,
+                                        'day_volume': day_volume
+                                    }
+                                    
+                                    if symbol in symbols:
+                                        collected_data[symbol]['trades'].append(trade_data)
+                                        trade_count += 1
+                                        if trade_count % 5 == 1:  # Print every 5th trade
+                                            print(f"🔄 {symbol}: Last=${price}, Change=${change}")
+                        
+                        elif parsed.get('type') == 'KEEPALIVE':
+                            # Respond to keepalive
+                            keepalive_response = {"type": "KEEPALIVE", "channel": 0}
+                            await websocket.send(json.dumps(keepalive_response))
+                            
+                    except asyncio.TimeoutError:
+                        continue
+                    except Exception as e:
+                        print(f"⚠️ Message error: {e}")
+                
+                print(f"\n✅ Data collection complete!")
+                print(f"   📊 Quotes collected: {quote_count}")
+                print(f"   🔄 Trades collected: {trade_count}")
+                
+        except Exception as e:
+            print(f"❌ WebSocket error: {e}")
+        
+        return collected_data
+
+    async def get_option_chains(self, symbols: list):
+        """Get option chain data for symbols"""
+        print(f"\n⛓️ Fetching option chains...")
+        
+        option_data = {}
+        for symbol in symbols[:2]:  # Limit to first 2 symbols for speed
             try:
-                customer = self.session.get_customer()
-                accounts = customer.accounts
+                chain = get_option_chain(self.session, symbol)
+                option_data[symbol] = {
+                    'total_contracts': len(chain),
+                    'sample_contracts': []
+                }
                 
-                total_value = sum(convert_decimal(acc.net_liquidating_value) or 0 for acc in accounts)
+                # Get sample of nearest expiration options
+                for option in chain[:10]:
+                    option_info = {
+                        'symbol': option.symbol,
+                        'strike': float(option.strike_price),
+                        'expiration': str(option.expiration_date),
+                        'type': option.option_type.value,
+                        'days_to_expiry': option.days_to_expiration
+                    }
+                    option_data[symbol]['sample_contracts'].append(option_info)
                 
-                if total_value > 0:
-                    print(f"💰 Account funded: ${total_value:,.2f}")
-                    print(f"🔄 Note: Running in delayed data mode anyway for comparison")
-                else:
-                    print(f"⏳ Account unfunded - perfect for delayed data analysis")
-                    print(f"💡 Delayed data is excellent for strategy development!")
+                print(f"   {symbol}: {len(chain)} option contracts")
                 
             except Exception as e:
-                print(f"⚠️  Account check: {e}")
-            
-            return True
-            
-        except Exception as e:
-            print(f"❌ Connection failed: {e}")
-            return False
-    
-    def get_enhanced_stock_data(self, ticker):
-        """Get comprehensive stock data optimized for delayed analysis"""
-        try:
-            stock = Equity.get(self.session, ticker)
-            
-            # Get stock price data
-            current_price = None
-            previous_close = None
-            
-            # Try multiple endpoints for delayed data
-            try:
-                # Market metrics endpoint
-                quote_data = self.session.get(f'/market-metrics?symbols={ticker}')
-                if quote_data and 'data' in quote_data and quote_data['data']['items']:
-                    market_data = quote_data['data']['items'][0]
-                    current_price = convert_decimal(market_data.get('last-price'))
-                    previous_close = convert_decimal(market_data.get('previous-close-price'))
-            except:
-                pass
-            
-            # Try instruments endpoint if first fails
-            if not current_price:
-                try:
-                    stock_quote = self.session.get(f'/instruments/equities/{ticker}')
-                    if stock_quote and 'data' in stock_quote:
-                        current_price = convert_decimal(stock_quote['data'].get('close-price'))
-                except:
-                    pass
-            
-            # Calculate daily change if we have both prices
-            daily_change = None
-            daily_change_percent = None
-            if current_price and previous_close and previous_close > 0:
-                daily_change = current_price - previous_close
-                daily_change_percent = (daily_change / previous_close) * 100
-            
-            return {
-                "ticker": stock.symbol,
-                "company_name": stock.description,
-                "exchange": stock.listed_market,
-                "current_price": current_price,
-                "previous_close": previous_close,
-                "daily_change": daily_change,
-                "daily_change_percent": daily_change_percent,
-                "active": stock.active
-            }
-            
-        except Exception as e:
-            print(f"❌ Error getting stock data for {ticker}: {e}")
-            return None
-    
-    def analyze_delayed_options(self, ticker, stock_data):
-        """Analyze options using delayed data approach"""
-        print(f"\n📊 Analyzing {ticker} options (Delayed Data Focus)...")
+                print(f"   ⚠️ {symbol} option chain error: {e}")
+                option_data[symbol] = {'error': str(e)}
         
-        if not stock_data['current_price']:
-            print(f"⚠️  No price data for {ticker} - skipping")
-            return pd.DataFrame()
-        
-        try:
-            chain = get_option_chain(self.session, ticker)
-            print(f"📈 Found {len(chain)} expiration dates")
-            
-            current_price = stock_data['current_price']
-            analysis_data = []
-            
-            # Calculate strike range for liquid options
-            min_strike = current_price * (1 - Settings.STRIKE_RANGE_PERCENT)
-            max_strike = current_price * (1 + Settings.STRIKE_RANGE_PERCENT)
-            
-            for exp_date, option_list in chain.items():
-                # Date calculations
-                if isinstance(exp_date, str):
-                    exp_dt = datetime.strptime(exp_date, "%Y-%m-%d")
-                else:
-                    exp_dt = exp_date
-                exp_dt = datetime.combine(exp_dt, datetime.min.time())
-                days_left = (exp_dt - datetime.now()).days
-                
-                # Filter by expiration
-                if Settings.MIN_DAYS_TO_EXPIRATION <= days_left <= Settings.MAX_DAYS_TO_EXPIRATION:
-                    print(f"  📅 {exp_date}: {days_left} days, {len(option_list)} options")
-                    
-                    # Focus on liquid strikes
-                    liquid_options = [opt for opt in option_list 
-                                    if min_strike <= convert_decimal(opt.strike_price) <= max_strike]
-                    
-                    print(f"    🎯 {len(liquid_options)} liquid options (${min_strike:.0f}-${max_strike:.0f})")
-                    
-                    for option in liquid_options:
-                        contract_data = self._analyze_delayed_contract(
-                            option, exp_date, days_left, stock_data
-                        )
-                        if contract_data:
-                            analysis_data.append(contract_data)
-            
-            df = pd.DataFrame(analysis_data)
-            print(f"✅ Analyzed {len(df)} liquid option contracts")
-            return df
-            
-        except Exception as e:
-            print(f"❌ Error analyzing options for {ticker}: {e}")
-            return pd.DataFrame()
-    
-    def _analyze_delayed_contract(self, option, exp_date, days_left, stock_data):
-        """Analyze single contract optimized for delayed data"""
-        try:
-            strike = convert_decimal(option.strike_price)
-            option_type = "Call" if option.option_type.value == "C" else "Put"
-            time_to_expiration = max(days_left / 365.0, 1/365)
-            
-            # Extract available delayed data
-            bid = convert_decimal(getattr(option, 'bid', None))
-            ask = convert_decimal(getattr(option, 'ask', None))
-            last = convert_decimal(getattr(option, 'last', None))
-            mark = convert_decimal(getattr(option, 'mark', None))
-            volume = convert_decimal(getattr(option, 'volume', None))
-            open_interest = convert_decimal(getattr(option, 'open_interest', None))
-            
-            # Delayed Greeks (may be from previous close)
-            delayed_delta = convert_decimal(getattr(option, 'delta', None))
-            delayed_gamma = convert_decimal(getattr(option, 'gamma', None))
-            delayed_theta = convert_decimal(getattr(option, 'theta', None))
-            delayed_vega = convert_decimal(getattr(option, 'vega', None))
-            delayed_iv = convert_decimal(getattr(option, 'implied_volatility', None))
-            
-            # Use last price as primary delayed price
-            delayed_price = last or mark or ((bid + ask) / 2 if bid and ask else None)
-            
-            # Calculate key metrics
-            moneyness = calculate_moneyness(stock_data['current_price'], strike)
-            intrinsic_value = None
-            time_value = None
-            
-            if stock_data['current_price'] and strike:
-                if option_type == "Call":
-                    intrinsic_value = max(0, stock_data['current_price'] - strike)
-                else:
-                    intrinsic_value = max(0, strike - stock_data['current_price'])
-                
-                if delayed_price:
-                    time_value = delayed_price - intrinsic_value
-            
-            # Estimate current IV using delayed price (if available)
-            estimated_iv = delayed_iv or 0.25  # Default to 25% if no IV available
-            
-            # Calculate theoretical values using Black-Scholes
-            theoretical_data = {}
-            if VOLLIB_AVAILABLE and estimated_iv:
-                try:
-                    flag = 'c' if option_type == "Call" else 'p'
-                    theoretical_data = {
-                        'theoretical_price': black_scholes(flag, stock_data['current_price'], strike, 
-                                                         time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv),
-                        'theoretical_delta': delta(flag, stock_data['current_price'], strike, 
-                                                 time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv),
-                        'theoretical_gamma': gamma(flag, stock_data['current_price'], strike, 
-                                                 time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv),
-                        'theoretical_theta': theta(flag, stock_data['current_price'], strike, 
-                                                 time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv) / 365,
-                        'theoretical_vega': vega(flag, stock_data['current_price'], strike, 
-                                               time_to_expiration, Settings.RISK_FREE_RATE, estimated_iv) / 100
-                    }
-                except:
-                    theoretical_data = {
-                        'theoretical_price': None, 'theoretical_delta': None,
-                        'theoretical_gamma': None, 'theoretical_theta': None, 'theoretical_vega': None
-                    }
-            
-            # Calculate price deviation if we have both delayed and theoretical
-            price_deviation = None
-            if delayed_price and theoretical_data.get('theoretical_price'):
-                price_deviation = delayed_price - theoretical_data['theoretical_price']
-            
-            # Liquidity scoring based on available data
-            liquidity_score = 0
-            if bid and ask:
-                spread = ask - bid
-                mid_price = (bid + ask) / 2
-                if mid_price > 0:
-                    spread_percent = (spread / mid_price) * 100
-                    liquidity_score += 3 if spread_percent < 5 else 1  # Tight spread = liquid
-            
-            if volume and volume > 10:
-                liquidity_score += 2
-            if open_interest and open_interest > 100:
-                liquidity_score += 1
-            
-            return {
-                # Basic info
-                'ticker': stock_data['ticker'],
-                'symbol': option.symbol,
-                'expiration_date': str(exp_date),
-                'days_to_expiration': days_left,
-                'time_to_expiration_years': time_to_expiration,
-                'strike_price': strike,
-                'option_type': option_type,
-                'underlying_price': stock_data['current_price'],
-                'moneyness': moneyness,
-                
-                # Delayed market data
-                'delayed_bid': bid,
-                'delayed_ask': ask,
-                'delayed_last': last,
-                'delayed_mark': mark,
-                'delayed_price': delayed_price,
-                'volume': volume,
-                'open_interest': open_interest,
-                
-                # Delayed Greeks
-                'delayed_delta': delayed_delta,
-                'delayed_gamma': delayed_gamma,
-                'delayed_theta': delayed_theta,
-                'delayed_vega': delayed_vega,
-                'delayed_iv': delayed_iv,
-                
-                # Calculated values
-                'intrinsic_value': intrinsic_value,
-                'time_value': time_value,
-                'estimated_iv': estimated_iv,
-                
-                # Theoretical comparison
-                **theoretical_data,
-                'price_deviation': price_deviation,
-                
-                # Analysis metrics
-                'liquidity_score': liquidity_score,
-                'data_quality_score': sum([bool(delayed_price), bool(delayed_delta), bool(volume)]),
-                
-                # Flags for filtering
-                'has_delayed_pricing': bool(delayed_price),
-                'has_delayed_greeks': bool(delayed_delta),
-                'has_volume_data': bool(volume),
-                'is_liquid': liquidity_score >= 3,
-                
-                # Metadata
-                'analysis_timestamp': datetime.now().isoformat(),
-                'data_type': 'delayed'
-            }
-            
-        except Exception as e:
-            print(f"❌ Error analyzing {option.symbol}: {e}")
-            return None
-    
-    def generate_delayed_analysis_report(self, df, ticker, stock_data):
-        """Generate comprehensive delayed data analysis report"""
-        if df.empty:
-            return f"No data available for {ticker}"
-        
-        # Data quality metrics
-        total_contracts = len(df)
-        with_pricing = df['has_delayed_pricing'].sum()
-        with_greeks = df['has_delayed_greeks'].sum()
-        with_volume = df['has_volume_data'].sum()
-        liquid_options = df['is_liquid'].sum()
-        
-        report = f"""
-{'='*80}
-DELAYED DATA ANALYSIS REPORT: {ticker}
-{'='*80}
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Stock: {stock_data['company_name']} (${stock_data['current_price']:.2f})
-Daily Change: {stock_data['daily_change_percent']:.2f}% (${stock_data['daily_change']:.2f})
+        return option_data
 
-📊 DATA SUMMARY:
-─────────────────────────────────────────────────────────────────────────────
-Total Liquid Contracts: {total_contracts:,}
-With Delayed Pricing: {with_pricing:,} ({with_pricing/total_contracts*100:.1f}%)
-With Delayed Greeks: {with_greeks:,} ({with_greeks/total_contracts*100:.1f}%)
-With Volume Data: {with_volume:,} ({with_volume/total_contracts*100:.1f}%)
-High Liquidity Options: {liquid_options:,} ({liquid_options/total_contracts*100:.1f}%)
-
-🎯 DELAYED DATA QUALITY ASSESSMENT:
-─────────────────────────────────────────────────────────────────────────────"""
-        
-        if with_pricing > total_contracts * 0.7:
-            report += """
-✅ EXCELLENT delayed pricing coverage
-🎯 Perfect for end-of-day analysis and backtesting"""
-        elif with_pricing > total_contracts * 0.3:
-            report += """
-✅ GOOD delayed pricing coverage
-📊 Suitable for strategy development"""
-        else:
-            report += """
-⚠️  LIMITED delayed pricing coverage
-🔄 May need alternative data sources"""
-        
-        # Price analysis
-        pricing_data = df.dropna(subset=['delayed_price'])
-        if not pricing_data.empty:
-            avg_price = pricing_data['delayed_price'].mean()
-            report += f"""
-
-💰 OPTION PRICING ANALYSIS:
-─────────────────────────────────────────────────────────────────────────────
-Average Option Price: ${avg_price:.2f}
-Price Range: ${pricing_data['delayed_price'].min():.2f} - ${pricing_data['delayed_price'].max():.2f}
-Options Under $1: {(pricing_data['delayed_price'] < 1.0).sum():,}
-Options $1-$5: {((pricing_data['delayed_price'] >= 1.0) & (pricing_data['delayed_price'] < 5.0)).sum():,}
-Options Over $5: {(pricing_data['delayed_price'] >= 5.0).sum():,}"""
-        
-        # Greeks analysis (if available)
-        greeks_data = df.dropna(subset=['delayed_delta'])
-        if not greeks_data.empty:
-            report += f"""
-
-🔢 DELAYED GREEKS ANALYSIS:
-─────────────────────────────────────────────────────────────────────────────
-Average Delta: {greeks_data['delayed_delta'].mean():.3f}
-Delta Range: {greeks_data['delayed_delta'].min():.3f} to {greeks_data['delayed_delta'].max():.3f}
-High Delta Options (>0.7): {(greeks_data['delayed_delta'] > 0.7).sum():,}
-Medium Delta Options (0.3-0.7): {((greeks_data['delayed_delta'] >= 0.3) & (greeks_data['delayed_delta'] <= 0.7)).sum():,}
-Low Delta Options (<0.3): {(greeks_data['delayed_delta'] < 0.3).sum():,}"""
-        
-        # Liquidity analysis
-        if liquid_options > 0:
-            liquid_df = df[df['is_liquid']]
-            report += f"""
-
-💧 LIQUIDITY ANALYSIS:
-─────────────────────────────────────────────────────────────────────────────
-High Liquidity Options: {liquid_options:,}
-Avg Volume (Liquid): {liquid_df['volume'].mean():.0f}
-Avg Open Interest (Liquid): {liquid_df['open_interest'].mean():.0f}"""
-        
-        # Theoretical comparison (if available)
-        if VOLLIB_AVAILABLE:
-            theoretical_data = df.dropna(subset=['theoretical_price', 'delayed_price'])
-            if not theoretical_data.empty:
-                price_diffs = theoretical_data['price_deviation']
-                report += f"""
-
-🧮 THEORETICAL vs DELAYED COMPARISON:
-─────────────────────────────────────────────────────────────────────────────
-Contracts with Both Prices: {len(theoretical_data):,}
-Avg Price Difference: ${price_diffs.mean():.3f}
-Overvalued Options: {(price_diffs > 0.50).sum():,}
-Undervalued Options: {(price_diffs < -0.50).sum():,}"""
-        
-        # Top opportunities
-        if not pricing_data.empty:
-            # Sort by various criteria for opportunities
-            high_volume = pricing_data[pricing_data['volume'] > 100].nlargest(5, 'volume') if 'volume' in pricing_data.columns else pd.DataFrame()
-            
-            if not high_volume.empty:
-                report += f"""
-
-🔥 TOP VOLUME OPTIONS (for liquidity):
-─────────────────────────────────────────────────────────────────────────────"""
-                for _, row in high_volume.iterrows():
-                    report += f"""
-{row['symbol']} | ${row['strike_price']:.0f} {row['option_type']} | Price: ${row['delayed_price']:.2f} | Vol: {row['volume']:.0f}"""
-        
-        report += f"""
-
-💡 DELAYED DATA INSIGHTS:
-─────────────────────────────────────────────────────────────────────────────
-✅ Delayed data is PERFECT for:
-  • End-of-day strategy analysis
-  • Historical backtesting
-  • Pattern recognition
-  • Risk management planning
-  • Options selection and filtering
-
-🎯 STRATEGIC ADVANTAGES:
-  • No emotional market noise
-  • Consistent data for systematic analysis
-  • Perfect for building and testing strategies
-  • Great for identifying long-term opportunities
-
-📈 RECOMMENDED ANALYSIS:
-  • Focus on high-volume, liquid options
-  • Use theoretical prices for fair value estimates
-  • Build watchlists for when you get real-time data
-  • Develop systematic selection criteria
-
-{'='*80}
-"""
-        
-        return report
-
-async def main():
-    """Main delayed data analysis program"""
-    
-    print("📊 TASTYTRADE DELAYED DATA ANALYZER")
-    print("=" * 60)
-    print(f"🎯 Optimized for unfunded account analysis")
-    print(f"📈 Analyzing {len(Settings.STOCKS)} stocks")
-    print(f"📅 Expiration range: {Settings.MIN_DAYS_TO_EXPIRATION}-{Settings.MAX_DAYS_TO_EXPIRATION} days")
-    print(f"🧮 Black-Scholes available: {VOLLIB_AVAILABLE}")
-    print("=" * 60)
-    
-    analyzer = DelayedDataAnalyzer()
-    if not await analyzer.connect():
-        return
-    
-    all_data = []
-    
-    for stock_config in Settings.STOCKS:
-        ticker = stock_config["ticker"]
-        
-        print(f"\n{'='*50}")
-        print(f"📊 ANALYZING: {ticker} ({stock_config['name']})")
-        print("="*50)
-        
-        # Get enhanced stock data
-        stock_data = analyzer.get_enhanced_stock_data(ticker)
-        if not stock_data:
-            continue
-        
-        print(f"🏢 Company: {stock_data['company_name']}")
-        print(f"📈 Price: ${stock_data.get('current_price', 'N/A')}")
-        if stock_data.get('daily_change_percent'):
-            print(f"📊 Daily Change: {stock_data['daily_change_percent']:.2f}%")
-        
-        # Analyze options with delayed data focus
-        df = analyzer.analyze_delayed_options(ticker, stock_data)
-        if df.empty:
-            continue
-        
-        # Generate comprehensive analysis
-        report = analyzer.generate_delayed_analysis_report(df, ticker, stock_data)
-        print(report)
-        
-        # Save detailed data
-        csv_filename = f"{ticker}_delayed_analysis.csv"
-        df.to_csv(csv_filename, index=False)
-        print(f"💾 Saved detailed analysis: {csv_filename}")
-        
-        # Save report
-        report_filename = f"{ticker}_delayed_report.txt"
-        with open(report_filename, 'w') as f:
-            f.write(report)
-        print(f"📄 Saved report: {report_filename}")
-        
-        all_data.append(df)
-        
-        # Small delay between stocks
-        time_module.sleep(1)
-    
-    # Combined analysis
-    if all_data:
-        combined_df = pd.concat(all_data, ignore_index=True)
-        
-        print(f"\n{'='*60}")
-        print(f"🌟 COMBINED DELAYED DATA ANALYSIS")
+    async def comprehensive_data_extraction(self, symbols: list, stream_duration: int = 60):
+        """Extract all available TastyTrade data"""
+        print(f"🚀 TASTYTRADE COMPREHENSIVE DATA EXTRACTION")
+        print(f"   Symbols: {', '.join(symbols)}")
+        print(f"   Stream Duration: {stream_duration} seconds")
+        print(f"   Feed Type: DELAYED (15-minute delay)")
         print("="*60)
         
-        total_contracts = len(combined_df)
-        total_with_pricing = combined_df['has_delayed_pricing'].sum()
-        total_liquid = combined_df['is_liquid'].sum()
+        results = {
+            'timestamp': datetime.now().isoformat(),
+            'symbols': symbols,
+            'feed_type': 'delayed',
+            'account_type': 'demo' if self.session.is_test else 'live',
+            'market_data': {},
+            'streaming_data': {},
+            'option_chains': {}
+        }
         
-        print(f"📊 Total contracts analyzed: {total_contracts:,}")
-        print(f"💰 With delayed pricing: {total_with_pricing:,} ({total_with_pricing/total_contracts*100:.1f}%)")
-        print(f"💧 High liquidity options: {total_liquid:,} ({total_liquid/total_contracts*100:.1f}%)")
+        # Phase 1: Market Data
+        results['market_data'] = await self.get_market_data(symbols)
         
-        # Save combined dataset
-        combined_filename = "combined_delayed_analysis.csv"
-        combined_df.to_csv(combined_filename, index=False)
-        print(f"💾 Combined dataset: {combined_filename}")
+        # Phase 2: Streaming Quotes
+        results['streaming_data'] = await self.stream_delayed_quotes(symbols, stream_duration)
         
-        print(f"\n🎯 DELAYED DATA SUCCESS!")
-        print(f"✅ You now have comprehensive delayed data for strategy development")
-        print(f"📈 Perfect for backtesting and systematic analysis")
-        print(f"🚀 When real-time funding activates, you'll have both datasets to compare!")
+        # Phase 3: Option Chains
+        results['option_chains'] = await self.get_option_chains(symbols)
         
-        if not VOLLIB_AVAILABLE:
-            print(f"\n💡 ENHANCEMENT OPPORTUNITY:")
-            print(f"Install py-vollib for theoretical pricing comparison:")
-            print(f"  pip install py-vollib")
+        return results
+
+    def analyze_and_save(self, data: dict):
+        """Analyze collected data and save to file"""
+        print(f"\n💾 ANALYZING AND SAVING DATA")
+        print("="*40)
+        
+        # Save raw data
+        filename = f"tastytrade_production_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        with open(filename, 'w') as f:
+            json.dump(data, f, indent=2, default=str)
+        
+        print(f"📁 Raw data saved: {filename}")
+        
+        # Analysis
+        symbols = data.get('symbols', [])
+        streaming_data = data.get('streaming_data', {})
+        
+        print(f"\n📊 DATA ANALYSIS:")
+        for symbol in symbols:
+            if symbol in streaming_data:
+                quotes = streaming_data[symbol].get('quotes', [])
+                trades = streaming_data[symbol].get('trades', [])
+                
+                print(f"\n   {symbol}:")
+                print(f"      Quotes received: {len(quotes)}")
+                print(f"      Trades received: {len(trades)}")
+                
+                if quotes:
+                    latest_quote = quotes[-1]
+                    print(f"      Latest quote: Bid=${latest_quote.get('bid')}, Ask=${latest_quote.get('ask')}")
+                    print(f"      Spread: ${latest_quote.get('spread')}")
+                
+                if trades:
+                    latest_trade = trades[-1]
+                    print(f"      Latest trade: ${latest_trade.get('last')} (change: ${latest_trade.get('change')})")
+        
+        # Market metrics summary
+        market_data = data.get('market_data', {})
+        print(f"\n📈 MARKET METRICS:")
+        for symbol in symbols:
+            if symbol in market_data:
+                metrics = market_data[symbol].get('market_metrics', {})
+                if 'data' in metrics and 'items' in metrics['data']:
+                    for item in metrics['data']['items']:
+                        if item.get('symbol') == symbol:
+                            iv = item.get('implied-volatility-index', 0)
+                            liquidity = item.get('liquidity-rating', 0)
+                            iv_pct = float(iv) * 100 if iv else 0
+                            print(f"   {symbol}: IV={iv_pct:.1f}%, Liquidity={liquidity}/5")
+        
+        # Option chains summary
+        option_chains = data.get('option_chains', {})
+        print(f"\n⛓️ OPTION CHAINS:")
+        for symbol, chain_data in option_chains.items():
+            if 'total_contracts' in chain_data:
+                print(f"   {symbol}: {chain_data['total_contracts']} contracts available")
+        
+        return filename
+
+async def main():
+    """Main execution function"""
+    print("🚀 TastyTrade Production Data Extractor")
+    print("="*50)
+    
+    # Configuration
+    username = input("Enter TastyTrade username: ")
+    password = input("Enter TastyTrade password: ")
+    
+    # Symbols to extract (can customize)
+    symbols = ['SPY', 'QQQ', 'AAPL', 'TSLA']
+    stream_duration = 45  # seconds
+    
+    try:
+        print(f"\n🔐 Connecting to TastyTrade...")
+        extractor = TastyTradeProductionExtractor(username, password)
+        print(f"✅ Connected successfully!")
+        
+        # Run comprehensive extraction
+        results = await extractor.comprehensive_data_extraction(symbols, stream_duration)
+        
+        # Analyze and save
+        filename = extractor.analyze_and_save(results)
+        
+        print(f"\n🎉 EXTRACTION COMPLETE!")
+        print(f"📁 Data saved to: {filename}")
+        print(f"💡 Successfully extracted TastyTrade delayed market data!")
+        print(f"🔄 Run again anytime to get fresh data")
+        
+    except Exception as e:
+        print(f"❌ Extraction failed: {e}")
+        import traceback
+        traceback.print_exc()
 
 if __name__ == "__main__":
     asyncio.run(main())
@@ -845,8 +650,8 @@ class Settings:
     """Settings optimized for real-time data analysis"""
     
     # Your TastyTrade login
-    USERNAME = "stonkyoloer"
-    PASSWORD = "@!3X3R!kkamiles"
+    USERNAME = "username"
+    PASSWORD = "password"
     
     # Focus on highly liquid stocks for real-time analysis
     STOCKS = [
