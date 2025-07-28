@@ -180,9 +180,16 @@ else:
 python3 auth_test.py
 ```
 
-# 4️⃣ TastyTrade Data Import & Analysis
+# 4️⃣ TastyTrade (15 Min Delayed) Data | Unfunded Account
 
-## Fetch Delated Data From TastyTrade
+## Create a File 
+```bash
+touch delayed_data.py
+open -e delayed_data.py
+```
+
+## Save the Script
+
 ```bash
 #!/usr/bin/env python3
 """
@@ -595,7 +602,17 @@ if __name__ == "__main__":
 
 
 
-## 📈 Fetch Real Time Data From TastyTrade 
+
+
+
+# 4️⃣ TastyTrade LIVE Data | Funded Account
+
+
+### Create a File
+
+```bash
+name here
+```
 
 ```bash
 #!/usr/bin/env python3
