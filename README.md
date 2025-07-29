@@ -25,6 +25,8 @@ It:
 
 # 1️⃣  Collect Data
 
+**Source**: Stocks are Nasdaq-100 constituents or related, aligned with [Nasdaq-100 Index](https://www.nasdaq.com/market-activity/quotes/nasdaq-ndx-index)
+
 ---
 
 # 2️⃣  Prompt AI (ChatGPT / Grok)
@@ -94,7 +96,20 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
   - Liquidity Grade: A (ideal), B (acceptable), C (avoid).  
 - Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
+---
 
+## Prompt Output
+| Ticker | Sector              | AI Theme                                              | Avg IV % | IV Rank | Liquidity Grade |
+|--------|---------------------|------------------------------------------------------|----------|---------|-----------------|
+| NVDA   | Technology          | AI chips, semiconductors                            | 68.6     | ≥ 30%   | A               |
+| ISRG   | Biotechnology       | ML drug discovery (oncology, antivirals, genomics, psychedelics) | 59.3 | ≥ 30%   | A               |
+| PLTR   | Technology          | Cloud/LLM infrastructure                           | 68.6     | ≥ 30%   | A               |
+| TSLA   | Transportation      | Autonomous vehicles, predictive logistics, fleet AI | 52.7     | ≥ 30%   | A               |
+| AMZN   | Technology          | Cloud/LLM infrastructure                           | 45.0     | ≥ 30%   | A               |
+| ENPH   | Energy (Renewable)  | AI-optimized solar/wind/hydro, grid/storage analytics | 59.3 | ≥ 30%   | A               |
+| XOM    | Energy (Traditional)| AI in oil/gas ops, predictive maintenance, commodities algos | 35.0 | ≥ 30%   | B               |
+| DE     | Agriculture         | Precision farming, ag-biotech, automation           | 40.0     | ≥ 30%   | B               |
+| CAT    | Industrials         | Robotics, smart infrastructure, automation systems  | 38.0     | ≥ 30%   | B               |
 
 # 3️⃣ Connect to TastyTrade API 
 
