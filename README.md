@@ -688,6 +688,24 @@ ___
 
 # 5️⃣ Model
 
+1. **Import libraries** – Brings in math, options API, and analysis tools '**so we can fetch and calculate spreads.**'  
+2. **Create `CreditSpread` data class** – Holds details of one trade **to keep trade info neat and structured.**  
+3. **Create `CreditSpreadsAnalyzer` class** – Handles all analysis steps **so code stays organized.**  
+4. **Login & load data** – Logs into TastyTrade and loads saved market data **so we know current prices and metrics.**  
+5. **Utility functions (option type, strike, expiration)** – Pulls key details from option data **to help filter calls vs puts.**  
+6. **Black‑Scholes pricing** – Calculates theoretical option prices **to estimate fair premiums.**  
+7. **POP (Probability of Profit)** – Calculates chance a trade will profit **so we can filter only good trades.**  
+8. **Get symbol data** – Finds price, IV, and liquidity for each stock **so we know trade quality.**  
+9. **Flatten option chain** – Converts option data into one simple list **so it’s easier to search.**  
+10. **Analyze bull put spreads** – Looks for **put credit spreads** by selling a higher strike put and buying a lower strike put **so we profit if the stock stays above the short strike (bullish).**  
+11. **Analyze bear call spreads** – Looks for **call credit spreads** by selling a lower strike call and buying a higher strike call **so we profit if the stock stays below the short strike (bearish).**  
+12. **Find all spreads** – Runs both bull put and bear call analysis across all symbols **to build one master list of trade candidates.**  
+13. **Rank spreads** – Sorts all trades by confidence, ROI, and POP **so the best setups float to the top.**  
+14. **Display results** – Prints the top trades clearly **so we can quickly review and select.**  
+15. **Main function** – Loads data, runs analysis, ranks, displays, and saves results **so the workflow runs automatically.**  
+16. **Run script** – Executes everything **so trade picking happens when we run the file.**
+
+
 ### Create a File
 ```bash
 touch cs_picker.py
