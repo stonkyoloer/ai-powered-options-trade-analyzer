@@ -1,4 +1,8 @@
-# ⬇️ AI Options Portfolio & Daily Trade Screener
+# 📈 StonkYoloer Portfolio & Daily Trade Screener
+
+I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I am not responsible for my actions.  No DD.  No Brains.  JUST VIBES!  
+
+---
 
 ## 📖 What This Does
 This workflow builds an **AI‑driven trading portfolio** and screens for the day’s top option trades.  
@@ -7,8 +11,6 @@ It:
 2. Pulls **live option chain and Greeks data** from Tastytrade.
 3. Filters and ranks option trades using **defined rules and real‑time risk metrics**.
 4. Outputs the **Top 3 highest‑probability trades** in a clean table.
-
-The goal is to remove noise, automate the heavy data lifting, and focus only on **high‑quality trades with clear probabilities and defined risk**.
 
 ---
 
@@ -21,12 +23,11 @@ The goal is to remove noise, automate the heavy data lifting, and focus only on 
 ---
 
 
-
-
 # 1️⃣  Collect Data
 
+---
 
-# 2️⃣  Prompt AI
+# 2️⃣  Prompt AI (ChatGPT / Grok)
 
 ## 🗂 Attachment
 - us_tickers.csv
@@ -95,7 +96,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
 
 
-# 3️⃣ TastyTrade API Connection 
+# 3️⃣ Connect to TastyTrade API 
 
 ## 🛠 Setup & Install
 
@@ -113,6 +114,8 @@ pip install tastytrade websockets pandas httpx certifi
   - `websockets`: Helps get live updates on the Greeks.
   - `pandas`: Handles and calculates with the data.
   - `httpx` and `certifi`: Make secure connections to the internet.
+
+---
 
 ## 🔐 Test Tastytrade Login
 
@@ -137,7 +140,7 @@ print("Ready for authentication test")
 ```bash
 python3 test_connection.py
 ```
-
+---
 
 ## 🔑 Authenticate & Get Account Info
 
@@ -179,22 +182,35 @@ else:
 ```bash
 python3 auth_test.py
 ```
+---
 
-# 4️⃣ TastyTrade (15 Min Delayed) Data | Unfunded Account
+# 4️⃣ Fetch TastyTrade Data
 
-## Create a File 
+1. **Import libraries –** Brings in tools we need (async, websockets, json, etc.) so the script can work.
+2. **Create class –** Groups all portfolio data functions to keep code organized.
+3. **Login & portfolio list –** Logs into TastyTrade and loads tickers so we know what to track.
+4. **Get WebSocket token –** Gets a streaming token so we can connect for live quotes.
+5. **Fetch market data –** Pulls IV, liquidity, and instrument info to see stock risk and tradability.
+6. **Stream quotes –** Connects to WebSocket and listens to bid/ask/last to capture price action.
+7. **Get option chains –** Fetches option contracts to see strikes and expirations for trading.
+8. **Run full extraction –** Calls all steps together to collect complete portfolio data.
+9. **Analyze & save –** Saves data to JSON and prints summary so we can use it later.
+10. **Main function –** Runs everything to make the script actually do its job.
+11. **Run script –** Starts the program so data extraction happens when we execute it.
+---
+### Create a File 
 ```bash
 touch delayed_data.py
 open -e delayed_data.py
 ```
 
-## Save the Script
+### Save the Script (15 min delayed feed)
 
 ```bash
 #!/usr/bin/env python3
 """
-TASTYTRADE PRODUCTION DATA EXTRACTOR
-SUCCESS: Now extracts real delayed market data from TastyTrade!
+TASTYTRADE PORTFOLIO DATA EXTRACTOR
+Extracts real delayed market data from TastyTrade for your portfolio
 
 ✅ Working Features:
 - DXLink WebSocket protocol
@@ -202,13 +218,24 @@ SUCCESS: Now extracts real delayed market data from TastyTrade!
 - Real delayed quotes (15-min delay)
 - Quote data: bid/ask/spreads
 - Trade data: last/change/volume
-- Multiple symbols support
+- Portfolio focus
 
 Data Sources:
 - Market metrics (IV, liquidity)
 - WebSocket quotes (bid/ask/last)
 - Option chains
 - All saved to JSON
+
+Portfolio Focus:
+- NVDA (NVIDIA)
+- ISRG (Intuitive Surgical)
+- PLTR (Palantir)  
+- TSLA (Tesla)
+- AMZN (Amazon)
+- ENPH (Enphase Energy)
+- XOM (Exxon Mobil)
+- DE (John Deere)
+- CAT (Caterpillar)
 """
 
 import asyncio
@@ -222,10 +249,23 @@ from tastytrade.instruments import get_option_chain, Option, Equity
 
 warnings.filterwarnings('ignore')
 
-class TastyTradeProductionExtractor:
+class TastyTradePortfolioExtractor:
     def __init__(self, username: str, password: str):
         self.session = Session(username, password)
         self.websocket_token = None
+        
+        # Your portfolio configuration
+        self.portfolio = [
+            {"ticker": "NVDA", "name": "NVIDIA"},
+            {"ticker": "ISRG", "name": "Intuitive Surgical"}, 
+            {"ticker": "PLTR", "name": "Palantir"},
+            {"ticker": "TSLA", "name": "Tesla"},
+            {"ticker": "AMZN", "name": "Amazon"},
+            {"ticker": "ENPH", "name": "Enphase Energy"},
+            {"ticker": "XOM", "name": "Exxon Mobil"},
+            {"ticker": "DE", "name": "John Deere"},
+            {"ticker": "CAT", "name": "Caterpillar"}
+        ]
         
     async def get_websocket_token(self, symbols: list):
         """Retrieve WebSocket token from /api-quote-tokens"""
@@ -246,11 +286,19 @@ class TastyTradeProductionExtractor:
 
     async def get_market_data(self, symbols: list):
         """Get market metrics and instrument data"""
-        print(f"📊 Fetching market data for {len(symbols)} symbols...")
+        print(f"📊 Fetching market data for {len(symbols)} portfolio symbols...")
         
         market_data = {}
         for symbol in symbols:
+            # Find company name from portfolio
+            company_name = "Unknown"
+            for stock in self.portfolio:
+                if stock["ticker"] == symbol:
+                    company_name = stock["name"]
+                    break
+            
             market_data[symbol] = {
+                'company_name': company_name,
                 'market_metrics': {},
                 'instrument_info': {}
             }
@@ -267,7 +315,7 @@ class TastyTradeProductionExtractor:
                                 iv = item.get('implied-volatility-index', 0)
                                 liquidity = item.get('liquidity-rating', 0)
                                 iv_pct = float(iv) * 100 if iv else 0
-                                print(f"   {symbol}: IV={iv_pct:.1f}%, Liquidity={liquidity}")
+                                print(f"   {symbol} ({company_name}): IV={iv_pct:.1f}%, Liquidity={liquidity}")
             except Exception as e:
                 print(f"   ⚠️ {symbol} market metrics error: {e}")
             
@@ -287,6 +335,7 @@ class TastyTradeProductionExtractor:
     async def stream_delayed_quotes(self, symbols: list, duration_seconds: int = 30):
         """Stream delayed quotes using DXLink WebSocket with COMPACT format parsing"""
         print(f"\n📺 Streaming delayed quotes for {duration_seconds} seconds...")
+        print(f"📋 Monitoring: {', '.join(symbols)}")
         
         # Get WebSocket token
         if not await self.get_websocket_token(symbols):
@@ -359,7 +408,7 @@ class TastyTradeProductionExtractor:
                     await websocket.send(json.dumps(sub_msg))
                     await asyncio.sleep(0.05)
                 
-                print(f"📤 Subscribed to {', '.join(symbols)}")
+                print(f"📤 Subscribed to portfolio symbols")
                 
                 # 5. COLLECT DATA
                 start_time = datetime.now()
@@ -400,7 +449,7 @@ class TastyTradeProductionExtractor:
                                     if symbol in symbols:
                                         collected_data[symbol]['quotes'].append(quote_data)
                                         quote_count += 1
-                                        if quote_count % 10 == 1:  # Print every 10th quote
+                                        if quote_count % 15 == 1:  # Print every 15th quote (less spam with more symbols)
                                             print(f"📊 {symbol}: Bid=${bid_price}, Ask=${ask_price}, Spread=${quote_data['spread']}")
                                 
                                 elif event_type == "Trade" and len(event_data) >= 12:
@@ -421,7 +470,7 @@ class TastyTradeProductionExtractor:
                                     if symbol in symbols:
                                         collected_data[symbol]['trades'].append(trade_data)
                                         trade_count += 1
-                                        if trade_count % 5 == 1:  # Print every 5th trade
+                                        if trade_count % 10 == 1:  # Print every 10th trade
                                             print(f"🔄 {symbol}: Last=${price}, Change=${change}")
                         
                         elif parsed.get('type') == 'KEEPALIVE':
@@ -445,19 +494,23 @@ class TastyTradeProductionExtractor:
 
     async def get_option_chains(self, symbols: list):
         """Get option chain data for symbols"""
-        print(f"\n⛓️ Fetching option chains...")
+        print(f"\n⛓️ Fetching option chains for portfolio...")
         
         option_data = {}
-        for symbol in symbols[:2]:  # Limit to first 2 symbols for speed
+        
+        # Process all symbols but limit details for speed
+        for i, symbol in enumerate(symbols):
             try:
+                print(f"   Processing {symbol} ({i+1}/{len(symbols)})...")
+                
                 chain = get_option_chain(self.session, symbol)
                 option_data[symbol] = {
                     'total_contracts': len(chain),
                     'sample_contracts': []
                 }
                 
-                # Get sample of nearest expiration options
-                for option in chain[:10]:
+                # Get sample of nearest expiration options (first 5)
+                for option in chain[:5]:
                     option_info = {
                         'symbol': option.symbol,
                         'strike': float(option.strike_price),
@@ -467,7 +520,10 @@ class TastyTradeProductionExtractor:
                     }
                     option_data[symbol]['sample_contracts'].append(option_info)
                 
-                print(f"   {symbol}: {len(chain)} option contracts")
+                print(f"      {symbol}: {len(chain)} option contracts available")
+                
+                # Rate limiting - especially important with more symbols
+                await asyncio.sleep(0.2)
                 
             except Exception as e:
                 print(f"   ⚠️ {symbol} option chain error: {e}")
@@ -475,16 +531,19 @@ class TastyTradeProductionExtractor:
         
         return option_data
 
-    async def comprehensive_data_extraction(self, symbols: list, stream_duration: int = 60):
-        """Extract all available TastyTrade data"""
-        print(f"🚀 TASTYTRADE COMPREHENSIVE DATA EXTRACTION")
-        print(f"   Symbols: {', '.join(symbols)}")
+    async def comprehensive_data_extraction(self, stream_duration: int = 60):
+        """Extract all available TastyTrade data for your portfolio"""
+        symbols = [stock["ticker"] for stock in self.portfolio]
+        
+        print(f"🚀 TASTYTRADE PORTFOLIO DATA EXTRACTION")
+        print(f"   Portfolio Symbols: {', '.join(symbols)}")
         print(f"   Stream Duration: {stream_duration} seconds")
         print(f"   Feed Type: DELAYED (15-minute delay)")
-        print("="*60)
+        print("="*70)
         
         results = {
             'timestamp': datetime.now().isoformat(),
+            'portfolio': self.portfolio,
             'symbols': symbols,
             'feed_type': 'delayed',
             'account_type': 'demo' if self.session.is_test else 'live',
@@ -506,27 +565,30 @@ class TastyTradeProductionExtractor:
 
     def analyze_and_save(self, data: dict):
         """Analyze collected data and save to file"""
-        print(f"\n💾 ANALYZING AND SAVING DATA")
-        print("="*40)
+        print(f"\n💾 ANALYZING AND SAVING PORTFOLIO DATA")
+        print("="*50)
         
         # Save raw data
-        filename = f"tastytrade_production_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"portfolio_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
         with open(filename, 'w') as f:
             json.dump(data, f, indent=2, default=str)
         
         print(f"📁 Raw data saved: {filename}")
         
         # Analysis
+        portfolio = data.get('portfolio', [])
         symbols = data.get('symbols', [])
         streaming_data = data.get('streaming_data', {})
         
-        print(f"\n📊 DATA ANALYSIS:")
-        for symbol in symbols:
+        print(f"\n📊 PORTFOLIO DATA ANALYSIS:")
+        for i, symbol in enumerate(symbols):
+            company_name = portfolio[i]["name"] if i < len(portfolio) else "Unknown"
+            
             if symbol in streaming_data:
                 quotes = streaming_data[symbol].get('quotes', [])
                 trades = streaming_data[symbol].get('trades', [])
                 
-                print(f"\n   {symbol}:")
+                print(f"\n   {symbol} ({company_name}):")
                 print(f"      Quotes received: {len(quotes)}")
                 print(f"      Trades received: {len(trades)}")
                 
@@ -541,9 +603,10 @@ class TastyTradeProductionExtractor:
         
         # Market metrics summary
         market_data = data.get('market_data', {})
-        print(f"\n📈 MARKET METRICS:")
+        print(f"\n📈 PORTFOLIO MARKET METRICS:")
         for symbol in symbols:
             if symbol in market_data:
+                company_name = market_data[symbol].get('company_name', 'Unknown')
                 metrics = market_data[symbol].get('market_metrics', {})
                 if 'data' in metrics and 'items' in metrics['data']:
                     for item in metrics['data']['items']:
@@ -551,45 +614,49 @@ class TastyTradeProductionExtractor:
                             iv = item.get('implied-volatility-index', 0)
                             liquidity = item.get('liquidity-rating', 0)
                             iv_pct = float(iv) * 100 if iv else 0
-                            print(f"   {symbol}: IV={iv_pct:.1f}%, Liquidity={liquidity}/5")
+                            print(f"   {symbol} ({company_name}): IV={iv_pct:.1f}%, Liquidity={liquidity}/5")
         
         # Option chains summary
         option_chains = data.get('option_chains', {})
-        print(f"\n⛓️ OPTION CHAINS:")
+        print(f"\n⛓️ PORTFOLIO OPTION CHAINS:")
         for symbol, chain_data in option_chains.items():
             if 'total_contracts' in chain_data:
-                print(f"   {symbol}: {chain_data['total_contracts']} contracts available")
+                company_name = next((stock["name"] for stock in portfolio if stock["ticker"] == symbol), "Unknown")
+                print(f"   {symbol} ({company_name}): {chain_data['total_contracts']} contracts available")
         
         return filename
 
 async def main():
     """Main execution function"""
-    print("🚀 TastyTrade Production Data Extractor")
-    print("="*50)
+    print("🚀 TastyTrade Portfolio Data Extractor")
+    print("="*60)
     
     # Configuration
-    username = input("Enter TastyTrade username: ")
-    password = input("Enter TastyTrade password: ")
+    username = "username"
+    password = "password"
     
-    # Symbols to extract (can customize)
-    symbols = ['SPY', 'QQQ', 'AAPL', 'TSLA']
-    stream_duration = 45  # seconds
+    # Stream duration (in seconds)
+    stream_duration = 45  # Reduced for more symbols
     
     try:
         print(f"\n🔐 Connecting to TastyTrade...")
-        extractor = TastyTradeProductionExtractor(username, password)
+        extractor = TastyTradePortfolioExtractor(username, password)
         print(f"✅ Connected successfully!")
         
+        print(f"\n💼 Your Portfolio:")
+        for stock in extractor.portfolio:
+            print(f"   {stock['ticker']} - {stock['name']}")
+        
         # Run comprehensive extraction
-        results = await extractor.comprehensive_data_extraction(symbols, stream_duration)
+        results = await extractor.comprehensive_data_extraction(stream_duration)
         
         # Analyze and save
         filename = extractor.analyze_and_save(results)
         
-        print(f"\n🎉 EXTRACTION COMPLETE!")
+        print(f"\n🎉 PORTFOLIO EXTRACTION COMPLETE!")
         print(f"📁 Data saved to: {filename}")
-        print(f"💡 Successfully extracted TastyTrade delayed market data!")
-        print(f"🔄 Run again anytime to get fresh data")
+        print(f"💡 Successfully extracted TastyTrade delayed market data for your portfolio!")
+        print(f"🔄 Run the trade picker next: python3 credit_spreads_picker.py")
         
     except Exception as e:
         print(f"❌ Extraction failed: {e}")
@@ -599,20 +666,23 @@ async def main():
 if __name__ == "__main__":
     asyncio.run(main())
 ```
-
-
-
-
-
-
-# 4️⃣ TastyTrade LIVE Data | Funded Account
-
+---
 
 ### Create a File
 
 ```bash
 name here
 ```
+
+### Real Time Data
+
+```bash
+waiting for approval
+```
+
+
+
+
 
 ```bash
 #!/usr/bin/env python3
