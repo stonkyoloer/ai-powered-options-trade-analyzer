@@ -214,6 +214,257 @@ python3 auth_test.py
 11. **Run script –** Starts the program so data extraction happens when we execute it.
 ---
 
+## Step 1 | Install tastytrade and websockets
+```bash
+pip install tastytrade websockets
+```
+## Step 2 | Create a file `config.py`
+```bash
+touch config.py
+open -e config.py
+```
+## Step 3 | Save user name and password in file
+```bash
+# config.py
+USERNAME = "your_username_here"
+PASSWORD = "your_password_here"
+
+print("Config file loaded!")
+```
+## Step 4 | Create a file `test1.py`
+```bash
+touch test1.py
+open -e test1.py
+```
+## Step 5 | Login to TastyTrade Script
+```bash
+# test1.py
+from tastytrade import Session
+from config import USERNAME, PASSWORD
+
+print("Trying to log in...")
+
+try:
+    session = Session(USERNAME, PASSWORD)
+    print("✅ SUCCESS! You're logged in!")
+    print(f"Account type: {'demo' if session.is_test else 'live'}")
+except Exception as e:
+    print(f"❌ FAILED: {e}")
+```
+## Step 6 | Create a file `test2.py`
+```bash
+touch test2.py
+open -e test2.py
+```
+## Step 7 | Query NVDA Data Script
+```bash
+# test2.py
+import asyncio
+import json
+from tastytrade import Session
+from config import USERNAME, PASSWORD
+
+async def get_basic_data():
+    print("Getting basic data for NVDA...")
+    
+    session = Session(USERNAME, PASSWORD)
+    
+    try:
+        response = await session.async_client.get("https://api.tastyworks.com/market-metrics?symbols=NVDA")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            # Save it to a file so you can look at it
+            with open("nvda_data.json", "w") as f:
+                json.dump(data, f, indent=2)
+            
+            print("✅ SUCCESS! Data saved to nvda_data.json")
+            print("Go look at that file to see what we got!")
+            
+        else:
+            print(f"❌ FAILED: Got status code {response.status_code}")
+            
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+
+# Run it
+asyncio.run(get_basic_data())
+```
+## Step 8 | Create a file `test3.py`
+```bash
+touch test3.py
+open -e test3.py
+```
+## Step 0 | Get WebSocket token needed for live data
+```bash
+# test3.py
+import asyncio
+from tastytrade import Session
+from config import USERNAME, PASSWORD
+
+async def get_token():
+    print("Getting WebSocket token...")
+    
+    session = Session(USERNAME, PASSWORD)
+    
+    try:
+        response = await session.async_client.get("https://api.tastyworks.com/api-quote-tokens?symbols=NVDA")
+        
+        if response.status_code == 200:
+            data = response.json()
+            
+            if 'data' in data and 'token' in data['data']:
+                token = data['data']['token']
+                
+                # Save the token to a file
+                with open("token.txt", "w") as f:
+                    f.write(token)
+                
+                print("✅ SUCCESS! Token saved to token.txt")
+                print(f"Token preview: {token[:50]}...")
+                
+            else:
+                print("❌ FAILED: No token in response")
+                
+        else:
+            print(f"❌ FAILED: Got status code {response.status_code}")
+            
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+
+# Run it
+asyncio.run(get_token())
+```
+## Step 10 | Create a file `test4`
+```bash
+touch test4.py
+open -e test4.py
+```
+## Step 11 | Test live data streaming 
+```bash
+# test4.py
+import asyncio
+import json
+import websockets
+from datetime import datetime
+from tastytrade import Session
+from config import USERNAME, PASSWORD
+
+async def test_live_data():
+    print("Testing live data streaming...")
+    
+    # Read the token we saved earlier
+    try:
+        with open("token.txt", "r") as f:
+            token = f.read().strip()
+        print("✅ Token loaded from file")
+    except:
+        print("❌ FAILED: No token file found. Run test3.py first!")
+        return
+    
+    session = Session(USERNAME, PASSWORD)
+    quotes_collected = []
+    
+    try:
+        # Connect to the WebSocket
+        url = session.dxlink_url
+        headers = [('Authorization', f'Bearer {token}')]
+        
+        print("Connecting to live data feed...")
+        
+        async with websockets.connect(url, additional_headers=headers) as websocket:
+            print("✅ Connected!")
+            
+            # Setup the connection (this is required protocol stuff)
+            setup_msg = {"type": "SETUP", "channel": 0, "keepaliveTimeout": 60, "acceptKeepaliveTimeout": 5, "version": "0.1-DXLink-JS/8.0.0"}
+            await websocket.send(json.dumps(setup_msg))
+            await websocket.recv()
+            
+            # Login
+            auth_msg = {"type": "AUTH", "channel": 0, "token": token}
+            await websocket.send(json.dumps(auth_msg))
+            
+            # Wait for login confirmation
+            for _ in range(3):
+                response = await websocket.recv()
+                data = json.loads(response)
+                if data.get('type') == 'AUTH_STATE' and data.get('state') == 'AUTHORIZED':
+                    print("✅ Logged in to live feed!")
+                    break
+            
+            # Open a channel for data
+            channel_msg = {"type": "CHANNEL_REQUEST", "channel": 1, "service": "FEED", "parameters": {"contract": "TICKER"}}
+            await websocket.send(json.dumps(channel_msg))
+            await websocket.recv()
+            
+            # Subscribe to NVDA quotes
+            sub_msg = {"type": "FEED_SUBSCRIPTION", "channel": 1, "add": [{"symbol": "NVDA", "type": "Quote"}]}
+            await websocket.send(json.dumps(sub_msg))
+            
+            print("📡 Listening for NVDA quotes for 15 seconds...")
+            print("(This is REAL live data with a 15-minute delay)")
+            
+            # Collect data for 15 seconds
+            start_time = datetime.now()
+            while (datetime.now() - start_time).total_seconds() < 15:
+                try:
+                    message = await asyncio.wait_for(websocket.recv(), timeout=1.0)
+                    parsed = json.loads(message)
+                    
+                    if parsed.get('type') == 'FEED_DATA':
+                        data_items = parsed.get('data', [])
+                        if len(data_items) >= 2 and data_items[0] == "Quote":
+                            event_data = data_items[1]
+                            if len(event_data) >= 13:
+                                bid_price = event_data[7]
+                                ask_price = event_data[11]
+                                
+                                quote = {
+                                    'time': datetime.now().isoformat(),
+                                    'bid': bid_price,
+                                    'ask': ask_price,
+                                    'spread': round(ask_price - bid_price, 2) if ask_price and bid_price else None
+                                }
+                                
+                                quotes_collected.append(quote)
+                                print(f"📊 Quote #{len(quotes_collected)}: Bid=${bid_price}, Ask=${ask_price}, Spread=${quote['spread']}")
+                
+                except asyncio.TimeoutError:
+                    continue
+            
+            print(f"\n✅ DONE! Collected {len(quotes_collected)} quotes")
+            
+            # Save the quotes
+            with open("live_quotes.json", "w") as f:
+                json.dump(quotes_collected, f, indent=2)
+            
+            print("💾 Quotes saved to live_quotes.json")
+            
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+
+# Run it
+asyncio.run(test_live_data())
+```
+## Step 12 | Create a file `test5.py`
+```bash
+touch test5.py
+open -e test5.py
+```
+
+
+
+
+
+
+
+
+
+
+
+
+---
 ## 🐢 15 Minute Delayed Data
 
 ### Create a File 
