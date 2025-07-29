@@ -199,20 +199,7 @@ python3 auth_test.py
 ```
 ---
 
-# 4️⃣ Fetch TastyTrade Data
-
-1. **Import libraries –** Brings in tools we need (async, websockets, json, etc.) so the script can work.
-2. **Create class –** Groups all portfolio data functions to keep code organized.
-3. **Login & portfolio list –** Logs into TastyTrade and loads tickers so we know what to track.
-4. **Get WebSocket token –** Gets a streaming token so we can connect for live quotes.
-5. **Fetch market data –** Pulls IV, liquidity, and instrument info to see stock risk and tradability.
-6. **Stream quotes –** Connects to WebSocket and listens to bid/ask/last to capture price action.
-7. **Get option chains –** Fetches option contracts to see strikes and expirations for trading.
-8. **Run full extraction –** Calls all steps together to collect complete portfolio data.
-9. **Analyze & save –** Saves data to JSON and prints summary so we can use it later.
-10. **Main function –** Runs everything to make the script actually do its job.
-11. **Run script –** Starts the program so data extraction happens when we execute it.
----
+# 4️⃣ Build Data Tables
 
 ## Step 1 | Install tastytrade and websockets
 ```bash
@@ -452,14 +439,458 @@ asyncio.run(test_live_data())
 touch test5.py
 open -e test5.py
 ```
+## Step 13 | Query the options chain 
+```bash
+# test5_final.py - FINAL WORKING VERSION - only uses attributes that exist
+import asyncio
+import json
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain
+from config import USERNAME, PASSWORD
 
+async def get_option_data_final():
+    print("Getting NVDA option chain data (FINAL WORKING VERSION)...")
+    
+    session = Session(USERNAME, PASSWORD)
+    
+    try:
+        # Get the option chain
+        print("📥 Fetching option chain...")
+        chain_dict = get_option_chain(session, "NVDA")
+        
+        print(f"✅ Retrieved option chain!")
+        print(f"   Type: {type(chain_dict)}")
+        print(f"   Expiration dates found: {len(chain_dict)} dates")
+        
+        # Process the defaultdict structure correctly
+        option_data = {
+            'symbol': 'NVDA',
+            'total_contracts': 0,
+            'expirations': {},
+            'all_contracts': []
+        }
+        
+        print("📊 Processing option contracts by expiration...")
+        
+        # Iterate through each expiration date
+        for expiration_date, options_list in chain_dict.items():
+            exp_date_str = str(expiration_date)
+            print(f"\n📅 Processing expiration: {exp_date_str}")
+            print(f"   Options for this date: {len(options_list)}")
+            
+            # Initialize expiration data
+            option_data['expirations'][exp_date_str] = {
+                'expiration_date': exp_date_str,
+                'total_contracts': len(options_list),
+                'calls': 0,
+                'puts': 0,
+                'contracts': []
+            }
+            
+            # Process each option in this expiration
+            for i, option in enumerate(options_list):
+                try:
+                    # Only use attributes that definitely exist (based on your debug output)
+                    contract_info = {
+                        'symbol': option.symbol,
+                        'underlying_symbol': option.underlying_symbol,
+                        'strike_price': float(option.strike_price),
+                        'expiration_date': str(option.expiration_date),
+                        'option_type': option.option_type.value,  # 'C' or 'P'
+                        'days_to_expiration': option.days_to_expiration,
+                        'exercise_style': str(option.exercise_style),
+                        'shares_per_contract': option.shares_per_contract,
+                        'is_closing_only': option.is_closing_only,
+                        'active': option.active,
+                        'settlement_type': str(option.settlement_type),
+                        'streamer_symbol': option.streamer_symbol,
+                        'instrument_type': str(option.instrument_type),
+                        'option_chain_type': str(option.option_chain_type),
+                        'expiration_type': str(option.expiration_type)
+                    }
+                    
+                    # Try to get optional attributes safely
+                    try:
+                        contract_info['stops_trading_at'] = str(option.stops_trading_at)
+                    except:
+                        contract_info['stops_trading_at'] = None
+                    
+                    try:
+                        contract_info['expires_at'] = str(option.expires_at)
+                    except:
+                        contract_info['expires_at'] = None
+                    
+                    try:
+                        contract_info['market_time_instrument_collection'] = str(option.market_time_instrument_collection)
+                    except:
+                        contract_info['market_time_instrument_collection'] = None
+                    
+                    # Add to expiration-specific data
+                    option_data['expirations'][exp_date_str]['contracts'].append(contract_info)
+                    
+                    # Add to overall contracts list
+                    option_data['all_contracts'].append(contract_info)
+                    
+                    # Count calls vs puts
+                    if option.option_type.value == 'C':
+                        option_data['expirations'][exp_date_str]['calls'] += 1
+                    else:
+                        option_data['expirations'][exp_date_str]['puts'] += 1
+                    
+                    # Print first few from each expiration
+                    if i < 3:
+                        print(f"      ✅ {i+1}. {option.symbol} | ${option.strike_price} {option.option_type.value} | DTE: {option.days_to_expiration}")
+                
+                except Exception as e:
+                    print(f"      ⚠️ Error processing option {i}: {e}")
+                    # Add error record but continue
+                    error_contract = {
+                        'symbol': f'ERROR_{i}',
+                        'error': str(e),
+                        'strike_price': 0,
+                        'expiration_date': exp_date_str,
+                        'option_type': 'ERROR'
+                    }
+                    option_data['all_contracts'].append(error_contract)
+            
+            # Update total count
+            option_data['total_contracts'] += len(options_list)
+            
+            exp_data = option_data['expirations'][exp_date_str]
+            print(f"   ✅ {exp_date_str}: {exp_data['calls']} calls, {exp_data['puts']} puts ({exp_data['total_contracts']} total)")
+        
+        # Save all option data
+        with open("nvda_options_final.json", "w") as f:
+            json.dump(option_data, f, indent=2, default=str)
+        
+        print(f"\n💾 Final option data saved to nvda_options_final.json")
+        
+        # Create summary
+        summary = {
+            'symbol': 'NVDA',
+            'total_contracts': option_data['total_contracts'],
+            'total_expirations': len(option_data['expirations']),
+            'expiration_summary': {}
+        }
+        
+        # Summarize each expiration
+        total_calls = 0
+        total_puts = 0
+        for exp_date, exp_data in option_data['expirations'].items():
+            summary['expiration_summary'][exp_date] = {
+                'total': exp_data['total_contracts'],
+                'calls': exp_data['calls'],
+                'puts': exp_data['puts'],
+                'days_to_expiration': exp_data['contracts'][0]['days_to_expiration'] if exp_data['contracts'] else 0
+            }
+            total_calls += exp_data['calls']
+            total_puts += exp_data['puts']
+        
+        summary['total_calls'] = total_calls
+        summary['total_puts'] = total_puts
+        
+        with open("nvda_options_final_summary.json", "w") as f:
+            json.dump(summary, f, indent=2)
+        
+        print(f"📋 Summary saved to nvda_options_final_summary.json")
+        
+        # Print comprehensive stats
+        print(f"\n📈 COMPREHENSIVE OPTION CHAIN STATS:")
+        print(f"   Total contracts: {option_data['total_contracts']:,}")
+        print(f"   Total calls: {total_calls:,}")
+        print(f"   Total puts: {total_puts:,}")
+        print(f"   Expiration dates: {len(option_data['expirations'])}")
+        
+        # Show each expiration
+        print(f"\n📅 ALL EXPIRATIONS:")
+        sorted_expirations = sorted(option_data['expirations'].items())
+        for exp_date, exp_data in sorted_expirations:
+            dte = exp_data['contracts'][0]['days_to_expiration'] if exp_data['contracts'] else 0
+            print(f"   {exp_date} (DTE: {dte:2d}): {exp_data['calls']:3d} calls + {exp_data['puts']:3d} puts = {exp_data['total_contracts']:3d} total")
+        
+        # Show strike range for nearest expiration
+        if sorted_expirations:
+            nearest_exp_date, nearest_exp_data = sorted_expirations[0]
+            strikes = [contract['strike_price'] for contract in nearest_exp_data['contracts'] if contract.get('strike_price', 0) > 0]
+            if strikes:
+                print(f"\n🎯 NEAREST EXPIRATION ({nearest_exp_date}):")
+                print(f"   Strike range: ${min(strikes):.2f} - ${max(strikes):.2f}")
+                print(f"   Total strikes: {len(set(strikes))}")
+        
+        # Show sample contracts
+        print(f"\n📊 SAMPLE CONTRACTS (first 5 successful):")
+        successful_contracts = [c for c in option_data['all_contracts'] if not c.get('error')]
+        for i, contract in enumerate(successful_contracts[:5]):
+            print(f"   {i+1}. {contract['symbol']}")
+            print(f"      Strike: ${contract['strike_price']} {contract['option_type']}")
+            print(f"      Expiration: {contract['expiration_date']} (DTE: {contract['days_to_expiration']})")
+            print(f"      Streamer: {contract['streamer_symbol']}")
+            print()
+        
+        print(f"🎉 SUCCESS! Collected {len(successful_contracts):,} valid option contracts!")
+        
+        return option_data
+        
+    except Exception as e:
+        print(f"❌ ERROR: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
+# Run it
+if __name__ == "__main__":
+    asyncio.run(get_option_data_final())
+```
+## Create a file `test6.py`
+## Query for the greeks
+```bash
+# comprehensive_greeks_fetcher.py - Get Greeks for more realistic strike prices
+import asyncio
+import json
+from datetime import datetime
+from tastytrade import Session, DXLinkStreamer
+from tastytrade.dxfeed import Greeks, Quote
+from tastytrade.instruments import get_option_chain
+from config import USERNAME, PASSWORD
 
+async def get_comprehensive_greeks():
+    """
+    Get Greeks for more realistic NVDA option strikes that are likely to have active data
+    """
+    print("🎯 COMPREHENSIVE GREEKS FETCHER")
+    print("="*60)
+    
+    session = Session(USERNAME, PASSWORD)
+    
+    try:
+        # Get NVDA current price first
+        print("📊 Getting NVDA stock quote first...")
+        async with DXLinkStreamer(session) as temp_streamer:
+            await temp_streamer.subscribe(Quote, ['NVDA'])
+            nvda_quote = await asyncio.wait_for(
+                temp_streamer.get_event(Quote), 
+                timeout=10.0
+            )
+            nvda_price = float((nvda_quote.bid_price + nvda_quote.ask_price) / 2)
+            print(f"💰 NVDA Current Price: ~${nvda_price:.2f}")
+        
+        # Get option chain
+        print(f"\n📊 Getting NVDA option chain...")
+        chain = get_option_chain(session, 'NVDA')
+        
+        if not chain:
+            print("❌ Could not get option chain")
+            return None
+        
+        print(f"✅ Got option chain with {len(chain)} expirations")
+        
+        # Get options from the first 2 nearest expirations
+        expirations = sorted(chain.keys())[:2]
+        
+        all_test_options = []
+        
+        for exp_date in expirations:
+            print(f"\n📅 Processing expiration: {exp_date}")
+            options = chain[exp_date]
+            
+            # Select strikes around the current stock price
+            target_strikes = [
+                nvda_price * 0.95,  # 5% OTM put / ITM call
+                nvda_price * 0.98,  # 2% OTM put / ITM call  
+                nvda_price * 1.00,  # ATM
+                nvda_price * 1.02,  # 2% OTM call / ITM put
+                nvda_price * 1.05,  # 5% OTM call / ITM put
+            ]
+            
+            exp_options = []
+            
+            for target_strike in target_strikes:
+                # Find closest actual strikes for calls and puts
+                # Convert Decimal strike_price to float for comparison
+                closest_call = min(
+                    [opt for opt in options if opt.option_type.value == 'C'],
+                    key=lambda x: abs(float(x.strike_price) - target_strike),
+                    default=None
+                )
+                closest_put = min(
+                    [opt for opt in options if opt.option_type.value == 'P'],
+                    key=lambda x: abs(float(x.strike_price) - target_strike),
+                    default=None
+                )
+                
+                if closest_call and closest_call not in exp_options:
+                    exp_options.append(closest_call)
+                if closest_put and closest_put not in exp_options:
+                    exp_options.append(closest_put)
+            
+            # Limit to 8 options per expiration
+            exp_options = exp_options[:8]
+            all_test_options.extend(exp_options)
+            
+            print(f"   📈 Selected {len(exp_options)} options around ${nvda_price:.0f}")
+            for opt in exp_options:
+                strike_price = float(opt.strike_price)  # Convert Decimal to float
+                distance = ((strike_price / nvda_price) - 1) * 100
+                moneyness = "ITM" if (opt.option_type.value == 'C' and strike_price < nvda_price) or \
+                                   (opt.option_type.value == 'P' and strike_price > nvda_price) else "OTM"
+                print(f"      {opt.option_type.value} ${strike_price:.0f} ({distance:+.1f}% {moneyness})")
+        
+        print(f"\n🎯 Total options to test: {len(all_test_options)}")
+        
+        # Get streamer symbols
+        streamer_symbols = [option.streamer_symbol for option in all_test_options]
+        
+        # Connect to streamer and get data
+        print(f"\n📡 Connecting to DXLink streamer...")
+        
+        async with DXLinkStreamer(session) as streamer:
+            print(f"✅ Connected!")
+            
+            # Subscribe to Greeks and Quotes
+            print(f"📊 Subscribing to Greeks and Quotes...")
+            await streamer.subscribe(Greeks, streamer_symbols)
+            await streamer.subscribe(Quote, streamer_symbols)
+            
+            print(f"✅ Subscribed! Waiting for data...")
+            
+            # Collect Greeks data for up to 30 seconds
+            greeks_received = []
+            quotes_received = []
+            
+            print(f"⏳ Collecting data for 30 seconds...")
+            start_time = asyncio.get_event_loop().time()
+            
+            while (asyncio.get_event_loop().time() - start_time) < 30:
+                try:
+                    # Try to get Greeks
+                    greeks_data = await asyncio.wait_for(
+                        streamer.get_event(Greeks), 
+                        timeout=2.0
+                    )
+                    
+                    if isinstance(greeks_data, list):
+                        greeks_received.extend(greeks_data)
+                    else:
+                        greeks_received.append(greeks_data)
+                    
+                    print(f"📊 Received Greeks for: {greeks_data.event_symbol if not isinstance(greeks_data, list) else f'{len(greeks_data)} symbols'}")
+                    
+                except asyncio.TimeoutError:
+                    # Try to get quotes instead
+                    try:
+                        quote_data = await asyncio.wait_for(
+                            streamer.get_event(Quote),
+                            timeout=2.0
+                        )
+                        
+                        if isinstance(quote_data, list):
+                            quotes_received.extend(quote_data)
+                        else:
+                            quotes_received.append(quote_data)
+                            
+                    except asyncio.TimeoutError:
+                        continue
+            
+            # Process and display results
+            print(f"\n🎉 DATA COLLECTION COMPLETE!")
+            print("="*60)
+            print(f"📊 Greeks received: {len(greeks_received)}")
+            print(f"💰 Quotes received: {len(quotes_received)}")
+            
+            if greeks_received:
+                print(f"\n🔢 GREEKS DATA:")
+                print("="*60)
+                
+                # Group by expiration for better display
+                greeks_by_exp = {}
+                for greek in greeks_received:
+                    # Extract expiration from symbol (e.g., .NVDA250801C140 -> 250801)
+                    exp_part = greek.event_symbol.split('250801')[0] + '250801' if '250801' in greek.event_symbol else 'Unknown'
+                    if exp_part not in greeks_by_exp:
+                        greeks_by_exp[exp_part] = []
+                    greeks_by_exp[exp_part].append(greek)
+                
+                for exp, greeks_list in greeks_by_exp.items():
+                    print(f"\n📅 Expiration: {exp}")
+                    print("-" * 40)
+                    
+                    for greek in sorted(greeks_list, key=lambda x: (x.event_symbol[-1], float(x.event_symbol.split('C')[-1] if 'C' in x.event_symbol else x.event_symbol.split('P')[-1]))):
+                        # Find option info
+                        option_info = next((opt for opt in all_test_options if opt.streamer_symbol == greek.event_symbol), None)
+                        
+                        # Calculate moneyness
+                        if option_info:
+                            strike_price = float(option_info.strike_price)  # Convert Decimal to float
+                            if option_info.option_type.value == 'C':
+                                moneyness = (nvda_price - strike_price) / nvda_price * 100
+                                itm_otm = "ITM" if moneyness > 0 else "OTM"
+                            else:  # Put
+                                moneyness = (strike_price - nvda_price) / nvda_price * 100
+                                itm_otm = "ITM" if moneyness > 0 else "OTM"
+                        else:
+                            moneyness = 0
+                            itm_otm = "UNK"
+                            strike_price = 0
+                        
+                        print(f"📊 {greek.event_symbol}")
+                        if option_info:
+                            print(f"   📋 {option_info.option_type.value} ${strike_price:.0f} ({moneyness:+.1f}% {itm_otm})")
+                        print(f"   💲 Price: ${greek.price:.4f}")
+                        print(f"   📈 Delta: {greek.delta:.6f}")
+                        print(f"   🔄 Gamma: {greek.gamma:.8f}")
+                        print(f"   ⏰ Theta: {greek.theta:.6f}")
+                        print(f"   📊 Vega: {greek.vega:.6f}")
+                        print(f"   🏦 Rho: {greek.rho:.6f}")
+                        print(f"   📉 IV: {greek.volatility*100:.2f}%")
+                        print()
+            
+            # Save data to file
+            output_data = {
+                'timestamp': datetime.now().isoformat(),
+                'nvda_price': nvda_price,
+                'total_greeks_received': len(greeks_received),
+                'total_quotes_received': len(quotes_received),
+                'greeks_data': []
+            }
+            
+            for greek in greeks_received:
+                option_info = next((opt for opt in all_test_options if opt.streamer_symbol == greek.event_symbol), None)
+                
+                output_data['greeks_data'].append({
+                    'symbol': greek.event_symbol,
+                    'strike': float(option_info.strike_price) if option_info else None,
+                    'option_type': option_info.option_type.value if option_info else None,
+                    'price': float(greek.price),
+                    'delta': float(greek.delta),
+                    'gamma': float(greek.gamma),
+                    'theta': float(greek.theta),
+                    'vega': float(greek.vega),
+                    'rho': float(greek.rho),
+                    'implied_volatility': float(greek.volatility),
+                    'time': int(greek.time)
+                })
+            
+            filename = f"nvda_comprehensive_greeks_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+            with open(filename, 'w') as f:
+                json.dump(output_data, f, indent=2)
+            
+            print(f"💾 Saved comprehensive data to: {filename}")
+            
+            return output_data
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        import traceback
+        traceback.print_exc()
+        return None
 
+if __name__ == "__main__":
+    asyncio.run(get_comprehensive_greeks())
+```
 
+# 4️⃣ Fetch TastyTrade Data
 
-
-
+---
 
 
 
@@ -476,464 +907,401 @@ open -e delayed_data.py
 ### Save the Script (15 min delayed feed)
 
 ```bash
-#!/usr/bin/env python3
-"""
-TASTYTRADE PORTFOLIO DATA EXTRACTOR
-Extracts real delayed market data from TastyTrade for your portfolio
-
-✅ Working Features:
-- DXLink WebSocket protocol
-- COMPACT data format parsing
-- Real delayed quotes (15-min delay)
-- Quote data: bid/ask/spreads
-- Trade data: last/change/volume
-- Portfolio focus
-
-Data Sources:
-- Market metrics (IV, liquidity)
-- WebSocket quotes (bid/ask/last)
-- Option chains
-- All saved to JSON
-
-Portfolio Focus:
-- NVDA (NVIDIA)
-- ISRG (Intuitive Surgical)
-- PLTR (Palantir)  
-- TSLA (Tesla)
-- AMZN (Amazon)
-- ENPH (Enphase Energy)
-- XOM (Exxon Mobil)
-- DE (John Deere)
-- CAT (Caterpillar)
-"""
-
+# portfolio_data_collector.py - Fixed version for comprehensive portfolio data collection
 import asyncio
 import json
-import websockets
 from datetime import datetime
-from decimal import Decimal
-import warnings
-from tastytrade import Session
-from tastytrade.instruments import get_option_chain, Option, Equity
+from tastytrade import Session, DXLinkStreamer
+from tastytrade.dxfeed import Greeks, Quote
+from tastytrade.instruments import get_option_chain
+from config import USERNAME, PASSWORD
 
-warnings.filterwarnings('ignore')
+# Portfolio symbols
+PORTFOLIO_SYMBOLS = [
+    'NVDA',  # NVIDIA
+    'ISRG',  # Intuitive Surgical
+    'PLTR',  # Palantir
+    'TSLA',  # Tesla
+    'AMZN',  # Amazon
+    'ENPH',  # Enphase Energy
+    'XOM',   # Exxon Mobil
+    'DE',    # John Deere
+    'CAT'    # Caterpillar
+]
 
-class TastyTradePortfolioExtractor:
-    def __init__(self, username: str, password: str):
-        self.session = Session(username, password)
-        self.websocket_token = None
-        
-        # Your portfolio configuration
-        self.portfolio = [
-            {"ticker": "NVDA", "name": "NVIDIA"},
-            {"ticker": "ISRG", "name": "Intuitive Surgical"}, 
-            {"ticker": "PLTR", "name": "Palantir"},
-            {"ticker": "TSLA", "name": "Tesla"},
-            {"ticker": "AMZN", "name": "Amazon"},
-            {"ticker": "ENPH", "name": "Enphase Energy"},
-            {"ticker": "XOM", "name": "Exxon Mobil"},
-            {"ticker": "DE", "name": "John Deere"},
-            {"ticker": "CAT", "name": "Caterpillar"}
-        ]
-        
-    async def get_websocket_token(self, symbols: list):
-        """Retrieve WebSocket token from /api-quote-tokens"""
-        try:
-            symbol_str = ','.join(symbols)
-            response = await self.session.async_client.get(f"https://api.tastyworks.com/api-quote-tokens?symbols={symbol_str}")
-            if response.status_code == 200:
-                data = response.json()
-                if 'data' in data and 'token' in data['data']:
-                    self.websocket_token = data['data']['token']
-                    print(f"🎫 WebSocket token retrieved")
-                    return True
-            print(f"❌ Failed to get WebSocket token")
-            return False
-        except Exception as e:
-            print(f"⚠️ Token error: {e}")
-            return False
-
-    async def get_market_data(self, symbols: list):
-        """Get market metrics and instrument data"""
-        print(f"📊 Fetching market data for {len(symbols)} portfolio symbols...")
-        
-        market_data = {}
-        for symbol in symbols:
-            # Find company name from portfolio
-            company_name = "Unknown"
-            for stock in self.portfolio:
-                if stock["ticker"] == symbol:
-                    company_name = stock["name"]
-                    break
-            
-            market_data[symbol] = {
-                'company_name': company_name,
-                'market_metrics': {},
-                'instrument_info': {}
-            }
-            
-            # Market metrics
-            try:
-                response = await self.session.async_client.get(f"https://api.tastyworks.com/market-metrics?symbols={symbol}")
-                if response.status_code == 200:
-                    data = response.json()
-                    market_data[symbol]['market_metrics'] = data
-                    if 'data' in data and 'items' in data['data']:
-                        for item in data['data']['items']:
-                            if item.get('symbol') == symbol:
-                                iv = item.get('implied-volatility-index', 0)
-                                liquidity = item.get('liquidity-rating', 0)
-                                iv_pct = float(iv) * 100 if iv else 0
-                                print(f"   {symbol} ({company_name}): IV={iv_pct:.1f}%, Liquidity={liquidity}")
-            except Exception as e:
-                print(f"   ⚠️ {symbol} market metrics error: {e}")
-            
-            # Instrument info
-            try:
-                response = await self.session.async_client.get(f"https://api.tastyworks.com/instruments/equities/{symbol}")
-                if response.status_code == 200:
-                    data = response.json()
-                    market_data[symbol]['instrument_info'] = data
-            except Exception as e:
-                print(f"   ⚠️ {symbol} instrument error: {e}")
-            
-            await asyncio.sleep(0.1)  # Rate limiting
-        
-        return market_data
-
-    async def stream_delayed_quotes(self, symbols: list, duration_seconds: int = 30):
-        """Stream delayed quotes using DXLink WebSocket with COMPACT format parsing"""
-        print(f"\n📺 Streaming delayed quotes for {duration_seconds} seconds...")
-        print(f"📋 Monitoring: {', '.join(symbols)}")
-        
-        # Get WebSocket token
-        if not await self.get_websocket_token(symbols):
-            return {}
-        
-        collected_data = {symbol: {'quotes': [], 'trades': []} for symbol in symbols}
-        
-        try:
-            dxlink_url = self.session.dxlink_url
-            headers = [('Authorization', f'Bearer {self.websocket_token}')]
-            
-            async with websockets.connect(dxlink_url, additional_headers=headers) as websocket:
-                print(f"✅ Connected to delayed feed")
-                
-                # DXLink Protocol Flow
-                
-                # 1. SETUP
-                setup_msg = {
-                    "type": "SETUP",
-                    "channel": 0,
-                    "keepaliveTimeout": 60,
-                    "acceptKeepaliveTimeout": 5,
-                    "version": "0.1-DXLink-JS/8.0.0"
-                }
-                await websocket.send(json.dumps(setup_msg))
-                await websocket.recv()  # Setup response
-                
-                # 2. AUTHENTICATE
-                auth_msg = {
-                    "type": "AUTH",
-                    "channel": 0,
-                    "token": self.websocket_token
-                }
-                await websocket.send(json.dumps(auth_msg))
-                
-                # Wait for AUTHORIZED state
-                auth_success = False
-                for _ in range(3):
-                    auth_response = await websocket.recv()
-                    auth_data = json.loads(auth_response)
-                    if auth_data.get('type') == 'AUTH_STATE' and auth_data.get('state') == 'AUTHORIZED':
-                        auth_success = True
-                        print(f"🔑 Authentication successful")
-                        break
-                
-                if not auth_success:
-                    print(f"❌ Authentication failed")
-                    return collected_data
-                
-                # 3. OPEN CHANNEL
-                channel_msg = {
-                    "type": "CHANNEL_REQUEST",
-                    "channel": 1,
-                    "service": "FEED",
-                    "parameters": {"contract": "TICKER"}
-                }
-                await websocket.send(json.dumps(channel_msg))
-                await websocket.recv()  # Channel opened response
-                
-                # 4. SUBSCRIBE TO SYMBOLS
-                for symbol in symbols:
-                    sub_msg = {
-                        "type": "FEED_SUBSCRIPTION",
-                        "channel": 1,
-                        "add": [
-                            {"symbol": symbol, "type": "Quote"},
-                            {"symbol": symbol, "type": "Trade"}
-                        ]
-                    }
-                    await websocket.send(json.dumps(sub_msg))
-                    await asyncio.sleep(0.05)
-                
-                print(f"📤 Subscribed to portfolio symbols")
-                
-                # 5. COLLECT DATA
-                start_time = datetime.now()
-                quote_count = 0
-                trade_count = 0
-                
-                while (datetime.now() - start_time).total_seconds() < duration_seconds:
-                    try:
-                        message = await asyncio.wait_for(websocket.recv(), timeout=1.0)
-                        parsed = json.loads(message)
-                        
-                        if parsed.get('type') == 'FEED_DATA':
-                            data_items = parsed.get('data', [])
-                            
-                            if len(data_items) >= 2:
-                                event_type = data_items[0]
-                                event_data = data_items[1]
-                                
-                                if event_type == "Quote" and len(event_data) >= 13:
-                                    # COMPACT Quote: [eventType, symbol, eventTime, sequence, timeNanoPart, bidTime, bidExchangeCode, bidPrice, bidSize, askTime, askExchangeCode, askPrice, askSize]
-                                    symbol = event_data[1]
-                                    bid_price = event_data[7]
-                                    bid_size = event_data[8]
-                                    ask_price = event_data[11]
-                                    ask_size = event_data[12]
-                                    
-                                    quote_data = {
-                                        'timestamp': datetime.now().isoformat(),
-                                        'symbol': symbol,
-                                        'bid': bid_price,
-                                        'ask': ask_price,
-                                        'bid_size': bid_size,
-                                        'ask_size': ask_size,
-                                        'spread': round(ask_price - bid_price, 2) if ask_price and bid_price else None,
-                                        'mid': round((ask_price + bid_price) / 2, 2) if ask_price and bid_price else None
-                                    }
-                                    
-                                    if symbol in symbols:
-                                        collected_data[symbol]['quotes'].append(quote_data)
-                                        quote_count += 1
-                                        if quote_count % 15 == 1:  # Print every 15th quote (less spam with more symbols)
-                                            print(f"📊 {symbol}: Bid=${bid_price}, Ask=${ask_price}, Spread=${quote_data['spread']}")
-                                
-                                elif event_type == "Trade" and len(event_data) >= 12:
-                                    # COMPACT Trade: [eventType, symbol, eventTime, time, timeNanoPart, sequence, exchangeCode, price, change, size, dayId, dayVolume, dayTurnover, ...]
-                                    symbol = event_data[1]
-                                    price = event_data[7]
-                                    change = event_data[8]
-                                    day_volume = event_data[11]
-                                    
-                                    trade_data = {
-                                        'timestamp': datetime.now().isoformat(),
-                                        'symbol': symbol,
-                                        'last': price,
-                                        'change': change,
-                                        'day_volume': day_volume
-                                    }
-                                    
-                                    if symbol in symbols:
-                                        collected_data[symbol]['trades'].append(trade_data)
-                                        trade_count += 1
-                                        if trade_count % 10 == 1:  # Print every 10th trade
-                                            print(f"🔄 {symbol}: Last=${price}, Change=${change}")
-                        
-                        elif parsed.get('type') == 'KEEPALIVE':
-                            # Respond to keepalive
-                            keepalive_response = {"type": "KEEPALIVE", "channel": 0}
-                            await websocket.send(json.dumps(keepalive_response))
-                            
-                    except asyncio.TimeoutError:
-                        continue
-                    except Exception as e:
-                        print(f"⚠️ Message error: {e}")
-                
-                print(f"\n✅ Data collection complete!")
-                print(f"   📊 Quotes collected: {quote_count}")
-                print(f"   🔄 Trades collected: {trade_count}")
-                
-        except Exception as e:
-            print(f"❌ WebSocket error: {e}")
-        
-        return collected_data
-
-    async def get_option_chains(self, symbols: list):
-        """Get option chain data for symbols"""
-        print(f"\n⛓️ Fetching option chains for portfolio...")
-        
-        option_data = {}
-        
-        # Process all symbols but limit details for speed
-        for i, symbol in enumerate(symbols):
-            try:
-                print(f"   Processing {symbol} ({i+1}/{len(symbols)})...")
-                
-                chain = get_option_chain(self.session, symbol)
-                option_data[symbol] = {
-                    'total_contracts': len(chain),
-                    'sample_contracts': []
-                }
-                
-                # Get sample of nearest expiration options (first 5)
-                for option in chain[:5]:
-                    option_info = {
-                        'symbol': option.symbol,
-                        'strike': float(option.strike_price),
-                        'expiration': str(option.expiration_date),
-                        'type': option.option_type.value,
-                        'days_to_expiry': option.days_to_expiration
-                    }
-                    option_data[symbol]['sample_contracts'].append(option_info)
-                
-                print(f"      {symbol}: {len(chain)} option contracts available")
-                
-                # Rate limiting - especially important with more symbols
-                await asyncio.sleep(0.2)
-                
-            except Exception as e:
-                print(f"   ⚠️ {symbol} option chain error: {e}")
-                option_data[symbol] = {'error': str(e)}
-        
-        return option_data
-
-    async def comprehensive_data_extraction(self, stream_duration: int = 60):
-        """Extract all available TastyTrade data for your portfolio"""
-        symbols = [stock["ticker"] for stock in self.portfolio]
-        
-        print(f"🚀 TASTYTRADE PORTFOLIO DATA EXTRACTION")
-        print(f"   Portfolio Symbols: {', '.join(symbols)}")
-        print(f"   Stream Duration: {stream_duration} seconds")
-        print(f"   Feed Type: DELAYED (15-minute delay)")
-        print("="*70)
-        
-        results = {
-            'timestamp': datetime.now().isoformat(),
-            'portfolio': self.portfolio,
-            'symbols': symbols,
-            'feed_type': 'delayed',
-            'account_type': 'demo' if self.session.is_test else 'live',
-            'market_data': {},
-            'streaming_data': {},
-            'option_chains': {}
-        }
-        
-        # Phase 1: Market Data
-        results['market_data'] = await self.get_market_data(symbols)
-        
-        # Phase 2: Streaming Quotes
-        results['streaming_data'] = await self.stream_delayed_quotes(symbols, stream_duration)
-        
-        # Phase 3: Option Chains
-        results['option_chains'] = await self.get_option_chains(symbols)
-        
-        return results
-
-    def analyze_and_save(self, data: dict):
-        """Analyze collected data and save to file"""
-        print(f"\n💾 ANALYZING AND SAVING PORTFOLIO DATA")
-        print("="*50)
-        
-        # Save raw data
-        filename = f"portfolio_data_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-        with open(filename, 'w') as f:
-            json.dump(data, f, indent=2, default=str)
-        
-        print(f"📁 Raw data saved: {filename}")
-        
-        # Analysis
-        portfolio = data.get('portfolio', [])
-        symbols = data.get('symbols', [])
-        streaming_data = data.get('streaming_data', {})
-        
-        print(f"\n📊 PORTFOLIO DATA ANALYSIS:")
-        for i, symbol in enumerate(symbols):
-            company_name = portfolio[i]["name"] if i < len(portfolio) else "Unknown"
-            
-            if symbol in streaming_data:
-                quotes = streaming_data[symbol].get('quotes', [])
-                trades = streaming_data[symbol].get('trades', [])
-                
-                print(f"\n   {symbol} ({company_name}):")
-                print(f"      Quotes received: {len(quotes)}")
-                print(f"      Trades received: {len(trades)}")
-                
-                if quotes:
-                    latest_quote = quotes[-1]
-                    print(f"      Latest quote: Bid=${latest_quote.get('bid')}, Ask=${latest_quote.get('ask')}")
-                    print(f"      Spread: ${latest_quote.get('spread')}")
-                
-                if trades:
-                    latest_trade = trades[-1]
-                    print(f"      Latest trade: ${latest_trade.get('last')} (change: ${latest_trade.get('change')})")
-        
-        # Market metrics summary
-        market_data = data.get('market_data', {})
-        print(f"\n📈 PORTFOLIO MARKET METRICS:")
-        for symbol in symbols:
-            if symbol in market_data:
-                company_name = market_data[symbol].get('company_name', 'Unknown')
-                metrics = market_data[symbol].get('market_metrics', {})
-                if 'data' in metrics and 'items' in metrics['data']:
-                    for item in metrics['data']['items']:
-                        if item.get('symbol') == symbol:
-                            iv = item.get('implied-volatility-index', 0)
-                            liquidity = item.get('liquidity-rating', 0)
-                            iv_pct = float(iv) * 100 if iv else 0
-                            print(f"   {symbol} ({company_name}): IV={iv_pct:.1f}%, Liquidity={liquidity}/5")
-        
-        # Option chains summary
-        option_chains = data.get('option_chains', {})
-        print(f"\n⛓️ PORTFOLIO OPTION CHAINS:")
-        for symbol, chain_data in option_chains.items():
-            if 'total_contracts' in chain_data:
-                company_name = next((stock["name"] for stock in portfolio if stock["ticker"] == symbol), "Unknown")
-                print(f"   {symbol} ({company_name}): {chain_data['total_contracts']} contracts available")
-        
-        return filename
-
-async def main():
-    """Main execution function"""
-    print("🚀 TastyTrade Portfolio Data Extractor")
-    print("="*60)
-    
-    # Configuration
-    username = "username"
-    password = "password"
-    
-    # Stream duration (in seconds)
-    stream_duration = 45  # Reduced for more symbols
+async def get_stock_quotes(session):
+    """
+    Get current stock quotes for all portfolio symbols
+    """
+    stock_prices = {}
     
     try:
-        print(f"\n🔐 Connecting to TastyTrade...")
-        extractor = TastyTradePortfolioExtractor(username, password)
-        print(f"✅ Connected successfully!")
+        async with DXLinkStreamer(session) as streamer:
+            print("📡 Connecting to quote streamer...")
+            await streamer.subscribe(Quote, PORTFOLIO_SYMBOLS)
+            print("✅ Subscribed to quotes")
+            
+            # Collect quotes for 30 seconds to ensure we get all symbols
+            collected_symbols = set()
+            start_time = asyncio.get_event_loop().time()
+            
+            while len(collected_symbols) < len(PORTFOLIO_SYMBOLS) and (asyncio.get_event_loop().time() - start_time) < 30:
+                try:
+                    quote = await asyncio.wait_for(streamer.get_event(Quote), timeout=5.0)
+                    
+                    if quote and quote.event_symbol in PORTFOLIO_SYMBOLS:
+                        symbol = quote.event_symbol
+                        
+                        if symbol not in collected_symbols:
+                            current_price = float((quote.bid_price + quote.ask_price) / 2)
+                            stock_prices[symbol] = {
+                                'current_price': current_price,
+                                'bid': float(quote.bid_price),
+                                'ask': float(quote.ask_price),
+                                'spread': float(quote.ask_price - quote.bid_price),
+                                'timestamp': datetime.now().isoformat()
+                            }
+                            collected_symbols.add(symbol)
+                            print(f"   ✅ {symbol}: ${current_price:.2f}")
+                        
+                except asyncio.TimeoutError:
+                    continue
+                except Exception as e:
+                    print(f"   ⚠️ Quote error: {e}")
+                    continue
+            
+            # For any missing symbols, try to get basic market data
+            missing_symbols = set(PORTFOLIO_SYMBOLS) - collected_symbols
+            if missing_symbols:
+                print(f"⚠️ Missing quotes for: {missing_symbols}")
+                # Add placeholder data so we can still get options chains
+                for symbol in missing_symbols:
+                    stock_prices[symbol] = {
+                        'current_price': 0.0,
+                        'bid': 0.0,
+                        'ask': 0.0,
+                        'spread': 0.0,
+                        'timestamp': datetime.now().isoformat(),
+                        'note': 'Price unavailable - using options data for analysis'
+                    }
+                    print(f"   ⚠️ {symbol}: No quote available")
+    
+    except Exception as e:
+        print(f"❌ Error getting quotes: {e}")
+        # Create placeholder data for all symbols
+        for symbol in PORTFOLIO_SYMBOLS:
+            stock_prices[symbol] = {
+                'current_price': 0.0,
+                'bid': 0.0,
+                'ask': 0.0,
+                'spread': 0.0,
+                'timestamp': datetime.now().isoformat(),
+                'note': 'Quote error - using options data for analysis'
+            }
+    
+    return stock_prices
+
+async def get_portfolio_data():
+    """
+    Comprehensive data collection for entire trading portfolio
+    """
+    print("🚀 PORTFOLIO DATA COLLECTOR (FIXED VERSION)")
+    print("="*80)
+    print(f"📊 Collecting data for {len(PORTFOLIO_SYMBOLS)} symbols:")
+    print(f"   {', '.join(PORTFOLIO_SYMBOLS)}")
+    print("="*80)
+    
+    session = Session(USERNAME, PASSWORD)
+    
+    portfolio_data = {
+        'timestamp': datetime.now().isoformat(),
+        'symbols': PORTFOLIO_SYMBOLS,
+        'stock_prices': {},
+        'options_data': {},
+        'greeks_data': {},
+        'summary': {
+            'total_symbols': len(PORTFOLIO_SYMBOLS),
+            'successful_symbols': 0,
+            'total_option_contracts': 0,
+            'total_greeks_collected': 0
+        }
+    }
+    
+    try:
+        # Step 1: Get current stock prices
+        print("\n📈 STEP 1: Getting current stock prices...")
+        print("-" * 50)
         
-        print(f"\n💼 Your Portfolio:")
-        for stock in extractor.portfolio:
-            print(f"   {stock['ticker']} - {stock['name']}")
+        portfolio_data['stock_prices'] = await get_stock_quotes(session)
         
-        # Run comprehensive extraction
-        results = await extractor.comprehensive_data_extraction(stream_duration)
+        # Step 2: Get options chains for all symbols
+        print(f"\n⛓️ STEP 2: Getting options chains...")
+        print("-" * 50)
         
-        # Analyze and save
-        filename = extractor.analyze_and_save(results)
+        credit_spread_options = []  # For credit spread analysis
         
-        print(f"\n🎉 PORTFOLIO EXTRACTION COMPLETE!")
-        print(f"📁 Data saved to: {filename}")
-        print(f"💡 Successfully extracted TastyTrade delayed market data for your portfolio!")
-        print(f"🔄 Run the trade picker next: python3 credit_spreads_picker.py")
+        for symbol in PORTFOLIO_SYMBOLS:
+            try:
+                print(f"\n📊 Getting {symbol} option chain...")
+                chain = get_option_chain(session, symbol)
+                
+                if not chain:
+                    print(f"   ❌ Could not get option chain for {symbol}")
+                    continue
+                
+                print(f"   ✅ Got {len(chain)} expirations for {symbol}")
+                
+                # Process options data
+                symbol_option_data = {
+                    'symbol': symbol,
+                    'total_contracts': 0,
+                    'expirations': {},
+                    'current_price': portfolio_data['stock_prices'].get(symbol, {}).get('current_price', 0)
+                }
+                
+                # Get first 4 nearest expirations for credit spread analysis
+                expirations = sorted(chain.keys())[:4]
+                
+                for exp_date in expirations:
+                    exp_date_str = str(exp_date)
+                    options_list = chain[exp_date]
+                    
+                    print(f"   📅 Processing {exp_date_str}: {len(options_list)} contracts")
+                    
+                    exp_data = {
+                        'expiration_date': exp_date_str,
+                        'total_contracts': len(options_list),
+                        'calls': 0,
+                        'puts': 0,
+                        'contracts': []
+                    }
+                    
+                    # Process each option and identify credit spread candidates
+                    calls_by_strike = {}
+                    puts_by_strike = {}
+                    
+                    for option in options_list:
+                        try:
+                            contract_info = {
+                                'symbol': option.symbol,
+                                'underlying_symbol': option.underlying_symbol,
+                                'strike_price': float(option.strike_price),
+                                'expiration_date': str(option.expiration_date),
+                                'option_type': option.option_type.value,
+                                'days_to_expiration': option.days_to_expiration,
+                                'streamer_symbol': option.streamer_symbol,
+                                'active': option.active,
+                                'shares_per_contract': option.shares_per_contract
+                            }
+                            
+                            exp_data['contracts'].append(contract_info)
+                            
+                            # Organize by strike for credit spread identification
+                            strike = float(option.strike_price)
+                            if option.option_type.value == 'C':
+                                calls_by_strike[strike] = option
+                                exp_data['calls'] += 1
+                            else:
+                                puts_by_strike[strike] = option
+                                exp_data['puts'] += 1
+                            
+                            # Add to credit spread candidates if DTE <= 45 (we'll filter to 33 later)
+                            if option.days_to_expiration <= 45:
+                                credit_spread_options.append(option)
+                                    
+                        except Exception as e:
+                            print(f"      ⚠️ Error processing option: {e}")
+                    
+                    symbol_option_data['expirations'][exp_date_str] = exp_data
+                    symbol_option_data['total_contracts'] += len(options_list)
+                    
+                    print(f"      ✅ {exp_data['calls']} calls, {exp_data['puts']} puts")
+                
+                portfolio_data['options_data'][symbol] = symbol_option_data
+                portfolio_data['summary']['total_option_contracts'] += symbol_option_data['total_contracts']
+                portfolio_data['summary']['successful_symbols'] += 1
+                
+                print(f"   🎯 {symbol} Summary: {symbol_option_data['total_contracts']} total contracts")
+                
+            except Exception as e:
+                print(f"   ❌ Error getting {symbol} options: {e}")
+        
+        # Step 3: Get Greeks for credit spread options
+        print(f"\n🔢 STEP 3: Getting Greeks data for credit spreads...")
+        print("-" * 50)
+        print(f"📊 Collecting Greeks for {len(credit_spread_options)} credit spread candidates")
+        
+        if credit_spread_options:
+            # Limit to prevent timeout - take up to 100 most relevant options
+            if len(credit_spread_options) > 100:
+                # Sort by DTE (shorter first) and then by activity
+                credit_spread_options.sort(key=lambda x: (x.days_to_expiration, x.underlying_symbol))
+                credit_spread_options = credit_spread_options[:100]
+                print(f"   📊 Limited to top 100 most relevant options")
+            
+            streamer_symbols = [option.streamer_symbol for option in credit_spread_options]
+            
+            async with DXLinkStreamer(session) as streamer:
+                print(f"📡 Connecting to DXLink streamer for Greeks...")
+                
+                # Subscribe to Greeks
+                await streamer.subscribe(Greeks, streamer_symbols)
+                print(f"✅ Subscribed to Greeks for {len(streamer_symbols)} options")
+                
+                # Collect Greeks data for 60 seconds
+                greeks_received = []
+                print(f"⏳ Collecting Greeks data for 60 seconds...")
+                
+                start_time = asyncio.get_event_loop().time()
+                
+                while (asyncio.get_event_loop().time() - start_time) < 60:
+                    try:
+                        greeks_data = await asyncio.wait_for(
+                            streamer.get_event(Greeks), 
+                            timeout=3.0
+                        )
+                        
+                        if isinstance(greeks_data, list):
+                            greeks_received.extend(greeks_data)
+                            print(f"📊 Received Greeks batch: {len(greeks_data)} items")
+                        else:
+                            greeks_received.append(greeks_data)
+                            
+                            # Only print every 10th individual item to reduce spam
+                            if len(greeks_received) % 10 == 0:
+                                print(f"📊 Greeks collected: {len(greeks_received)}")
+                        
+                    except asyncio.TimeoutError:
+                        continue
+                
+                print(f"✅ Total Greeks collected: {len(greeks_received)}")
+                
+                # Process Greeks data by symbol
+                greeks_by_symbol = {}
+                
+                for greek in greeks_received:
+                    # Extract underlying symbol from option symbol
+                    underlying = None
+                    for symbol in PORTFOLIO_SYMBOLS:
+                        if symbol in greek.event_symbol:
+                            underlying = symbol
+                            break
+                    
+                    if not underlying:
+                        continue
+                    
+                    if underlying not in greeks_by_symbol:
+                        greeks_by_symbol[underlying] = []
+                    
+                    # Find option info
+                    option_info = next((opt for opt in credit_spread_options if opt.streamer_symbol == greek.event_symbol), None)
+                    
+                    greek_record = {
+                        'symbol': greek.event_symbol,
+                        'underlying_symbol': underlying,
+                        'strike': float(option_info.strike_price) if option_info else None,
+                        'option_type': option_info.option_type.value if option_info else None,
+                        'days_to_expiration': option_info.days_to_expiration if option_info else None,
+                        'price': float(greek.price),
+                        'delta': float(greek.delta),
+                        'gamma': float(greek.gamma),
+                        'theta': float(greek.theta),
+                        'vega': float(greek.vega),
+                        'rho': float(greek.rho),
+                        'implied_volatility': float(greek.volatility),
+                        'time': int(greek.time)
+                    }
+                    
+                    greeks_by_symbol[underlying].append(greek_record)
+                
+                portfolio_data['greeks_data'] = greeks_by_symbol
+                portfolio_data['summary']['total_greeks_collected'] = len(greeks_received)
+        
+        # Step 4: Generate summary and save data
+        print(f"\n💾 STEP 4: Saving data and generating summary...")
+        print("-" * 50)
+        
+        # Save complete portfolio data
+        timestamp_str = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f"portfolio_data_{timestamp_str}.json"
+        
+        with open(filename, 'w') as f:
+            json.dump(portfolio_data, f, indent=2, default=str)
+        
+        print(f"✅ Complete data saved to: {filename}")
+        
+        # Create and save summary
+        summary_data = {
+            'timestamp': portfolio_data['timestamp'],
+            'portfolio_summary': {
+                'symbols': PORTFOLIO_SYMBOLS,
+                'successful_symbols': portfolio_data['summary']['successful_symbols'],
+                'total_option_contracts': portfolio_data['summary']['total_option_contracts'],
+                'total_greeks_collected': portfolio_data['summary']['total_greeks_collected']
+            },
+            'stock_prices': {symbol: data['current_price'] for symbol, data in portfolio_data['stock_prices'].items()},
+            'options_summary': {},
+            'greeks_summary': {}
+        }
+        
+        # Options summary by symbol
+        for symbol, data in portfolio_data['options_data'].items():
+            summary_data['options_summary'][symbol] = {
+                'total_contracts': data['total_contracts'],
+                'expirations': len(data['expirations']),
+                'current_price': data['current_price']
+            }
+        
+        # Greeks summary by symbol
+        for symbol, greeks_list in portfolio_data['greeks_data'].items():
+            summary_data['greeks_summary'][symbol] = {
+                'total_greeks': len(greeks_list),
+                'calls': len([g for g in greeks_list if g.get('option_type') == 'C']),
+                'puts': len([g for g in greeks_list if g.get('option_type') == 'P'])
+            }
+        
+        summary_filename = f"portfolio_summary_{timestamp_str}.json"
+        with open(summary_filename, 'w') as f:
+            json.dump(summary_data, f, indent=2)
+        
+        print(f"✅ Summary saved to: {summary_filename}")
+        
+        # Print final summary
+        print(f"\n🎉 PORTFOLIO DATA COLLECTION COMPLETE!")
+        print("="*80)
+        print(f"📊 FINAL SUMMARY:")
+        print(f"   Symbols processed: {portfolio_data['summary']['successful_symbols']}/{len(PORTFOLIO_SYMBOLS)}")
+        print(f"   Total option contracts: {portfolio_data['summary']['total_option_contracts']:,}")
+        print(f"   Total Greeks collected: {portfolio_data['summary']['total_greeks_collected']}")
+        
+        print(f"\n💰 STOCK PRICES:")
+        for symbol, price_data in portfolio_data['stock_prices'].items():
+            price = price_data['current_price']
+            if price > 0:
+                print(f"   {symbol}: ${price:.2f}")
+            else:
+                print(f"   {symbol}: Price unavailable")
+        
+        print(f"\n⛓️ OPTIONS CONTRACTS BY SYMBOL:")
+        for symbol, option_data in portfolio_data['options_data'].items():
+            print(f"   {symbol}: {option_data['total_contracts']:,} contracts ({len(option_data['expirations'])} expirations)")
+        
+        print(f"\n🔢 GREEKS BY SYMBOL:")
+        for symbol, greeks_list in portfolio_data['greeks_data'].items():
+            calls = len([g for g in greeks_list if g.get('option_type') == 'C'])
+            puts = len([g for g in greeks_list if g.get('option_type') == 'P'])
+            print(f"   {symbol}: {len(greeks_list)} total ({calls} calls, {puts} puts)")
+        
+        return portfolio_data
         
     except Exception as e:
-        print(f"❌ Extraction failed: {e}")
+        print(f"❌ Critical Error: {e}")
         import traceback
         traceback.print_exc()
+        return None
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    asyncio.run(get_portfolio_data())
 ```
 ---
 
@@ -954,22 +1322,6 @@ ___
 
 # 5️⃣ Model
 
-1. **Import libraries** – Brings in math, options API, and analysis tools **so we can fetch and calculate spreads.**  
-2. **Create `CreditSpread` data class** – Holds details of one trade **to keep trade info neat and structured.**  
-3. **Create `CreditSpreadsAnalyzer` class** – Handles all analysis steps **so code stays organized.**  
-4. **Login & load data** – Logs into TastyTrade and loads saved market data **so we know current prices and metrics.**  
-5. **Utility functions (option type, strike, expiration)** – Pulls key details from option data **to help filter calls vs puts.**  
-6. **Black‑Scholes pricing** – Calculates theoretical option prices **to estimate fair premiums.**  
-7. **POP (Probability of Profit)** – Calculates chance a trade will profit **so we can filter only good trades.**  
-8. **Get symbol data** – Finds price, IV, and liquidity for each stock **so we know trade quality.**  
-9. **Flatten option chain** – Converts option data into one simple list **so it’s easier to search.**  
-10. **Analyze bull put spreads** – Looks for **put credit spreads** by selling a higher strike put and buying a lower strike put **so we profit if the stock stays above the short strike (bullish).**  
-11. **Analyze bear call spreads** – Looks for **call credit spreads** by selling a lower strike call and buying a higher strike call **so we profit if the stock stays below the short strike (bearish).**  
-12. **Find all spreads** – Runs both bull put and bear call analysis across all symbols **to build one master list of trade candidates.**  
-13. **Rank spreads** – Sorts all trades by confidence, ROI, and POP **so the best setups float to the top.**  
-14. **Display results** – Prints the top trades clearly **so we can quickly review and select.**  
-15. **Main function** – Loads data, runs analysis, ranks, displays, and saves results **so the workflow runs automatically.**  
-16. **Run script** – Executes everything **so trade picking happens when we run the file.**
 
 
 ### Create a File
@@ -978,721 +1330,163 @@ touch cs_picker.py
 open -e cs_picker.py
 ```
 
-### Save the Script
+### Save the Black Scholes Model Script
 ```bash
-#!/usr/bin/env python3
-"""
-CREDIT SPREADS ONLY - TASTYTRADE TRADE PICKER
-Focused on Bull Put Spreads and Bear Call Spreads
-
-🎯 Target: 33%+ ROI, 66%+ POP
-📊 Strategies:
-- Bull Put Spreads (Put Credit Spreads)
-- Bear Call Spreads (Call Credit Spreads)
-
-Premium selling strategies for consistent income generation.
-"""
-
 import json
-import asyncio
-from datetime import datetime, timedelta
-from decimal import Decimal
+import glob
 import math
-from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple
+from datetime import datetime
+import pandas as pd
 from scipy.stats import norm
-import numpy as np
-from tastytrade import Session
-from tastytrade.instruments import get_option_chain, Option
 
-@dataclass
-class CreditSpread:
-    """Represents a credit spread opportunity"""
-    symbol: str
-    strategy: str  # "Bull Put Spread" or "Bear Call Spread"
-    description: str
-    credit_received: float
-    max_profit: float
-    max_loss: float
-    roi: float
-    pop: float
-    dte: int
-    short_strike: float
-    long_strike: float
-    spread_width: float
-    current_price: float
-    breakeven: float
-    confidence_score: float
-    risk_reward_ratio: float
-    expiration_date: str
+# === Load latest portfolio JSON ===
+def load_latest_json():
+    files = sorted(glob.glob("portfolio_data_*.json"))
+    if not files:
+        raise FileNotFoundError("No portfolio_data_*.json found!")
+    latest_file = files[-1]
+    print(f"📂 Using data file: {latest_file}")
+    with open(latest_file, 'r') as f:
+        return json.load(f)
 
-class CreditSpreadsAnalyzer:
-    def __init__(self, username: str, password: str, data_file: str = None):
-        self.session = Session(username, password)
-        self.market_data = {}
-        self.risk_free_rate = 0.045
-        
-        if data_file:
-            self.load_market_data(data_file)
+# --- Black-Scholes PoP helper ---
+def calc_pop(option_type, stock_price, strike, dte, iv, delta=None):
+    # If delta already provided, use it directly
+    if delta is not None:
+        # Short call PoP ~ 1 - delta, short put PoP ~ delta
+        return (1 - delta) if option_type == "C" else delta
     
-    def load_market_data(self, filename: str):
-        """Load market data from JSON file"""
-        try:
-            with open(filename, 'r') as f:
-                data = json.load(f)
-                self.market_data = data
-                print(f"📁 Loaded market data from {filename}")
-                return True
-        except Exception as e:
-            print(f"❌ Error loading data: {e}")
-            return False
-    
-    def get_option_type(self, option) -> str:
-        """Extract option type from option object"""
-        try:
-            if hasattr(option, 'option_type') and hasattr(option.option_type, 'value'):
-                return option.option_type.value
-            return ''
-        except:
-            return ''
+    # Black-Scholes approximation if delta missing
+    T = dte / 365
+    if T <= 0:
+        return 0.5
+    sigma = iv if iv > 0 else 0.2
+    r = 0.0
 
-    def get_strike_price(self, option) -> float:
-        """Extract strike price from option object"""
-        try:
-            if hasattr(option, 'strike_price'):
-                return float(option.strike_price)
-            return 0.0
-        except:
-            return 0.0
+    d1 = (math.log(stock_price / strike) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
+    d2 = d1 - sigma * math.sqrt(T)
 
-    def get_expiration_date(self, option):
-        """Extract expiration date from option object"""
-        try:
-            if hasattr(option, 'expiration_date'):
-                return option.expiration_date
-            return None
-        except:
-            return None
-    
-    def calculate_black_scholes_put(self, S: float, K: float, T: float, r: float, sigma: float) -> float:
-        """Calculate Black-Scholes put option price"""
-        if T <= 0:
-            return max(K - S, 0)
-        
-        try:
-            d1 = (math.log(S/K) + (r + sigma**2/2) * T) / (sigma * math.sqrt(T))
-            d2 = d1 - sigma * math.sqrt(T)
-            put_price = K * math.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
-            return max(put_price, 0)
-        except:
-            return max(K - S, 0)
-    
-    def calculate_black_scholes_call(self, S: float, K: float, T: float, r: float, sigma: float) -> float:
-        """Calculate Black-Scholes call option price"""
-        if T <= 0:
-            return max(S - K, 0)
-        
-        try:
-            d1 = (math.log(S/K) + (r + sigma**2/2) * T) / (sigma * math.sqrt(T))
-            d2 = d1 - sigma * math.sqrt(T)
-            call_price = S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
-            return max(call_price, 0)
-        except:
-            return max(S - K, 0)
-    
-    def calculate_pop_credit_spread(self, current_price: float, short_strike: float, 
-                                  iv: float, dte: int, is_put_spread: bool = True) -> float:
-        """Calculate Probability of Profit for credit spreads"""
-        T = dte / 365.0
-        
-        try:
-            if is_put_spread:
-                # Bull Put Spread: profitable if stock stays above short strike
-                d = (math.log(current_price / short_strike) + (self.risk_free_rate - iv**2/2) * T) / (iv * math.sqrt(T))
-                pop = norm.cdf(d) * 100
-            else:
-                # Bear Call Spread: profitable if stock stays below short strike  
-                d = (math.log(current_price / short_strike) + (self.risk_free_rate - iv**2/2) * T) / (iv * math.sqrt(T))
-                pop = norm.cdf(-d) * 100
-            
-            return min(max(pop, 1), 99)  # Cap between 1% and 99%
-        except:
-            return 50  # Default to 50% if calculation fails
-    
-    def get_symbol_data(self, symbol: str) -> Optional[Dict]:
-        """Extract current market data for symbol"""
-        if symbol not in self.market_data.get('streaming_data', {}):
-            return None
-            
-        streaming = self.market_data['streaming_data'][symbol]
-        market_metrics = self.market_data['market_data'].get(symbol, {}).get('market_metrics', {})
-        
-        quotes = streaming.get('quotes', [])
-        trades = streaming.get('trades', [])
-        
-        if not quotes or not trades:
-            return None
-            
-        latest_quote = quotes[-1]
-        latest_trade = trades[-1]
-        
-        # Extract IV from market metrics
-        iv = 0.25  # Default 25%
-        liquidity = 3
-        
-        if 'data' in market_metrics and 'items' in market_metrics['data']:
-            for item in market_metrics['data']['items']:
-                if item.get('symbol') == symbol:
-                    iv_raw = item.get('implied-volatility-index', 0.25)
-                    iv = float(iv_raw) if iv_raw else 0.25
-                    liquidity = item.get('liquidity-rating', 3)
-        
-        return {
-            'symbol': symbol,
-            'current_price': latest_trade.get('last', 0),
-            'bid': latest_quote.get('bid', 0),
-            'ask': latest_quote.get('ask', 0),
-            'spread': latest_quote.get('spread', 0),
-            'iv': iv,
-            'liquidity': liquidity,
-            'change': latest_trade.get('change', 0)
-        }
-    
-    def flatten_option_chain(self, chain):
-        """Extract all options from chain structure"""
-        all_options = []
-        
-        if isinstance(chain, dict):
-            for exp_date, option_list in chain.items():
-                if isinstance(option_list, list):
-                    all_options.extend(option_list)
-        elif hasattr(chain, '__iter__'):
-            for item in chain:
-                if isinstance(item, list):
-                    all_options.extend(item)
-                else:
-                    all_options.append(item)
-        else:
-            all_options = list(chain) if chain else []
-        
-        return all_options
-    
-    async def analyze_bull_put_spreads(self, symbol: str, symbol_data: dict, 
-                                     target_roi: float = 33, target_pop: float = 66) -> List[CreditSpread]:
-        """Find bull put spread opportunities (put credit spreads)"""
-        opportunities = []
-        current_price = symbol_data['current_price']
-        iv = symbol_data['iv']
-        
-        try:
-            chain = get_option_chain(self.session, symbol)
-            all_options = self.flatten_option_chain(chain)
-            
-            # Filter for puts
-            puts = [opt for opt in all_options if self.get_option_type(opt) == 'P']
-            
-            # Group by expiration
-            expirations = {}
-            for put in puts:
-                exp_date = self.get_expiration_date(put)
-                if exp_date:
-                    if exp_date not in expirations:
-                        expirations[exp_date] = []
-                    expirations[exp_date].append(put)
-            
-            print(f"   📊 Analyzing {len(puts)} puts across {len(expirations)} expirations")
-            
-            # Analyze each expiration (focus on 15-45 DTE)
-            for exp_date, exp_puts in expirations.items():
-                dte = (exp_date - datetime.now().date()).days
-                if dte < 15 or dte > 45:
-                    continue
-                
-                # Sort puts by strike (descending - highest strike first)
-                exp_puts.sort(key=lambda x: self.get_strike_price(x), reverse=True)
-                
-                # Look for bull put spread opportunities
-                # Bull Put = Sell higher strike put + Buy lower strike put
-                for i in range(min(20, len(exp_puts) - 1)):
-                    short_put = exp_puts[i]  # Higher strike (short)
-                    short_strike = self.get_strike_price(short_put)
-                    
-                    if short_strike <= 0:
-                        continue
-                    
-                    # Only consider strikes below current price (out of the money)
-                    # Target ~10-20% below current price for good risk/reward
-                    if short_strike >= current_price * 0.92:  # No more than 8% below current
-                        continue
-                    if short_strike < current_price * 0.75:   # No more than 25% below current
-                        continue
-                    
-                    # Look for long puts (lower strikes)
-                    for j in range(i + 1, min(i + 10, len(exp_puts))):
-                        long_put = exp_puts[j]  # Lower strike (long)
-                        long_strike = self.get_strike_price(long_put)
-                        
-                        if long_strike <= 0:
-                            continue
-                        
-                        spread_width = short_strike - long_strike
-                        
-                        # Target spread widths: $2.50, $5, $10 (common spreads)
-                        if spread_width not in [2.5, 5, 10]:
-                            # Allow some flexibility for odd strike spacing
-                            if not (2 <= spread_width <= 12):
-                                continue
-                        
-                        # Calculate option prices using Black-Scholes
-                        T = dte / 365.0
-                        short_put_price = self.calculate_black_scholes_put(
-                            current_price, short_strike, T, self.risk_free_rate, iv
-                        )
-                        long_put_price = self.calculate_black_scholes_put(
-                            current_price, long_strike, T, self.risk_free_rate, iv
-                        )
-                        
-                        # Credit received (premium we collect)
-                        credit = short_put_price - long_put_price
-                        
-                        # Skip spreads with very small credits
-                        if credit <= 0.15:  # Need at least $15 credit per spread
-                            continue
-                        
-                        # Calculate P&L metrics
-                        max_profit = credit * 100  # Per contract
-                        max_loss = (spread_width - credit) * 100
-                        
-                        if max_loss <= 0:
-                            continue
-                        
-                        # ROI calculation
-                        roi = (max_profit / max_loss) * 100
-                        
-                        # Breakeven point
-                        breakeven = short_strike - credit
-                        
-                        # POP calculation
-                        pop = self.calculate_pop_credit_spread(current_price, short_strike, iv, dte, True)
-                        
-                        # Check if meets criteria
-                        if roi >= target_roi and pop >= target_pop:
-                            # Calculate confidence score
-                            liquidity_score = min(symbol_data['liquidity'] / 5.0, 1.0)
-                            dte_score = 1.0 - abs(30 - dte) / 30.0  # Prefer ~30 DTE
-                            distance_score = min((current_price - short_strike) / current_price * 10, 1.0)  # Prefer OTM
-                            iv_score = min(iv / 0.5, 1.0)  # Higher IV = better premiums
-                            
-                            confidence = (liquidity_score + dte_score + distance_score + iv_score) / 4.0
-                            
-                            opportunity = CreditSpread(
-                                symbol=symbol,
-                                strategy="Bull Put Spread",
-                                description=f"Sell {short_strike:.0f}P / Buy {long_strike:.0f}P",
-                                credit_received=credit,
-                                max_profit=max_profit,
-                                max_loss=max_loss,
-                                roi=roi,
-                                pop=pop,
-                                dte=dte,
-                                short_strike=short_strike,
-                                long_strike=long_strike,
-                                spread_width=spread_width,
-                                current_price=current_price,
-                                breakeven=breakeven,
-                                confidence_score=confidence,
-                                risk_reward_ratio=max_profit / max_loss,
-                                expiration_date=str(exp_date)
-                            )
-                            
-                            opportunities.append(opportunity)
-            
-        except Exception as e:
-            print(f"   ⚠️ Error analyzing {symbol} bull put spreads: {e}")
-        
-        return opportunities
-    
-    async def analyze_bear_call_spreads(self, symbol: str, symbol_data: dict, 
-                                      target_roi: float = 33, target_pop: float = 66) -> List[CreditSpread]:
-        """Find bear call spread opportunities (call credit spreads)"""
-        opportunities = []
-        current_price = symbol_data['current_price']
-        iv = symbol_data['iv']
-        
-        try:
-            chain = get_option_chain(self.session, symbol)
-            all_options = self.flatten_option_chain(chain)
-            
-            # Filter for calls
-            calls = [opt for opt in all_options if self.get_option_type(opt) == 'C']
-            
-            # Group by expiration
-            expirations = {}
-            for call in calls:
-                exp_date = self.get_expiration_date(call)
-                if exp_date:
-                    if exp_date not in expirations:
-                        expirations[exp_date] = []
-                    expirations[exp_date].append(call)
-            
-            print(f"   📊 Analyzing {len(calls)} calls across {len(expirations)} expirations")
-            
-            # Analyze each expiration
-            for exp_date, exp_calls in expirations.items():
-                dte = (exp_date - datetime.now().date()).days
-                if dte < 15 or dte > 45:
-                    continue
-                
-                # Sort calls by strike (ascending - lowest strike first)
-                exp_calls.sort(key=lambda x: self.get_strike_price(x))
-                
-                # Look for bear call spread opportunities
-                # Bear Call = Sell lower strike call + Buy higher strike call
-                for i in range(min(20, len(exp_calls) - 1)):
-                    short_call = exp_calls[i]  # Lower strike (short)
-                    short_strike = self.get_strike_price(short_call)
-                    
-                    if short_strike <= 0:
-                        continue
-                    
-                    # Only consider strikes above current price (out of the money)
-                    # Target ~10-20% above current price for good risk/reward
-                    if short_strike <= current_price * 1.08:  # At least 8% above current
-                        continue
-                    if short_strike > current_price * 1.35:   # No more than 35% above current
-                        continue
-                    
-                    # Look for long calls (higher strikes)
-                    for j in range(i + 1, min(i + 10, len(exp_calls))):
-                        long_call = exp_calls[j]  # Higher strike (long)
-                        long_strike = self.get_strike_price(long_call)
-                        
-                        if long_strike <= 0:
-                            continue
-                        
-                        spread_width = long_strike - short_strike
-                        
-                        # Target spread widths
-                        if spread_width not in [2.5, 5, 10]:
-                            if not (2 <= spread_width <= 12):
-                                continue
-                        
-                        # Calculate option prices
-                        T = dte / 365.0
-                        short_call_price = self.calculate_black_scholes_call(
-                            current_price, short_strike, T, self.risk_free_rate, iv
-                        )
-                        long_call_price = self.calculate_black_scholes_call(
-                            current_price, long_strike, T, self.risk_free_rate, iv
-                        )
-                        
-                        # Credit received
-                        credit = short_call_price - long_call_price
-                        
-                        if credit <= 0.15:
-                            continue
-                        
-                        # Calculate P&L metrics
-                        max_profit = credit * 100
-                        max_loss = (spread_width - credit) * 100
-                        
-                        if max_loss <= 0:
-                            continue
-                        
-                        # ROI calculation
-                        roi = (max_profit / max_loss) * 100
-                        
-                        # Breakeven point
-                        breakeven = short_strike + credit
-                        
-                        # POP calculation
-                        pop = self.calculate_pop_credit_spread(current_price, short_strike, iv, dte, False)
-                        
-                        # Check if meets criteria
-                        if roi >= target_roi and pop >= target_pop:
-                            # Calculate confidence score
-                            liquidity_score = min(symbol_data['liquidity'] / 5.0, 1.0)
-                            dte_score = 1.0 - abs(30 - dte) / 30.0
-                            distance_score = min((short_strike - current_price) / current_price * 10, 1.0)
-                            iv_score = min(iv / 0.5, 1.0)
-                            
-                            confidence = (liquidity_score + dte_score + distance_score + iv_score) / 4.0
-                            
-                            opportunity = CreditSpread(
-                                symbol=symbol,
-                                strategy="Bear Call Spread",
-                                description=f"Sell {short_strike:.0f}C / Buy {long_strike:.0f}C",
-                                credit_received=credit,
-                                max_profit=max_profit,
-                                max_loss=max_loss,
-                                roi=roi,
-                                pop=pop,
-                                dte=dte,
-                                short_strike=short_strike,
-                                long_strike=long_strike,
-                                spread_width=spread_width,
-                                current_price=current_price,
-                                breakeven=breakeven,
-                                confidence_score=confidence,
-                                risk_reward_ratio=max_profit / max_loss,
-                                expiration_date=str(exp_date)
-                            )
-                            
-                            opportunities.append(opportunity)
-            
-        except Exception as e:
-            print(f"   ⚠️ Error analyzing {symbol} bear call spreads: {e}")
-        
-        return opportunities
-    
-    async def find_all_credit_spreads(self, target_roi: float = 33.0, target_pop: float = 66.0) -> List[CreditSpread]:
-        """Find all credit spread opportunities across portfolio"""
-        print(f"🎯 CREDIT SPREADS SCANNER")
-        print(f"   Target: ROI {target_roi}%+, POP {target_pop}%+")
-        print(f"   Strategies: Bull Put Spreads & Bear Call Spreads")
-        print(f"   DTE Range: 15-45 days")
-        print("="*60)
-        
-        all_opportunities = []
-        symbols = self.market_data.get('symbols', [])
-        
-        for symbol in symbols:
-            print(f"\n📊 Analyzing {symbol}...")
-            
-            symbol_data = self.get_symbol_data(symbol)
-            if not symbol_data:
-                print(f"   ❌ No data available for {symbol}")
+    if option_type == "C":  # call
+        return norm.cdf(-d2)
+    else:  # put
+        return norm.cdf(d2)
+
+# --- Find Greeks data for a given option symbol ---
+def _find_greeks(greek_data, streamer_symbol):
+    for symbol, greeks_list in greek_data.items():
+        for g in greeks_list:
+            if g["symbol"] == streamer_symbol:
+                return g
+    return {}
+
+# --- Build credit spreads ---
+def build_credit_spreads(data):
+    stock_prices = data["stock_prices"]
+    greeks_data = data["greeks_data"]
+    spreads = []
+
+    for symbol, sym_data in data["options_data"].items():
+        underlying_price = stock_prices[symbol]["current_price"]
+        expirations = sym_data["expirations"]
+
+        for exp_date, exp_data in expirations.items():
+            contracts = exp_data["contracts"]
+            if not contracts:
                 continue
-            
-            print(f"   Current: ${symbol_data['current_price']:.2f}")
-            print(f"   IV: {symbol_data['iv']*100:.1f}% (Higher = Better Premiums)")
-            print(f"   Liquidity: {symbol_data['liquidity']}/5")
-            
-            # Analyze both strategies
-            bull_puts = await self.analyze_bull_put_spreads(symbol, symbol_data, target_roi, target_pop)
-            bear_calls = await self.analyze_bear_call_spreads(symbol, symbol_data, target_roi, target_pop)
-            
-            total_found = len(bull_puts) + len(bear_calls)
-            
-            if total_found > 0:
-                all_opportunities.extend(bull_puts + bear_calls)
-                print(f"   ✅ Found {total_found} credit spreads ({len(bull_puts)} bull puts, {len(bear_calls)} bear calls)")
-            else:
-                print(f"   ⚪ No credit spreads meeting criteria")
-        
-        return all_opportunities
-    
-    def rank_credit_spreads(self, opportunities: List[CreditSpread]) -> List[CreditSpread]:
-        """Rank credit spreads by attractiveness"""
-        # Sort by confidence score, then ROI, then POP
-        ranked = sorted(opportunities, 
-                       key=lambda x: (x.confidence_score, x.roi, x.pop), 
-                       reverse=True)
-        
-        return ranked
-    
-    def display_credit_spreads(self, opportunities: List[CreditSpread], top_n: int = 15):
-        """Display top credit spread opportunities"""
-        if not opportunities:
-            print("\n❌ No credit spreads found matching your criteria")
-            print("\n💡 SUGGESTIONS:")
-            print("   • Lower ROI target: Try 25-30% instead of 33%")
-            print("   • Lower POP target: Try 60-65% instead of 66%") 
-            print("   • Higher IV stocks perform better for credit spreads")
-            print("   • Market conditions may not favor credit spreads today")
-            return
-        
-        print(f"\n🏆 TOP {min(top_n, len(opportunities))} CREDIT SPREAD OPPORTUNITIES")
-        print("="*80)
-        
-        bull_puts = [opp for opp in opportunities if opp.strategy == "Bull Put Spread"]
-        bear_calls = [opp for opp in opportunities if opp.strategy == "Bear Call Spread"]
-        
-        print(f"   📈 {len(bull_puts)} Bull Put Spreads (bullish/neutral)")
-        print(f"   📉 {len(bear_calls)} Bear Call Spreads (bearish/neutral)")
-        
-        for i, opp in enumerate(opportunities[:top_n], 1):
-            direction = "📈" if opp.strategy == "Bull Put Spread" else "📉"
-            
-            print(f"\n#{i} {direction} {opp.symbol} - {opp.strategy}")
-            print(f"   📋 Trade: {opp.description}")
-            print(f"   💰 Credit Received: ${opp.credit_received:.2f} per spread")
-            print(f"   🎯 Max Profit: ${opp.max_profit:.0f} (keep full credit)")
-            print(f"   📉 Max Loss: ${opp.max_loss:.0f}")
-            print(f"   📊 ROI: {opp.roi:.1f}%")
-            print(f"   🎲 POP: {opp.pop:.1f}%")
-            print(f"   📅 DTE: {opp.dte} days ({opp.expiration_date})")
-            print(f"   ⚖️ Risk/Reward: {opp.risk_reward_ratio:.2f}")
-            print(f"   ⭐ Confidence: {opp.confidence_score:.2f}")
-            print(f"   💵 Current Price: ${opp.current_price:.2f}")
-            print(f"   🎪 Strikes: {opp.short_strike:.0f}/{opp.long_strike:.0f} (${opp.spread_width:.0f} wide)")
-            print(f"   ⚖️ Breakeven: ${opp.breakeven:.2f}")
-            
-            # Add management tips
-            if opp.strategy == "Bull Put Spread":
-                distance = ((opp.current_price - opp.short_strike) / opp.current_price) * 100
-                print(f"   📍 Short strike is {distance:.1f}% below current price")
-            else:
-                distance = ((opp.short_strike - opp.current_price) / opp.current_price) * 100
-                print(f"   📍 Short strike is {distance:.1f}% above current price")
 
-async def main():
-    """Main execution function"""
-    print("🎯 Credit Spreads Focused Trade Picker")
-    print("="*50)
-    
-    # Configuration
-    username = "username"
-    password = "password"
-    
-    # Find latest market data file
-    import glob
-    import os
-    
-    data_files = glob.glob("portfolio_data_*.json") + glob.glob("tastytrade_production_*.json")
-    if not data_files:
-        print("❌ No market data files found!")
-        return
-    
-    latest_file = max(data_files, key=os.path.getctime)
-    print(f"📁 Using market data: {latest_file}")
-    
-    # Your criteria
-    target_roi = 33.0   # 33% ROI minimum
-    target_pop = 66.0   # 66% POP minimum
-    
-    try:
-        analyzer = CreditSpreadsAnalyzer(username, password, latest_file)
-        
-        print(f"\n💼 Portfolio Analysis for Credit Spreads:")
-        portfolio = [
-            {"ticker": "NVDA", "name": "NVIDIA"},
-            {"ticker": "ISRG", "name": "Intuitive Surgical"}, 
-            {"ticker": "PLTR", "name": "Palantir"},
-            {"ticker": "TSLA", "name": "Tesla"},
-            {"ticker": "AMZN", "name": "Amazon"},
-            {"ticker": "ENPH", "name": "Enphase Energy"},
-            {"ticker": "XOM", "name": "Exxon Mobil"},
-            {"ticker": "DE", "name": "John Deere"},
-            {"ticker": "CAT", "name": "Caterpillar"}
-        ]
-        
-        for stock in portfolio:
-            print(f"   {stock['ticker']} - {stock['name']}")
-        
-        # Find credit spread opportunities
-        opportunities = await analyzer.find_all_credit_spreads(target_roi, target_pop)
-        
-        # Rank and display
-        ranked_opportunities = analyzer.rank_credit_spreads(opportunities)
-        analyzer.display_credit_spreads(ranked_opportunities, top_n=15)
-        
-        # Save results
-        if ranked_opportunities:
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-            filename = f"credit_spreads_{timestamp}.json"
-            
-            data = {
-                'timestamp': datetime.now().isoformat(),
-                'criteria': {
-                    'target_roi': target_roi,
-                    'target_pop': target_pop,
-                    'dte_range': '15-45 days'
-                },
-                'total_opportunities': len(ranked_opportunities),
-                'bull_put_spreads': len([opp for opp in ranked_opportunities if opp.strategy == "Bull Put Spread"]),
-                'bear_call_spreads': len([opp for opp in ranked_opportunities if opp.strategy == "Bear Call Spread"]),
-                'opportunities': []
-            }
-            
-            for opp in ranked_opportunities:
-                opp_data = {
-                    'symbol': opp.symbol,
-                    'strategy': opp.strategy,
-                    'description': opp.description,
-                    'credit_received': opp.credit_received,
-                    'max_profit': opp.max_profit,
-                    'max_loss': opp.max_loss,
-                    'roi': opp.roi,
-                    'pop': opp.pop,
-                    'dte': opp.dte,
-                    'short_strike': opp.short_strike,
-                    'long_strike': opp.long_strike,
-                    'spread_width': opp.spread_width,
-                    'current_price': opp.current_price,
-                    'breakeven': opp.breakeven,
-                    'confidence_score': opp.confidence_score,
-                    'expiration_date': opp.expiration_date
-                }
-                data['opportunities'].append(opp_data)
-            
-            with open(filename, 'w') as f:
-                json.dump(data, f, indent=2)
-            
-            print(f"\n💾 Credit spreads saved to: {filename}")
-            
-            print(f"\n📈 CREDIT SPREADS SUMMARY:")
-            print(f"   Total opportunities: {len(ranked_opportunities)}")
-            print(f"   Bull Put Spreads: {data['bull_put_spreads']}")
-            print(f"   Bear Call Spreads: {data['bear_call_spreads']}")
-            
-            # Symbol breakdown
-            symbol_breakdown = {}
-            for opp in ranked_opportunities:
-                if opp.symbol not in symbol_breakdown:
-                    symbol_breakdown[opp.symbol] = {'bull_puts': 0, 'bear_calls': 0}
-                if opp.strategy == "Bull Put Spread":
-                    symbol_breakdown[opp.symbol]['bull_puts'] += 1
-                else:
-                    symbol_breakdown[opp.symbol]['bear_calls'] += 1
-            
-            print(f"\n🏢 By Symbol:")
-            for symbol, counts in sorted(symbol_breakdown.items()):
-                company_name = next((stock["name"] for stock in portfolio if stock["ticker"] == symbol), "Unknown")
-                total = counts['bull_puts'] + counts['bear_calls']
-                print(f"   {symbol} ({company_name}): {total} total ({counts['bull_puts']} bull puts, {counts['bear_calls']} bear calls)")
-        
-        else:
-            print(f"\n⚪ No credit spreads found meeting your criteria.")
-            print(f"\n🔧 TROUBLESHOOTING SUGGESTIONS:")
-            print(f"   1. Try relaxed criteria:")
-            print(f"      • ROI: 25-30% instead of {target_roi}%")
-            print(f"      • POP: 60-65% instead of {target_pop}%")
-            print(f"   2. High IV stocks work best:")
-            print(f"      • PLTR (68.6% IV) - Should have good opportunities")
-            print(f"      • ENPH (59.3% IV) - Good for premium selling") 
-            print(f"      • TSLA (52.7% IV) - Usually active options")
-            print(f"   3. Market conditions:")
-            print(f"      • Credit spreads work best in sideways/trending markets")
-            print(f"      • Very low or very high volatility can limit opportunities")
-            print(f"   4. Timing:")
-            print(f"      • Try running closer to market open (9:30-10:30 AM)")
-            print(f"      • Options pricing is most active during market hours")
-        
-        print(f"\n💡 CREDIT SPREADS TRADING TIPS:")
-        print(f"   📈 Bull Put Spreads:")
-        print(f"      • Use when bullish/neutral on stock")
-        print(f"      • Profit if stock stays above short strike")
-        print(f"      • Manage at 25-50% of max profit")
-        print(f"   📉 Bear Call Spreads:")
-        print(f"      • Use when bearish/neutral on stock") 
-        print(f"      • Profit if stock stays below short strike")
-        print(f"      • Manage at 25-50% of max profit")
-        print(f"   ⏰ General Tips:")
-        print(f"      • Target 15-45 DTE for good theta decay")
-        print(f"      • Aim for strikes with ~15-20 delta")
-        print(f"      • Close early if you can capture 25-50% of max profit")
-        print(f"      • High IV rank/percentile = better entry opportunities")
-        
-        print(f"\n✅ Credit spreads analysis complete!")
-        
-    except Exception as e:
-        print(f"❌ Analysis failed: {e}")
-        import traceback
-        traceback.print_exc()
+            dte = contracts[0]["days_to_expiration"]
+            if dte is None or dte > 33:
+                continue
 
+            # Separate calls and puts
+            calls = sorted([c for c in contracts if c["option_type"] == "C"], key=lambda x: x["strike_price"])
+            puts = sorted([p for p in contracts if p["option_type"] == "P"], key=lambda x: x["strike_price"])
+
+            # --- Bear Call Spread ---
+            for i in range(len(calls) - 1):
+                short = calls[i]
+                long = calls[i + 1]
+                if short["strike_price"] <= underlying_price:
+                    continue  # only OTM short call
+                width = long["strike_price"] - short["strike_price"]
+
+                greeks = _find_greeks(greeks_data, short["streamer_symbol"])
+                delta = greeks.get("delta") if greeks else None
+                iv = greeks.get("implied_volatility") if greeks else 0.2
+                price = greeks.get("price") if greeks else 0.0
+
+                pop = calc_pop("C", underlying_price, short["strike_price"], dte, iv, delta)
+                credit = price
+                max_loss = width - credit if width > credit else width
+                roi = credit / max_loss if max_loss > 0 else 0
+
+                spreads.append({
+                    "symbol": symbol,
+                    "type": "Bear Call",
+                    "short": short["strike_price"],
+                    "long": long["strike_price"],
+                    "width": width,
+                    "credit": credit,
+                    "roi": roi,
+                    "pop": pop,
+                    "dte": dte,
+                    "expiration": exp_date
+                })
+
+            # --- Bull Put Spread ---
+            for i in range(1, len(puts)):
+                short = puts[i]
+                long = puts[i - 1]
+                if short["strike_price"] >= underlying_price:
+                    continue  # only OTM short put
+                width = short["strike_price"] - long["strike_price"]
+
+                greeks = _find_greeks(greeks_data, short["streamer_symbol"])
+                delta = greeks.get("delta") if greeks else None
+                iv = greeks.get("implied_volatility") if greeks else 0.2
+                price = greeks.get("price") if greeks else 0.0
+
+                pop = calc_pop("P", underlying_price, short["strike_price"], dte, iv, delta)
+                credit = price
+                max_loss = width - credit if width > credit else width
+                roi = credit / max_loss if max_loss > 0 else 0
+
+                spreads.append({
+                    "symbol": symbol,
+                    "type": "Bull Put",
+                    "short": short["strike_price"],
+                    "long": long["strike_price"],
+                    "width": width,
+                    "credit": credit,
+                    "roi": roi,
+                    "pop": pop,
+                    "dte": dte,
+                    "expiration": exp_date
+                })
+    return spreads
+
+# === Main ===
 if __name__ == "__main__":
-    asyncio.run(main())
+    data = load_latest_json()
+    spreads = build_credit_spreads(data)
+
+    # Filter PoP > 66%, ROI > 33%, DTE < 33
+    filtered = [s for s in spreads if s["pop"] > 0.66 and s["roi"] > 0.33 and s["dte"] < 33]
+    df = pd.DataFrame(filtered)
+    df = df.sort_values(by=["pop", "roi"], ascending=False)
+
+    # Format ROI and PoP as percentages
+    df["roi_pct"] = df["roi"] * 100
+    df["pop_pct"] = df["pop"] * 100
+
+    print("\n=== TOP 10 CREDIT SPREADS ===")
+    print(df[["symbol", "type", "short", "long", "expiration", "dte",
+              "credit", "roi_pct", "pop_pct"]].head(10))
+
+    # Save full filtered list
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    df.to_csv(f"credit_spreads_{timestamp}.csv", index=False)
+    print(f"\nSaved full filtered list to credit_spreads_{timestamp}.csv")
 ```
 
 
