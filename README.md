@@ -688,7 +688,7 @@ ___
 
 # 5️⃣ Model
 
-1. **Import libraries** – Brings in math, options API, and analysis tools '**so we can fetch and calculate spreads.**'  
+1. **Import libraries** – Brings in math, options API, and analysis tools **so we can fetch and calculate spreads.**  
 2. **Create `CreditSpread` data class** – Holds details of one trade **to keep trade info neat and structured.**  
 3. **Create `CreditSpreadsAnalyzer` class** – Handles all analysis steps **so code stays organized.**  
 4. **Login & load data** – Logs into TastyTrade and loads saved market data **so we know current prices and metrics.**  
@@ -1430,12 +1430,10 @@ if __name__ == "__main__":
 ```
 
 
-
-
 # 6️⃣ Prompt AI
 
 ## 🗂 Attachment
-select_top_trades.csv
+cs_picker.py
 
 ---
 
