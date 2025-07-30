@@ -13,12 +13,9 @@ I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I a
 
 ---
 ## ✍️ Prompt 
-
 ### Attachment
 - us_tickers.csv
-
 ---
-
 ### Instructions 
 
 **Goal**  
@@ -48,21 +45,7 @@ Construct a 9-ticker, sector-diversified options portfolio emphasizing:
 
 **Portfolio Construction**  
 Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  include any high-IV recent IPOs or AI spin-outs that meet all criteria.
-
-| Sector                  | AI Theme                                                   |
-|-------------------------|------------------------------------------------------------|
-| Agriculture             | Precision farming, ag-biotech, automation                  |
-| Technology              | AI chips, semiconductors, cloud/LLM infrastructure         |
-| Industrials             | Robotics, smart infrastructure, automation systems         |
-| Biotechnology           | ML drug discovery (oncology, antivirals, genomics, psychedelics) |
-| Energy (Traditional)    | AI in oil/gas ops, predictive maintenance, commodities algos |
-| Energy (Renewable)      | AI-optimized solar/wind/hydro, grid/storage analytics      |
-| Financials              | AI for risk models, fraud detection, quant trading         |
-| Consumer Staples        | AI-driven forecasting, supply chain, personalization       |
-| Transportation          | Autonomous vehicles, predictive logistics, fleet AI        |
-
 ---
-
 ### Prompt
 **Goal**
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
@@ -81,28 +64,13 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
 ---
 
-### Prompt Output
-| Ticker | Sector              | AI Theme                                              | Avg IV % | IV Rank | Liquidity Grade |
-|--------|---------------------|------------------------------------------------------|----------|---------|-----------------|
-| NVDA   | Technology          | AI chips, semiconductors                            | 68.6     | ≥ 30%   | A               |
-| ISRG   | Biotechnology       | ML drug discovery (oncology, antivirals, genomics, psychedelics) | 59.3 | ≥ 30%   | A               |
-| PLTR   | Technology          | Cloud/LLM infrastructure                           | 68.6     | ≥ 30%   | A               |
-| TSLA   | Transportation      | Autonomous vehicles, predictive logistics, fleet AI | 52.7     | ≥ 30%   | A               |
-| AMZN   | Technology          | Cloud/LLM infrastructure                           | 45.0     | ≥ 30%   | A               |
-| ENPH   | Energy (Renewable)  | AI-optimized solar/wind/hydro, grid/storage analytics | 59.3 | ≥ 30%   | A               |
-| XOM    | Energy (Traditional)| AI in oil/gas ops, predictive maintenance, commodities algos | 35.0 | ≥ 30%   | B               |
-| DE     | Agriculture         | Precision farming, ag-biotech, automation           | 40.0     | ≥ 30%   | B               |
-| CAT    | Industrials         | Robotics, smart infrastructure, automation systems  | 38.0     | ≥ 30%   | B               |
+# 2️⃣ Setup & Install Tasty Trade API
 
-
-# 2️⃣ Pick Trades
-
-## 🛠 Setup & Install Tasty Trade API
+## 🛠 Create a Project
 
 **Create:** `mkdir tastytrade_data`
 
 **Open:** `cd tastytrade_data`
-
 
 **Install:** `pip install tastytrade websockets pandas httpx certifi`
 
@@ -169,17 +137,7 @@ else:
 **Run:** `python3 auth_test.py`
 
 
-# Build Data Tables
-
-
-### 🎯 What We're Building
-We're going to build a Stonk Trading Data Table that:
-
-1. Looks at `stock prices` 
-2. Finds all the `options contracts`
-3. Checks how risky each trade is using `Greeks`
-4. Gets the buy/sell prices `bid\ask`
-5. Finds the trades that make money with high probability!
+# 3️⃣ Build Data Tables
 
 
 ## 📁 Step 1: Get Stock Prices
@@ -272,7 +230,7 @@ if __name__ == "__main__":
 **Run:** `python3 stock_prices.py`
 
 
-
+---
 
 
 ## 📁 Step 2: Get All Options Contracts
@@ -396,6 +354,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 
 
+---
 
 ## 📁 Step 3: Check How Risky Each Trade Is (Greeks)
 
@@ -523,6 +482,8 @@ if __name__ == "__main__":
 ```
 
 **Run:** Python3 risk_analysis.py`
+
+---
 
 ## 📁 Step 4: Get Buy/Sell Prices (Bid/Ask)
 
@@ -682,6 +643,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 market_prices.py`
 
+---
 
 ## 📁 Step 5: Find the Best Credit Spreads
 
@@ -865,6 +827,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 find_tendies.py`
 
+---
 
 ## 📁 Step 6: The Master Tendie-Yoda Script
 
