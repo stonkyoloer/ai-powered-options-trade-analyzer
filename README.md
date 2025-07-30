@@ -916,7 +916,7 @@ async def run_complete_analysis():
         print(f"   ⚠️ Could not load final summary: {e}")
 ```
 
-**Run:** 
+**Run:** `python3 master.py`
 
 ---
 
