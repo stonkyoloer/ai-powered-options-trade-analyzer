@@ -481,7 +481,7 @@ if __name__ == "__main__":
     asyncio.run(analyze_risk())
 ```
 
-**Run:** Python3 risk_analysis.py`
+**Run:** `python3 risk_analysis.py`
 
 ---
 
