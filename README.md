@@ -4,39 +4,22 @@ I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I a
 
 ---
 
-## 📖 What This Does
-This workflow builds an **AI‑driven trading portfolio** and screens for the day’s top option trades.  
-It:
-1. Selects **9 AI-focused stocks** across multiple sectors.
-2. Pulls **live option chain and Greeks data** from Tastytrade.
-3. Filters and ranks option trades using **defined rules and real‑time risk metrics**.
-4. Outputs the **Top 3 highest‑probability trades** in a clean table.
 
----
+# 1️⃣  Portfolio Construction
 
-## 🧠 Why Build This?
-- **Massive option universe:** Thousands of tickers and millions of option combinations exist daily. This workflow narrows focus to **AI sector leaders only**.
-- **Objective filtering:** Uses liquidity, volatility, and momentum rules to eliminate weak setups.
-- **Greeks integration:** Delta, Gamma, Theta, Vega are pulled live so trades are grounded in real risk data.
-- **Risk control:** Only trades with high probability of profit and defined max loss are shown.
-
----
-
-
-# 1️⃣  Collect Data
+## 👨‍💻 Get Data
 
 **Source**: Stocks are Nasdaq-100 constituents or related, aligned with [Nasdaq-100 Index](https://www.nasdaq.com/market-activity/quotes/nasdaq-ndx-index)
 
 ---
+## ✍️ Prompt 
 
-# 2️⃣  Prompt AI (ChatGPT / Grok)
-
-## 🗂 Attachment
+### Attachment
 - us_tickers.csv
 
 ---
 
-## 👨‍🏫 Instructions 
+### Instructions 
 
 **Goal**  
 Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
@@ -80,7 +63,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 
 ---
 
-## 🤖 Prompt
+### Prompt
 **Goal**
 1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
 2. Use the attachments as your candidate universe.  
@@ -98,7 +81,7 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 - Include rebalancing triggers and signal filters in your commentary block below the table.  
 ---
 
-## Prompt Output
+### Prompt Output
 | Ticker | Sector              | AI Theme                                              | Avg IV % | IV Rank | Liquidity Grade |
 |--------|---------------------|------------------------------------------------------|----------|---------|-----------------|
 | NVDA   | Technology          | AI chips, semiconductors                            | 68.6     | ≥ 30%   | A               |
@@ -111,35 +94,31 @@ Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  in
 | DE     | Agriculture         | Precision farming, ag-biotech, automation           | 40.0     | ≥ 30%   | B               |
 | CAT    | Industrials         | Robotics, smart infrastructure, automation systems  | 38.0     | ≥ 30%   | B               |
 
-# 3️⃣ Connect to TastyTrade API 
 
-## 🛠 Setup & Install
+# 2️⃣ Pick Trades
 
-### Create a Folder
-```bash
-mkdir tastytrade_data
-cd tastytrade_data
-```
+## 🛠 Setup & Install Tasty Trade API
 
-### Install Required Packages
-```bash
-pip install tastytrade websockets pandas httpx certifi
-```
+**Create:** `mkdir tastytrade_data`
+
+**Open:** `cd tastytrade_data`
+
+
+**Install:** `pip install tastytrade websockets pandas httpx certifi`
+
   - `tastytrade`: Lets the project talk to the Tastytrade website to get data.
   - `websockets`: Helps get live updates on the Greeks.
   - `pandas`: Handles and calculates with the data.
   - `httpx` and `certifi`: Make secure connections to the internet.
 
----
 
 ## 🔐 Test Tastytrade Login
 
-### Create a File
-```bash
-touch test_connection.py
-open -e test_connection.py
-```
-### Save the Script
+
+**Create:** `touch test_connection.py`
+
+**Query:** `open -e test_connection.py`
+
 ```python
 import requests
 import json
@@ -151,20 +130,14 @@ url = "https://api.tastytrade.com/sessions"
 print(f"API URL: {url}")
 print("Ready for authentication test")
 ```
-### Run the Script
-```bash
-python3 test_connection.py
-```
----
+**Run:** `python3 test_connection.py`
+
 
 ## 🔑 Authenticate & Get Account Info
 
-### Create a File
-```bash
-touch auth_test.py
-open -e auth_test.py
-```
-### Save the Script
+**Create:** touch auth_test.py
+**Query:** open -e auth_test.py
+
 ```python
 import requests
 import json
@@ -193,24 +166,19 @@ else:
     print(f"Error: {response.text}")
 ```
 
-### Run the Script
-```bash
-python3 auth_test.py
-```
----
-
-# 4️⃣ Build Data Tables
+**Run:** `python3 auth_test.py`
 
 
----
+# Build Data Tables
 
-# 🎯 What We're Building
+
+### 🎯 What We're Building
 We're going to build a Stonk Trading Data Table that:
 
-1. Looks at stock prices 
-2. Finds all the options contracts
-3. Checks how risky each trade is using Greeks
-4. Gets the buy/sell prices
+1. Looks at `stock prices` 
+2. Finds all the `options contracts`
+3. Checks how risky each trade is using `Greeks`
+4. Gets the buy/sell prices `bid\ask`
 5. Finds the trades that make money with high probability!
 
 
@@ -898,7 +866,7 @@ if __name__ == "__main__":
 **Run:** `python3 find_tendies.py`
 
 
-## 📁 Final Step: The Master Tendie-Yoda Script
+## 📁 Step 6: The Master Tendie-Yoda Script
 
 **Create:** `touch master.py`
 
@@ -1024,7 +992,7 @@ async def run_complete_analysis():
 ├── 📊 risk_analysis.json
 ├── 🤖 market_prices.py
 ├── 📊 market_prices.json
-├── 🤖 find_best_deals.py
+├── 🤖 find_tendies.py
 ├── 📊 best_deals.json
 ├── 📈 credit_spreads.csv
 └── 🤖 master.py
