@@ -216,7 +216,7 @@ We're going to build a Stonk Trading Data Table that:
 
 ## 📁 Step 1: Get Stock Prices
 
-**Create:** `touch stock_prices.py`
+**Create:** `touch -e stock_prices.py`
 
 **Query:** `open stock_prices.py`
 
