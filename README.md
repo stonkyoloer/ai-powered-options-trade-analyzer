@@ -566,9 +566,27 @@ if __name__ == "__main__":
 import asyncio
 import json
 from datetime import datetime
+from decimal import Decimal
 from tastytrade import Session, DXLinkStreamer
 from tastytrade.dxfeed import Quote
 from config import USERNAME, PASSWORD
+
+def decimal_to_float(obj):
+    """Convert Decimal objects to float for JSON serialization"""
+    if isinstance(obj, Decimal):
+        return float(obj)
+    return obj
+
+def safe_float_convert(value):
+    """Safely convert any numeric value to float"""
+    if value is None:
+        return 0.0
+    if isinstance(value, Decimal):
+        return float(value)
+    try:
+        return float(value)
+    except (ValueError, TypeError):
+        return 0.0
 
 async def get_market_prices():
     print("💰 STEP 4: Getting Market Prices")
@@ -616,10 +634,13 @@ async def get_market_prices():
         
         print(f"✅ Collected {len(collected_quotes)} market prices!")
         
-        # Process quotes
+        # Process quotes with proper decimal handling
         for quote in collected_quotes:
-            buy_price = float(quote.bid_price) if quote.bid_price else 0.0
-            sell_price = float(quote.ask_price) if quote.ask_price else 0.0
+            # Safely convert all numeric values to float
+            buy_price = safe_float_convert(quote.bid_price)
+            sell_price = safe_float_convert(quote.ask_price)
+            bid_size = safe_float_convert(getattr(quote, 'bid_size', 0))
+            ask_size = safe_float_convert(getattr(quote, 'ask_size', 0))
             
             if buy_price > 0 and sell_price > 0:
                 market_prices[quote.event_symbol] = {
@@ -628,8 +649,8 @@ async def get_market_prices():
                     'what_sellers_want': sell_price,   # Ask price
                     'fair_price': (buy_price + sell_price) / 2,  # Middle price
                     'price_difference': sell_price - buy_price,  # Spread
-                    'buyers_willing': getattr(quote, 'bid_size', 0),
-                    'sellers_available': getattr(quote, 'ask_size', 0)
+                    'buyers_willing': bid_size,
+                    'sellers_available': ask_size
                 }
     
     # Organize by company
@@ -645,7 +666,7 @@ async def get_market_prices():
                 prices_by_company[company].append(price_data)
                 break
     
-    # Save our results
+    # Save our results with decimal handling
     result = {
         'step': 4,
         'what_we_did': 'Got buy/sell prices for all options',
@@ -662,8 +683,16 @@ async def get_market_prices():
     }
     
     filename = 'step4_market_prices.json'
+    
+    # Use custom JSON encoder to handle any remaining Decimal objects
+    class DecimalEncoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, Decimal):
+                return float(obj)
+            return super(DecimalEncoder, self).default(obj)
+    
     with open(filename, 'w') as f:
-        json.dump(result, f, indent=2)
+        json.dump(result, f, indent=2, cls=DecimalEncoder)
     
     print(f"\n✅ Saved market prices to: {filename}")
     print(f"💰 Got prices for {len(market_prices)} contracts!")
