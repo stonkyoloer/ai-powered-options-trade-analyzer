@@ -1119,3 +1119,98 @@ if __name__ == "__main__":
 
 # 6️⃣ Prompt for News and Event
 
+## 📋 Quick Start — Insert Your Trades Here
+
+### 🏆 Trades to Analyze
+```text
+1. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
+2. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
+3. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
+4. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
+5. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
+---
+
+CORE MISSION
+FIND TOMORROW'S INTEL TODAY – Search for breaking news and market‑moving information in this exact priority order:
+
+LAST 2‑4 HOURS: Breaking news, earnings announcements, regulatory decisions  
+LAST 24 HOURS: Company guidance, analyst upgrades/downgrades, sector developments  
+LAST 72 HOURS MAXIMUM: Major contract announcements, geopolitical events, economic data  
+
+────────────────────────────────────────────────────────────────────────
+
+LEGENDARY TRADER FRAMEWORKS
+🧠 1. STEVEN A. COHEN – Information Edge Master  
+• Focus: Fundamental catalyst identification, information asymmetry exploitation  
+• Key Qs: What non‑public insights give edge? What catalysts are market missing?  
+• Risk: Size by conviction, exit fast when thesis breaks  
+• Validate: Does position use superior sector/company knowledge?  
+
+🐢 2. RICHARD DENNIS – Systematic Turtle Rules  
+• Focus: Trend‑following, mechanical entries/exits  
+• Key Qs: Does setup follow rules? Is risk defined?  
+• Risk: 2 % max per trade, rule‑based exits  
+• Validate: Can this be replicated without emotion?  
+
+⏰ 3. LARRY R. WILLIAMS – Market Timing & Volatility  
+• Focus: Seasonality, IV analysis, short‑term setups  
+• Key Qs: IV rank OK for premium selling? Seasonals supportive?  
+• Risk: Time‑based exits, volatility awareness  
+• Validate: Does timing align with volatility cycles?  
+
+⚡ 4. PAUL ROTTER – Precision Scalping & Flow  
+• Focus: Order‑flow, market microstructure, fast execution  
+• Key Qs: What does flow reveal? Are market makers positioned?  
+• Risk: Tight stops, flow‑based sizing  
+• Validate: Does trade align with observable flow?  
+
+📈 5. TAKASHI KOTEGAWA – News‑Driven Momentum  
+• Focus: News catalysts, technical momentum  
+• Key Qs: What news drives price? Is momentum sustainable?  
+• Risk: Size vs. news strength, confirm momentum  
+• Validate: Does trade match news flow & momentum?  
+
+────────────────────────────────────────────────────────────────────────
+
+🔍 RESEARCH PROTOCOL (EXECUTE IN ORDER)
+PHASE 1 (0‑4 HRS): "breaking news [TICKER] today", "SEC filing [TICKER] latest", …  
+PHASE 2 (4‑24 HRS): "earnings call transcript [TICKER]", "sector news [SECTOR] today", …  
+PHASE 3 (24‑72 HRS): "institutional buying [TICKER]", "economic data impact [SECTOR]", …
+
+────────────────────────────────────────────────────────────────────────
+
+📊 POSITION ANALYSIS FRAMEWORK
+TECHNICAL: Strike distance, DTE for theta, Δ risk, IV environment  
+FUNDAMENTAL: Catalyst calendar, sector trends, company guidance, macro backdrop  
+TRADER LENS:  
+• Cohen – info edge • Dennis – systematic • Williams – timing • Rotter – flow • Kotegawa – momentum  
+
+────────────────────────────────────────────────────────────────────────
+
+📋 OUTPUT TABLE COLUMNS
+Position | Validation Status | Trader Consensus | Plain Thesis | Key News/Events | Risk Assessment | Time‑Sensitive Intelligence
+
+────────────────────────────────────────────────────────────────────────
+
+⚠️ CRITICAL SUCCESS FACTORS
+• **Information Recency:** newest first, timestamp everything  
+• **Validation Rigor:** 4 / 5 rejects ⇒ invalidate; 3+ agrees ⇒ validate; split ⇒ neutral  
+• **Risk Priority:** earnings/FDA, key levels, DTE vs. catalysts, IV regime, liquidity  
+
+────────────────────────────────────────────────────────────────────────
+
+✅ EXECUTION CHECKLIST
+☐ Searched last 4 hrs news ☐ No earnings inside DTE ☐ Applied 5 frameworks ☐ 2‑3 key risks noted  
+☐ Action items dated ☐ Positions ranked by validation strength ☐ Time‑sensitive intel included  
+
+────────────────────────────────────────────────────────────────────────
+
+🎯 FINAL DELIVERABLES
+• Newest intelligence (≤ 4 hrs)  
+• Clear validation decision per trade  
+• Specific risk mitigations  
+• Time‑critical action items & dates  
+• Trader‑consensus logic  
+• Bottom‑line execution priority  
+
+
