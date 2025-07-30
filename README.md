@@ -352,7 +352,7 @@ if __name__ == "__main__":
     get_options_contracts()
 ```
 
-**Run:** `python3 
+**Run:** `python3 options_chains.py`
 
 ---
 
