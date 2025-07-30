@@ -908,31 +908,37 @@ def find_deals_with_delta_analysis():
     
     # Show top 10 from each category
     print(f"\n🏆 TOP 10 - NO DELTA FILTER:")
-    print("-" * 100)
+    print("-" * 140)
     for i, spread in enumerate(all_spreads_no_delta[:10]):
         delta_color = "🟢" if abs(spread['spread_delta']) <= 0.2 else ("🟡" if abs(spread['spread_delta']) <= 0.5 else "🔴")
         print(f"{i+1:2}. {spread['company']:4} | "
+              f"SELL ${spread['short_strike']:3.0f}C / BUY ${spread['long_strike']:3.0f}C | "
               f"PoP: {spread['probability_of_profit']:5.1f}% | "
               f"ROI: {spread['roi_percent']:5.1f}% | "
+              f"DTE: {spread['days_to_expiration']:2d} | "
               f"Δ: {spread['spread_delta']:6.3f} {delta_color} | "
               f"Credit: ${spread['credit_collected']:.2f}")
     
     print(f"\n🎯 TOP 10 - WITH LOOSE DELTA FILTER (±0.5):")
-    print("-" * 100)
+    print("-" * 140)
     for i, spread in enumerate(all_spreads_loose_delta[:10]):
         print(f"{i+1:2}. {spread['company']:4} | "
+              f"SELL ${spread['short_strike']:3.0f}C / BUY ${spread['long_strike']:3.0f}C | "
               f"PoP: {spread['probability_of_profit']:5.1f}% | "
               f"ROI: {spread['roi_percent']:5.1f}% | "
+              f"DTE: {spread['days_to_expiration']:2d} | "
               f"Δ: {spread['spread_delta']:6.3f} | "
               f"Credit: ${spread['credit_collected']:.2f}")
     
     if all_spreads_strict_delta:
         print(f"\n🎯 TOP 10 - WITH STRICT DELTA FILTER (±0.2):")
-        print("-" * 100)
+        print("-" * 140)
         for i, spread in enumerate(all_spreads_strict_delta[:10]):
             print(f"{i+1:2}. {spread['company']:4} | "
+                  f"SELL ${spread['short_strike']:3.0f}C / BUY ${spread['long_strike']:3.0f}C | "
                   f"PoP: {spread['probability_of_profit']:5.1f}% | "
                   f"ROI: {spread['roi_percent']:5.1f}% | "
+                  f"DTE: {spread['days_to_expiration']:2d} | "
                   f"Δ: {spread['spread_delta']:6.3f} | "
                   f"Credit: ${spread['credit_collected']:.2f}")
     else:
