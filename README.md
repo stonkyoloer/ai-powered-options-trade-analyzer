@@ -1041,7 +1041,7 @@ def calculate_liquidity_score(open_interest, volume, spread, company):
 if __name__ == "__main__":
     asyncio.run(analyze_iv_and_liquidity())
 ```
-
+**Run:** `python3 iv_liquidity.py`
 
 # 5️⃣ Black Scholes Analysis
 
