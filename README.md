@@ -424,136 +424,7 @@ if __name__ == "__main__":
 
 ---
 
-## 📁 Step 4: Check How Risky Each Trade Is (Greeks)
-
-**Create:** `touch risk_analysis.py`
-
-**Query:** `open -e risk_analysis.py`
-
-```bash
-import asyncio
-import json
-from datetime import datetime
-from tastytrade import Session, DXLinkStreamer
-from tastytrade.dxfeed import Greeks
-from config import USERNAME, PASSWORD
-
-async def analyze_risk():
-    print("🧮 STEP 3: Risk Analysis (Greeks)")
-    print("=" * 50)
-    print("🔬 Using special math to check how risky each bet is...")
-    
-    # Load our options from Step 2
-    with open('step2_options_contracts.json', 'r') as f:
-        step2_data = json.load(f)
-    
-    # Collect all contract symbols we need to analyze
-    all_contracts = []
-    for company_data in step2_data['options_by_company'].values():
-        for exp_data in company_data['expiration_dates'].values():
-            for contract in exp_data['contracts']:
-                all_contracts.append(contract['streamer_symbol'])
-    
-    print(f"🎯 Analyzing risk for {len(all_contracts)} contracts...")
-    
-    session = Session(USERNAME, PASSWORD)
-    risk_data = {}
-    
-    async with DXLinkStreamer(session) as streamer:
-        print("📡 Connecting to get risk calculations...")
-        await streamer.subscribe(Greeks, all_contracts)
-        print("✅ Connected! Getting risk data...")
-        
-        collected_greeks = []
-        start_time = asyncio.get_event_loop().time()
-        
-        # Collect for 2 minutes to get all data
-        while (asyncio.get_event_loop().time() - start_time) < 120:
-            try:
-                greek_data = await asyncio.wait_for(streamer.get_event(Greeks), timeout=3.0)
-                
-                if greek_data:
-                    collected_greeks.append(greek_data)
-                    
-                    # Show progress every 100 items
-                    if len(collected_greeks) % 100 == 0:
-                        print(f"   📊 Risk calculations done: {len(collected_greeks)}")
-                        
-            except asyncio.TimeoutError:
-                continue
-        
-        print(f"✅ Completed {len(collected_greeks)} risk calculations!")
-        
-        # Organize risk data by company
-        companies = ['NVDA', 'TSLA', 'AMZN', 'ISRG', 'PLTR', 'ENPH', 'XOM', 'DE', 'CAT']
-        
-        for greek in collected_greeks:
-            # Figure out which company this belongs to
-            company = None
-            for comp in companies:
-                if comp in greek.event_symbol:
-                    company = comp
-                    break
-            
-            if company:
-                if company not in risk_data:
-                    risk_data[company] = []
-                
-                # Save the risk information in simple terms
-                risk_info = {
-                    'contract_name': greek.event_symbol,
-                    'current_option_price': float(greek.price),
-                    'delta': float(greek.delta),  # How much price changes when stock moves $1
-                    'theta': float(greek.theta),  # How much we lose each day (time decay)
-                    'gamma': float(greek.gamma),  # How much delta changes
-                    'vega': float(greek.vega),   # How much price changes with volatility
-                    'implied_volatility': float(greek.volatility)  # How "jumpy" people think stock will be
-                }
-                
-                risk_data[company].append(risk_info)
-    
-    # Save our results
-    result = {
-        'step': 3,
-        'what_we_did': 'Calculated risk for all options using Greeks',
-        'timestamp': datetime.now().isoformat(),
-        'total_risk_calculations': len(collected_greeks),
-        'companies_analyzed': len(risk_data),
-        'risk_by_company': risk_data,
-        'greek_explanations': {
-            'delta': 'How much option price changes when stock moves $1',
-            'theta': 'How much money we lose each day (time decay)',
-            'gamma': 'How much delta speeds up or slows down',
-            'vega': 'How much price changes if volatility changes',
-            'implied_volatility': 'How jumpy people think the stock will be'
-        }
-    }
-    
-    filename = 'step3_risk_analysis.json'
-    with open(filename, 'w') as f:
-        json.dump(result, f, indent=2)
-    
-    print(f"\n✅ Saved risk analysis to: {filename}")
-    print(f"🧮 Calculated risk for {len(collected_greeks)} contracts!")
-    
-    # Show some examples
-    print(f"\n📊 RISK EXAMPLES:")
-    for company, risks in list(risk_data.items())[:3]:
-        if risks:
-            example = risks[0]
-            print(f"   {company}: Delta={example['delta']:.3f}, Theta={example['theta']:.3f}")
-    
-    return result
-
-if __name__ == "__main__":
-    asyncio.run(analyze_risk())
-```
-
-**Run:** `python3 risk_analysis.py`
-
----
-
-## 📁 Step 5: Get Buy/Sell Prices (Bid/Ask)
+## 📁 Step 4: Get Buy/Sell Prices (Bid/Ask)
 
 **Create:** `touch market_prices.py`
 
@@ -713,93 +584,648 @@ if __name__ == "__main__":
 
 ---
 
-# 4️⃣ Black Scholes Model Analysis 
+## 📁 Step 5: Check How Risky Each Trade Is (Greeks)
 
-## 📁 Step 6: Find the Best Credit Spreads
+**Create:** `touch risk_analysis.py`
+
+**Query:** `open -e risk_analysis.py`
+
+```bash
+import asyncio
+import json
+from datetime import datetime
+from tastytrade import Session, DXLinkStreamer
+from tastytrade.dxfeed import Greeks
+from config import USERNAME, PASSWORD
+
+async def analyze_risk():
+    print("🧮 STEP 3: Risk Analysis (Greeks)")
+    print("=" * 50)
+    print("🔬 Using special math to check how risky each bet is...")
+    
+    # Load our options from Step 2
+    with open('step2_options_contracts.json', 'r') as f:
+        step2_data = json.load(f)
+    
+    # Collect all contract symbols we need to analyze
+    all_contracts = []
+    for company_data in step2_data['options_by_company'].values():
+        for exp_data in company_data['expiration_dates'].values():
+            for contract in exp_data['contracts']:
+                all_contracts.append(contract['streamer_symbol'])
+    
+    print(f"🎯 Analyzing risk for {len(all_contracts)} contracts...")
+    
+    session = Session(USERNAME, PASSWORD)
+    risk_data = {}
+    
+    async with DXLinkStreamer(session) as streamer:
+        print("📡 Connecting to get risk calculations...")
+        await streamer.subscribe(Greeks, all_contracts)
+        print("✅ Connected! Getting risk data...")
+        
+        collected_greeks = []
+        start_time = asyncio.get_event_loop().time()
+        
+        # Collect for 2 minutes to get all data
+        while (asyncio.get_event_loop().time() - start_time) < 120:
+            try:
+                greek_data = await asyncio.wait_for(streamer.get_event(Greeks), timeout=3.0)
+                
+                if greek_data:
+                    collected_greeks.append(greek_data)
+                    
+                    # Show progress every 100 items
+                    if len(collected_greeks) % 100 == 0:
+                        print(f"   📊 Risk calculations done: {len(collected_greeks)}")
+                        
+            except asyncio.TimeoutError:
+                continue
+        
+        print(f"✅ Completed {len(collected_greeks)} risk calculations!")
+        
+        # Organize risk data by company
+        companies = ['NVDA', 'TSLA', 'AMZN', 'ISRG', 'PLTR', 'ENPH', 'XOM', 'DE', 'CAT']
+        
+        for greek in collected_greeks:
+            # Figure out which company this belongs to
+            company = None
+            for comp in companies:
+                if comp in greek.event_symbol:
+                    company = comp
+                    break
+            
+            if company:
+                if company not in risk_data:
+                    risk_data[company] = []
+                
+                # Save the risk information in simple terms
+                risk_info = {
+                    'contract_name': greek.event_symbol,
+                    'current_option_price': float(greek.price),
+                    'delta': float(greek.delta),  # How much price changes when stock moves $1
+                    'theta': float(greek.theta),  # How much we lose each day (time decay)
+                    'gamma': float(greek.gamma),  # How much delta changes
+                    'vega': float(greek.vega),   # How much price changes with volatility
+                    'implied_volatility': float(greek.volatility)  # How "jumpy" people think stock will be
+                }
+                
+                risk_data[company].append(risk_info)
+    
+    # Save our results
+    result = {
+        'step': 3,
+        'what_we_did': 'Calculated risk for all options using Greeks',
+        'timestamp': datetime.now().isoformat(),
+        'total_risk_calculations': len(collected_greeks),
+        'companies_analyzed': len(risk_data),
+        'risk_by_company': risk_data,
+        'greek_explanations': {
+            'delta': 'How much option price changes when stock moves $1',
+            'theta': 'How much money we lose each day (time decay)',
+            'gamma': 'How much delta speeds up or slows down',
+            'vega': 'How much price changes if volatility changes',
+            'implied_volatility': 'How jumpy people think the stock will be'
+        }
+    }
+    
+    filename = 'step3_risk_analysis.json'
+    with open(filename, 'w') as f:
+        json.dump(result, f, indent=2)
+    
+    print(f"\n✅ Saved risk analysis to: {filename}")
+    print(f"🧮 Calculated risk for {len(collected_greeks)} contracts!")
+    
+    # Show some examples
+    print(f"\n📊 RISK EXAMPLES:")
+    for company, risks in list(risk_data.items())[:3]:
+        if risks:
+            example = risks[0]
+            print(f"   {company}: Delta={example['delta']:.3f}, Theta={example['theta']:.3f}")
+    
+    return result
+
+if __name__ == "__main__":
+    asyncio.run(analyze_risk())
+```
+
+**Run:** `python3 risk_analysis.py`
+
+
+---
+
+# 4️⃣ IV and Liquidity Analysis 
+
+
+## 📁 Step 6: Find High IV and Liquidity
+
+**Create:** `touch iv_liquidity.py`
+
+**Query:** `touch iv_liquidity.py`
+
+```bash
+# advanced_iv_liquidity.py - STEP 6: Fixed version with better data collection
+import json
+import numpy as np
+from datetime import datetime
+import asyncio
+from tastytrade import Session, DXLinkStreamer
+from tastytrade.dxfeed import Summary
+from config import USERNAME, PASSWORD
+
+async def analyze_iv_and_liquidity():
+    print("📊 STEP 6: Advanced IV & Liquidity Analysis")
+    print("=" * 70)
+    print("🎯 Collecting comprehensive market data...")
+    
+    # Load previous data
+    with open('step1_stock_prices.json', 'r') as f:
+        stock_data = json.load(f)
+    
+    with open('step2_options_contracts.json', 'r') as f:
+        options_data = json.load(f)
+    
+    with open('step3_iv_data.json', 'r') as f:
+        iv_data = json.load(f)
+    
+    with open('step4_market_prices.json', 'r') as f:
+        price_data = json.load(f)
+    
+    print(f"✅ Loaded data: {options_data['total_contracts_found']} contracts to analyze")
+    
+    session = Session(USERNAME, PASSWORD)
+    
+    # Create lookups
+    price_lookup = {}
+    for company, prices_list in price_data['prices_by_company'].items():
+        for price in prices_list:
+            price_lookup[price['contract_name']] = price
+    
+    companies = list(stock_data['stock_prices'].keys())
+    enhanced_options = {}
+    
+    # Collect ALL contract symbols
+    all_symbols = []
+    symbol_to_company = {}
+    
+    for company, company_data in options_data['options_by_company'].items():
+        for exp_data in company_data['expiration_dates'].values():
+            for contract in exp_data['contracts']:
+                symbol = contract['streamer_symbol']
+                all_symbols.append(symbol)
+                symbol_to_company[symbol] = company
+    
+    print(f"📡 Need to get Summary data for {len(all_symbols)} contracts...")
+    
+    # Process in batches to avoid overwhelming the connection
+    batch_size = 500
+    summary_data = {}
+    
+    async with DXLinkStreamer(session) as streamer:
+        for batch_start in range(0, len(all_symbols), batch_size):
+            batch_end = min(batch_start + batch_size, len(all_symbols))
+            batch_symbols = all_symbols[batch_start:batch_end]
+            
+            print(f"\n   📊 Processing batch {batch_start//batch_size + 1}/{(len(all_symbols) + batch_size - 1)//batch_size}")
+            print(f"      Symbols {batch_start + 1} to {batch_end} of {len(all_symbols)}")
+            
+            # Subscribe to this batch
+            await streamer.subscribe(Summary, batch_symbols)
+            
+            # Collect data for this batch
+            batch_collected = 0
+            start_time = asyncio.get_event_loop().time()
+            no_data_timeout = 0
+            
+            # Collect for up to 30 seconds per batch or until we stop getting new data
+            while (asyncio.get_event_loop().time() - start_time) < 30 and no_data_timeout < 5:
+                try:
+                    summary = await asyncio.wait_for(streamer.get_event(Summary), timeout=1.0)
+                    if summary and summary.event_symbol in batch_symbols:
+                        summary_data[summary.event_symbol] = {
+                            'open_interest': int(summary.open_interest) if summary.open_interest else 0,
+                            'volume': int(summary.prev_day_volume) if summary.prev_day_volume else 0,
+                            'day_high': float(summary.day_high_price) if summary.day_high_price else 0,
+                            'day_low': float(summary.day_low_price) if summary.day_low_price else 0
+                        }
+                        batch_collected += 1
+                        no_data_timeout = 0  # Reset timeout counter
+                        
+                        if batch_collected % 50 == 0:
+                            print(f"      Collected: {batch_collected} summaries")
+                        
+                except asyncio.TimeoutError:
+                    no_data_timeout += 1
+                    continue
+                except Exception as e:
+                    continue
+            
+            print(f"      ✅ Batch complete: {batch_collected} summaries collected")
+            
+            # Unsubscribe from this batch before moving to next
+            await streamer.unsubscribe(Summary, batch_symbols)
+            
+            # Small delay between batches
+            await asyncio.sleep(0.5)
+    
+    print(f"\n✅ Total Summary data collected: {len(summary_data)} contracts")
+    
+    # Now analyze each company with all the data
+    for company in companies:
+        print(f"\n🏢 Analyzing {company}...")
+        
+        company_options = options_data['options_by_company'].get(company, {})
+        if not company_options:
+            continue
+        
+        current_price = company_options['current_stock_price']
+        company_contracts = []
+        
+        # Stats tracking
+        stats = {
+            'total_analyzed': 0,
+            'has_iv': 0,
+            'has_price': 0,
+            'has_summary': 0,
+            'has_all_data': 0
+        }
+        
+        for exp_data in company_options['expiration_dates'].values():
+            for contract in exp_data['contracts']:
+                symbol = contract['streamer_symbol']
+                stats['total_analyzed'] += 1
+                
+                # Check data availability
+                has_iv = symbol in iv_data['iv_by_contract']
+                has_price = symbol in price_lookup
+                has_summary = symbol in summary_data
+                
+                if has_iv:
+                    stats['has_iv'] += 1
+                if has_price:
+                    stats['has_price'] += 1
+                if has_summary:
+                    stats['has_summary'] += 1
+                
+                # Only analyze if we have at least IV and price data
+                if not (has_iv and has_price):
+                    continue
+                
+                stats['has_all_data'] += 1
+                
+                # Get all data
+                current_iv = iv_data['iv_by_contract'][symbol]
+                price_info = price_lookup[symbol]
+                
+                # Get summary data or use defaults
+                if has_summary:
+                    liquidity = summary_data[symbol]
+                else:
+                    liquidity = {'open_interest': 0, 'volume': 0}
+                
+                # Calculate metrics
+                bid = price_info['what_buyers_pay']
+                ask = price_info['what_sellers_want']
+                spread = ask - bid
+                
+                # Calculate liquidity score
+                liquidity_score = calculate_liquidity_score(
+                    liquidity['open_interest'],
+                    liquidity['volume'],
+                    spread,
+                    company
+                )
+                
+                contract_analysis = {
+                    'symbol': symbol,
+                    'strike': contract['strike_price'],
+                    'type': contract['contract_type'],
+                    'days_to_exp': contract['days_until_expires'],
+                    'current_iv': current_iv,
+                    'open_interest': liquidity['open_interest'],
+                    'volume': liquidity['volume'],
+                    'bid': bid,
+                    'ask': ask,
+                    'bid_ask_spread': spread,
+                    'liquidity_score': liquidity_score,
+                    'liquid': liquidity_score >= 70,
+                    'has_summary_data': has_summary
+                }
+                
+                company_contracts.append(contract_analysis)
+        
+        # Calculate company metrics
+        if company_contracts:
+            liquid_contracts = [c for c in company_contracts if c['liquid']]
+            high_volume = [c for c in company_contracts if c['volume'] >= 100]
+            high_oi = [c for c in company_contracts if c['open_interest'] >= 1000]
+            tight_spreads = [c for c in company_contracts if c['bid_ask_spread'] <= 0.10]
+            
+            avg_iv = np.mean([c['current_iv'] for c in company_contracts])
+            
+            enhanced_options[company] = {
+                'current_stock_price': current_price,
+                'avg_implied_volatility': avg_iv,
+                'data_coverage': stats,
+                'metrics': {
+                    'total_contracts_analyzed': len(company_contracts),
+                    'liquid_contracts': len(liquid_contracts),
+                    'high_volume_contracts': len(high_volume),
+                    'high_oi_contracts': len(high_oi),
+                    'tight_spread_contracts': len(tight_spreads),
+                    'contracts_with_summary': sum(1 for c in company_contracts if c['has_summary_data'])
+                },
+                'top_liquid_contracts': sorted(
+                    company_contracts, 
+                    key=lambda x: (x['liquidity_score'], x['open_interest']), 
+                    reverse=True
+                )[:20]
+            }
+            
+            print(f"   📊 Avg IV: {avg_iv:.3f}")
+            print(f"   📈 Contracts analyzed: {len(company_contracts)}")
+            print(f"   💧 Liquid contracts: {len(liquid_contracts)}")
+            print(f"   📊 High OI (≥1000): {len(high_oi)}")
+            print(f"   📊 Summary data coverage: {stats['has_summary']}/{stats['total_analyzed']} ({stats['has_summary']/stats['total_analyzed']*100:.1f}%)")
+    
+    # Find best opportunities
+    all_liquid_contracts = []
+    for company, data in enhanced_options.items():
+        for contract in data['top_liquid_contracts']:
+            if contract['liquid']:
+                contract['company'] = company
+                all_liquid_contracts.append(contract)
+    
+    # Sort by liquidity score
+    all_liquid_contracts.sort(key=lambda x: (x['liquidity_score'], x['open_interest']), reverse=True)
+    
+    # Save results
+    result = {
+        'step': 6,
+        'what_we_did': 'Comprehensive IV & Liquidity Analysis',
+        'timestamp': datetime.now().isoformat(),
+        'data_summary': {
+            'total_contracts': options_data['total_contracts_found'],
+            'contracts_with_iv': len(iv_data['iv_by_contract']),
+            'contracts_with_prices': price_data['total_prices_collected'],
+            'contracts_with_summary': len(summary_data)
+        },
+        'companies_analyzed': len(enhanced_options),
+        'enhanced_options': enhanced_options,
+        'top_liquid_contracts': all_liquid_contracts[:50],
+        'liquidity_criteria': {
+            'score_threshold': 70,
+            'oi_threshold': 1000,
+            'volume_threshold': 100,
+            'spread_thresholds': {
+                'top_names': 0.05,
+                'others': 0.10
+            }
+        }
+    }
+    
+    filename = 'step6_advanced_iv_liquidity.json'
+    with open(filename, 'w') as f:
+        json.dump(result, f, indent=2)
+    
+    print(f"\n✅ Analysis complete!")
+    print(f"📊 Summary data coverage: {len(summary_data)}/{len(all_symbols)} contracts ({len(summary_data)/len(all_symbols)*100:.1f}%)")
+    print(f"💧 Total liquid contracts found: {len(all_liquid_contracts)}")
+    print(f"📁 Results saved to: {filename}")
+    
+    return result
+
+def calculate_liquidity_score(open_interest, volume, spread, company):
+    """Calculate 0-100 liquidity score"""
+    score = 0
+    
+    # Open interest component (40 points)
+    if open_interest >= 1000:
+        score += 40
+    elif open_interest >= 500:
+        score += 30
+    elif open_interest >= 100:
+        score += 20
+    elif open_interest > 0:
+        score += min(20, (open_interest / 100) * 20)
+    
+    # Volume component (30 points)
+    if volume >= 1000:
+        score += 30
+    elif volume >= 500:
+        score += 20
+    elif volume >= 100:
+        score += 10
+    elif volume > 0:
+        score += min(10, (volume / 100) * 10)
+    
+    # Spread component (30 points)
+    if spread >= 0:
+        if company in ['NVDA', 'TSLA', 'AMZN']:
+            if spread <= 0.05:
+                score += 30
+            elif spread <= 0.10:
+                score += 20
+            elif spread <= 0.20:
+                score += 10
+        else:
+            if spread <= 0.10:
+                score += 30
+            elif spread <= 0.20:
+                score += 20
+            elif spread <= 0.50:
+                score += 10
+    
+    return min(100, score)
+
+if __name__ == "__main__":
+    asyncio.run(analyze_iv_and_liquidity())
+```
+
+
+# 5️⃣ Black Scholes Analysis
+
+
+## 📁 Step 7: Find the Best Deals
+
+
 
 **Create:** `touch find_tendies.py`
 
 **Query:** `open -e find_tendies.py`
 
 ```bash
+# enhanced_find_tendies.py - STEP 7: Both Call and Put Credit Spreads
 import json
-import pandas as pd
 import numpy as np
 from datetime import datetime
-import math
 from scipy.stats import norm
 
-class BlackScholesCalculator:
-    """Black-Scholes option pricing and probability calculations"""
+class EliteCreditSpreadScanner:
+    """Advanced credit spread scanner for BOTH calls and puts"""
     
     def __init__(self, risk_free_rate=0.05):
         self.risk_free_rate = risk_free_rate
     
-    def black_scholes_call(self, S, K, T, r, sigma):
-        """Calculate Black-Scholes call option price"""
-        if T <= 0:
-            return max(S - K, 0)
-        
-        if sigma <= 0:
-            return max(S - K, 0)
-            
-        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
-        d2 = d1 - sigma * np.sqrt(T)
-        
-        call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
-        return max(call_price, 0)
-    
-    def probability_otm(self, S, K, T, sigma, option_type='call'):
-        """Calculate probability that option expires out-of-the-money"""
-        if T <= 0:
-            return 1.0 if (option_type == 'call' and S < K) or (option_type == 'put' and S > K) else 0.0
-        
-        if sigma <= 0:
-            return 1.0 if (option_type == 'call' and S < K) or (option_type == 'put' and S > K) else 0.0
+    def black_scholes_probability(self, S, K, T, sigma, option_type='call'):
+        """Calculate probability of staying OTM for calls or puts"""
+        if T <= 0 or sigma <= 0:
+            return 0
         
         d2 = (np.log(S / K) + (self.risk_free_rate - 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         
         if option_type == 'call':
-            prob_otm = norm.cdf(-d2)
+            # Probability call stays OTM (stock stays below K)
+            return norm.cdf(-d2) * 100
         else:
-            prob_otm = norm.cdf(d2)
-        
-        return prob_otm
+            # Probability put stays OTM (stock stays above K)  
+            return norm.cdf(d2) * 100
     
-    def calculate_greeks(self, S, K, T, r, sigma, option_type='call'):
-        """Calculate option Greeks"""
-        if T <= 0:
-            return {'delta': 0, 'theta': 0, 'gamma': 0, 'vega': 0}
+    def scan_call_spreads(self, liquid_contracts, current_price, company, price_lookup, avg_iv):
+        """Scan for bear call credit spreads (calls above current price)"""
+        call_spreads = []
         
-        if sigma <= 0:
-            return {'delta': 0, 'theta': 0, 'gamma': 0, 'vega': 0}
+        # Get calls above current price
+        calls_above = []
+        for contract in liquid_contracts:
+            if (contract['type'] == 'CALL' and 
+                contract['strike'] > current_price and
+                contract['liquid'] and
+                contract['symbol'] in price_lookup):
+                calls_above.append(contract)
         
-        d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
-        d2 = d1 - sigma * np.sqrt(T)
+        calls_above.sort(key=lambda x: x['strike'])
         
-        if option_type == 'call':
-            delta = norm.cdf(d1)
-            theta = (-S * norm.pdf(d1) * sigma / (2 * np.sqrt(T)) 
-                    - r * K * np.exp(-r * T) * norm.cdf(d2)) / 365
-        else:
-            delta = -norm.cdf(-d1)
-            theta = (-S * norm.pdf(d1) * sigma / (2 * np.sqrt(T)) 
-                    + r * K * np.exp(-r * T) * norm.cdf(-d2)) / 365
+        # Create call spreads
+        for i in range(len(calls_above) - 1):
+            short_call = calls_above[i]
+            long_call = calls_above[i + 1]
+            
+            spread = self.analyze_credit_spread(
+                short_call, long_call, current_price, company, 
+                price_lookup, avg_iv, 'BEAR_CALL'
+            )
+            if spread:
+                call_spreads.append(spread)
         
-        gamma = norm.pdf(d1) / (S * sigma * np.sqrt(T))
-        vega = S * norm.pdf(d1) * np.sqrt(T) / 100
+        return call_spreads
+    
+    def scan_put_spreads(self, liquid_contracts, current_price, company, price_lookup, avg_iv):
+        """Scan for bull put credit spreads (puts below current price)"""
+        put_spreads = []
+        
+        # Get puts below current price
+        puts_below = []
+        for contract in liquid_contracts:
+            if (contract['type'] == 'PUT' and 
+                contract['strike'] < current_price and
+                contract['liquid'] and
+                contract['symbol'] in price_lookup):
+                puts_below.append(contract)
+        
+        puts_below.sort(key=lambda x: x['strike'], reverse=True)  # Highest to lowest
+        
+        # Create put spreads
+        for i in range(len(puts_below) - 1):
+            short_put = puts_below[i]      # Higher strike (short)
+            long_put = puts_below[i + 1]   # Lower strike (long)
+            
+            spread = self.analyze_credit_spread(
+                short_put, long_put, current_price, company, 
+                price_lookup, avg_iv, 'BULL_PUT'
+            )
+            if spread:
+                put_spreads.append(spread)
+        
+        return put_spreads
+    
+    def analyze_credit_spread(self, short_option, long_option, current_price, 
+                            company, price_lookup, avg_iv, spread_type):
+        """Analyze a credit spread (works for both calls and puts)"""
+        
+        strike_width = abs(long_option['strike'] - short_option['strike'])
+        if strike_width > 10:
+            return None
+        
+        short_symbol = short_option['symbol']
+        long_symbol = long_option['symbol']
+        
+        # Get price data
+        short_price = price_lookup[short_symbol]
+        long_price = price_lookup[long_symbol]
+        
+        # Calculate credit (what we collect)
+        credit = short_price['what_buyers_pay'] - long_price['what_sellers_want']
+        if credit <= 0:
+            return None
+        
+        max_risk = strike_width - credit
+        roi = (credit / max_risk * 100) if max_risk > 0 else 0
+        
+        # Skip low ROI
+        if roi < 10:
+            return None
+        
+        # Get IV for probability calculation
+        short_iv = short_option.get('current_iv', avg_iv)
+        time_to_exp = short_option['days_to_exp'] / 365
+        
+        # Calculate probability based on spread type
+        if spread_type == 'BEAR_CALL':
+            # For bear call: want stock to stay BELOW short strike
+            prob_profit = self.black_scholes_probability(
+                current_price, short_option['strike'], time_to_exp, short_iv, 'call'
+            )
+            distance_from_money = ((short_option['strike'] - current_price) / current_price) * 100
+        else:  # BULL_PUT
+            # For bull put: want stock to stay ABOVE short strike  
+            prob_profit = self.black_scholes_probability(
+                current_price, short_option['strike'], time_to_exp, short_iv, 'put'
+            )
+            distance_from_money = ((current_price - short_option['strike']) / current_price) * 100
+        
+        # Skip low probability
+        if prob_profit < 65:
+            return None
+        
+        # Check minimum liquidity
+        min_oi = min(short_option['open_interest'], long_option['open_interest'])
+        if min_oi < 500:
+            return None
         
         return {
-            'delta': delta,
-            'theta': theta,
-            'gamma': gamma,
-            'vega': vega
+            'company': company,
+            'spread_type': spread_type,
+            'short_strike': short_option['strike'],
+            'long_strike': long_option['strike'],
+            'strike_width': strike_width,
+            'days_to_expiration': short_option['days_to_exp'],
+            'credit': credit,
+            'max_risk': max_risk,
+            'roi_percent': roi,
+            'probability_of_profit': prob_profit,
+            'current_stock_price': current_price,
+            'distance_from_money': distance_from_money,
+            'short_iv': short_iv,
+            'min_open_interest': min_oi,
+            'short_symbol': short_symbol,
+            'long_symbol': long_symbol,
+            'strategy_explanation': self.get_strategy_explanation(spread_type, short_option['strike'], long_option['strike'])
         }
+    
+    def get_strategy_explanation(self, spread_type, short_strike, long_strike):
+        """Explain the strategy"""
+        if spread_type == 'BEAR_CALL':
+            return f"Sell ${short_strike} call, buy ${long_strike} call. Profit if stock stays below ${short_strike}"
+        else:
+            return f"Sell ${short_strike} put, buy ${long_strike} put. Profit if stock stays above ${short_strike}"
 
-def find_deals_with_delta_analysis():
-    print("🔍 BLACK-SCHOLES WITH DELTA ANALYSIS")
+def scan_all_credit_spreads():
+    print("🏆 STEP 7: Complete Credit Spread Scanner")
     print("=" * 70)
-    print("🎯 ROI > 10%, PoP > 66%, Delta Analysis...")
+    print("🎯 Scanning BOTH Call and Put Credit Spreads...")
+    print("📈 Bear Call Spreads: Profit when stock doesn't go UP")
+    print("📉 Bull Put Spreads: Profit when stock doesn't go DOWN")
     
     # Load all data
     with open('step1_stock_prices.json', 'r') as f:
@@ -808,234 +1234,129 @@ def find_deals_with_delta_analysis():
     with open('step2_options_contracts.json', 'r') as f:
         options_data = json.load(f)
     
-    with open('step3_risk_analysis.json', 'r') as f:
-        risk_data = json.load(f)
+    with open('step3_iv_data.json', 'r') as f:
+        iv_data = json.load(f)
     
     with open('step4_market_prices.json', 'r') as f:
         price_data = json.load(f)
     
-    print("✅ Loaded all data!")
+    with open('step6_advanced_iv_liquidity.json', 'r') as f:
+        iv_liquidity_data = json.load(f)
     
-    bs_calc = BlackScholesCalculator()
+    scanner = EliteCreditSpreadScanner()
     
-    # Create lookups
-    greek_lookup = {}
-    for company, greeks_list in risk_data['risk_by_company'].items():
-        for greek in greeks_list:
-            greek_lookup[greek['contract_name']] = greek
-    
+    # Create price lookup
     price_lookup = {}
     for company, prices_list in price_data['prices_by_company'].items():
         for price in prices_list:
             price_lookup[price['contract_name']] = price
     
-    all_spreads_no_delta = []  # No delta filter
-    all_spreads_loose_delta = []  # Loose delta filter
-    all_spreads_strict_delta = []  # Strict delta filter
+    all_spreads = []
+    call_spreads_total = 0
+    put_spreads_total = 0
     
-    delta_stats = {
-        'deltas_seen': [],
-        'negative_deltas': 0,
-        'neutral_deltas': 0,  # -0.2 to +0.2
-        'positive_deltas': 0
-    }
-    
+    # Scan each company
     for company, company_options in options_data['options_by_company'].items():
-        current_stock_price = company_options['current_stock_price']
+        current_price = company_options['current_stock_price']
+        company_iv_data = iv_liquidity_data['enhanced_options'].get(company, {})
+        avg_iv = company_iv_data.get('avg_implied_volatility', 0.3)
         
-        print(f"\n🏢 {company} (${current_stock_price:.2f})...")
+        print(f"\n🏢 Scanning {company} (Price: ${current_price:.2f}, Avg IV: {avg_iv:.3f})...")
         
-        for exp_date, exp_data in company_options['expiration_dates'].items():
-            contracts = exp_data['contracts']
-            calls = [c for c in contracts if c['contract_type'] == 'CALL']
-            calls_above_price = [c for c in calls if c['strike_price'] > current_stock_price]
-            calls_above_price.sort(key=lambda x: x['strike_price'])
-            
-            for i in range(len(calls_above_price) - 1):
-                short_call = calls_above_price[i]
-                long_call = calls_above_price[i + 1]
-                
-                if long_call['strike_price'] - short_call['strike_price'] > 5:
-                    continue
-                
-                short_symbol = short_call['streamer_symbol']
-                long_symbol = long_call['streamer_symbol']
-                
-                if (short_symbol not in price_lookup or long_symbol not in price_lookup or
-                    short_symbol not in greek_lookup or long_symbol not in greek_lookup):
-                    continue
-                
-                short_price_data = price_lookup[short_symbol]
-                long_price_data = price_lookup[long_symbol]
-                short_greek_data = greek_lookup[short_symbol]
-                long_greek_data = greek_lookup[long_symbol]
-                
-                # Get data
-                short_iv = short_greek_data['implied_volatility']
-                long_iv = long_greek_data['implied_volatility']
-                avg_iv = (short_iv + long_iv) / 2
-                
-                days_to_exp = short_call['days_until_expires']
-                time_to_exp = days_to_exp / 365.0
-                
-                if time_to_exp <= 0:
-                    continue
-                
-                # Calculate market credit
-                short_bid = short_price_data['what_buyers_pay']
-                long_ask = long_price_data['what_sellers_want']
-                
-                if short_bid <= 0 or long_ask <= 0:
-                    continue
-                
-                market_credit = short_bid - long_ask
-                
-                if market_credit <= 0:
-                    continue
-                
-                # Black-Scholes probability
-                prob_profit_bs = bs_calc.probability_otm(
-                    current_stock_price, short_call['strike_price'], 
-                    time_to_exp, avg_iv, 'call'
-                ) * 100
-                
-                # Calculate metrics
-                strike_width = long_call['strike_price'] - short_call['strike_price']
-                max_risk = strike_width - market_credit
-                roi_percent = (market_credit / max_risk) * 100 if max_risk > 0 else 0
-                
-                # Calculate Greeks
-                short_greeks = bs_calc.calculate_greeks(
-                    current_stock_price, short_call['strike_price'], 
-                    time_to_exp, bs_calc.risk_free_rate, short_iv, 'call'
-                )
-                long_greeks = bs_calc.calculate_greeks(
-                    current_stock_price, long_call['strike_price'], 
-                    time_to_exp, bs_calc.risk_free_rate, long_iv, 'call'
-                )
-                
-                spread_delta = short_greeks['delta'] - long_greeks['delta']
-                spread_theta = short_greeks['theta'] - long_greeks['theta']
-                
-                # Track delta statistics
-                delta_stats['deltas_seen'].append(spread_delta)
-                if spread_delta < -0.1:
-                    delta_stats['negative_deltas'] += 1
-                elif -0.2 <= spread_delta <= 0.2:
-                    delta_stats['neutral_deltas'] += 1
-                else:
-                    delta_stats['positive_deltas'] += 1
-                
-                # Basic filters first
-                if roi_percent <= 10 or prob_profit_bs <= 66:
-                    continue
-                
-                spread = {
-                    'company': company,
-                    'short_strike': short_call['strike_price'],
-                    'long_strike': long_call['strike_price'],
-                    'days_to_expiration': days_to_exp,
-                    'credit_collected': market_credit,
-                    'max_risk': max_risk,
-                    'roi_percent': roi_percent,
-                    'probability_of_profit': prob_profit_bs,
-                    'current_stock_price': current_stock_price,
-                    'avg_implied_volatility': avg_iv,
-                    'spread_delta': spread_delta,
-                    'spread_theta': spread_theta,
-                    'explanation': f"Collect ${market_credit:.2f}, {prob_profit_bs:.1f}% PoP if {company} stays below ${short_call['strike_price']:.0f}",
-                    'delta_interpretation': 'Neutral' if abs(spread_delta) <= 0.2 else ('Bullish' if spread_delta > 0.2 else 'Bearish')
-                }
-                
-                # Add to no-delta list (already passed ROI/PoP filters)
-                all_spreads_no_delta.append(spread)
-                
-                # Add to loose delta list (delta between -0.5 and +0.5)
-                if -0.5 <= spread_delta <= 0.5:
-                    all_spreads_loose_delta.append(spread)
-                
-                # Add to strict delta list (delta between -0.2 and +0.2)
-                if -0.2 <= spread_delta <= 0.2:
-                    all_spreads_strict_delta.append(spread)
+        # Skip if IV too low
+        if avg_iv < 0.25:
+            print(f"   ⚠️ IV too low ({avg_iv:.3f}), skipping...")
+            continue
+        
+        liquid_contracts = company_iv_data.get('top_liquid_contracts', [])
+        
+        # Scan call credit spreads (bear call spreads)
+        call_spreads = scanner.scan_call_spreads(
+            liquid_contracts, current_price, company, price_lookup, avg_iv
+        )
+        call_spreads_total += len(call_spreads)
+        
+        # Scan put credit spreads (bull put spreads)  
+        put_spreads = scanner.scan_put_spreads(
+            liquid_contracts, current_price, company, price_lookup, avg_iv
+        )
+        put_spreads_total += len(put_spreads)
+        
+        all_spreads.extend(call_spreads)
+        all_spreads.extend(put_spreads)
+        
+        print(f"   📈 Bear Call Spreads: {len(call_spreads)}")
+        print(f"   📉 Bull Put Spreads: {len(put_spreads)}")
+        print(f"   🎯 Total for {company}: {len(call_spreads) + len(put_spreads)}")
     
-    # Sort all lists by probability
-    all_spreads_no_delta.sort(key=lambda x: x['probability_of_profit'], reverse=True)
-    all_spreads_loose_delta.sort(key=lambda x: x['probability_of_profit'], reverse=True)
-    all_spreads_strict_delta.sort(key=lambda x: x['probability_of_profit'], reverse=True)
+    # Sort by ROI * Probability score
+    for spread in all_spreads:
+        spread['combined_score'] = spread['roi_percent'] * (spread['probability_of_profit'] / 100)
     
-    print(f"\n📊 DELTA ANALYSIS RESULTS:")
-    print(f"   Deltas seen: min={min(delta_stats['deltas_seen']):.3f}, max={max(delta_stats['deltas_seen']):.3f}")
-    print(f"   Negative deltas (<-0.1): {delta_stats['negative_deltas']}")
-    print(f"   Neutral deltas (-0.2 to +0.2): {delta_stats['neutral_deltas']}")
-    print(f"   Positive deltas (>+0.2): {delta_stats['positive_deltas']}")
+    all_spreads.sort(key=lambda x: x['combined_score'], reverse=True)
     
-    print(f"\n🎯 FILTER COMPARISON (ROI>10%, PoP>66%):")
-    print(f"   ✅ NO Delta Filter: {len(all_spreads_no_delta)} opportunities")
-    print(f"   📊 LOOSE Delta Filter (±0.5): {len(all_spreads_loose_delta)} opportunities")
-    print(f"   🎯 STRICT Delta Filter (±0.2): {len(all_spreads_strict_delta)} opportunities")
+    print(f"\n💎 TOTAL CREDIT SPREADS FOUND: {len(all_spreads)}")
+    print(f"📈 Bear Call Spreads: {call_spreads_total}")
+    print(f"📉 Bull Put Spreads: {put_spreads_total}")
+    print("=" * 70)
     
-    # Show top 10 from each category
-    print(f"\n🏆 TOP 10 - NO DELTA FILTER:")
-    print("-" * 140)
-    for i, spread in enumerate(all_spreads_no_delta[:10]):
-        delta_color = "🟢" if abs(spread['spread_delta']) <= 0.2 else ("🟡" if abs(spread['spread_delta']) <= 0.5 else "🔴")
-        print(f"{i+1:2}. {spread['company']:4} | "
-              f"SELL ${spread['short_strike']:3.0f}C / BUY ${spread['long_strike']:3.0f}C | "
-              f"PoP: {spread['probability_of_profit']:5.1f}% | "
-              f"ROI: {spread['roi_percent']:5.1f}% | "
-              f"DTE: {spread['days_to_expiration']:2d} | "
-              f"Δ: {spread['spread_delta']:6.3f} {delta_color} | "
-              f"Credit: ${spread['credit_collected']:.2f}")
+    # Show top 15 - mixed calls and puts
+    print(f"\n🏆 TOP 15 CREDIT SPREADS (Both Types):")
+    print("-" * 120)
     
-    print(f"\n🎯 TOP 10 - WITH LOOSE DELTA FILTER (±0.5):")
-    print("-" * 140)
-    for i, spread in enumerate(all_spreads_loose_delta[:10]):
-        print(f"{i+1:2}. {spread['company']:4} | "
-              f"SELL ${spread['short_strike']:3.0f}C / BUY ${spread['long_strike']:3.0f}C | "
-              f"PoP: {spread['probability_of_profit']:5.1f}% | "
-              f"ROI: {spread['roi_percent']:5.1f}% | "
-              f"DTE: {spread['days_to_expiration']:2d} | "
-              f"Δ: {spread['spread_delta']:6.3f} | "
-              f"Credit: ${spread['credit_collected']:.2f}")
+    for i, spread in enumerate(all_spreads[:15]):
+        spread_icon = "📈" if spread['spread_type'] == 'BEAR_CALL' else "📉"
+        spread_name = "Bear Call" if spread['spread_type'] == 'BEAR_CALL' else "Bull Put"
+        
+        print(f"{i+1:2}. {spread_icon} {spread['company']:4} {spread_name:9} | "
+              f"${spread['short_strike']:.0f}/{spread['long_strike']:.0f} | "
+              f"Score: {spread['combined_score']:.1f} | "
+              f"PoP: {spread['probability_of_profit']:.1f}% | "
+              f"ROI: {spread['roi_percent']:.1f}% | "
+              f"Credit: ${spread['credit']:.2f} | "
+              f"DTE: {spread['days_to_expiration']}")
+        print(f"     📝 {spread['strategy_explanation']}")
     
-    if all_spreads_strict_delta:
-        print(f"\n🎯 TOP 10 - WITH STRICT DELTA FILTER (±0.2):")
-        print("-" * 140)
-        for i, spread in enumerate(all_spreads_strict_delta[:10]):
-            print(f"{i+1:2}. {spread['company']:4} | "
-                  f"SELL ${spread['short_strike']:3.0f}C / BUY ${spread['long_strike']:3.0f}C | "
-                  f"PoP: {spread['probability_of_profit']:5.1f}% | "
-                  f"ROI: {spread['roi_percent']:5.1f}% | "
-                  f"DTE: {spread['days_to_expiration']:2d} | "
-                  f"Δ: {spread['spread_delta']:6.3f} | "
-                  f"Credit: ${spread['credit_collected']:.2f}")
-    else:
-        print(f"\n❌ NO TRADES passed strict delta filter (±0.2)")
-    
-    # Save the no-delta version as the main result
+    # Save results
     result = {
-        'step': 5,
-        'filters_used': 'ROI > 10%, PoP > 66%, NO delta filter',
-        'total_opportunities': len(all_spreads_no_delta),
-        'delta_analysis': {
-            'no_delta_filter': len(all_spreads_no_delta),
-            'loose_delta_filter': len(all_spreads_loose_delta),
-            'strict_delta_filter': len(all_spreads_strict_delta)
-        },
-        'best_deals': all_spreads_no_delta[:25],
-        'timestamp': datetime.now().isoformat()
+        'step': 7,
+        'what_we_did': 'Complete Credit Spread Analysis - Both Calls and Puts',
+        'timestamp': datetime.now().isoformat(),
+        'total_spreads_found': len(all_spreads),
+        'bear_call_spreads': call_spreads_total,
+        'bull_put_spreads': put_spreads_total,
+        'all_spreads': all_spreads[:100],  # Top 100
+        'summary_stats': {
+            'avg_roi': np.mean([s['roi_percent'] for s in all_spreads]) if all_spreads else 0,
+            'avg_probability': np.mean([s['probability_of_profit'] for s in all_spreads]) if all_spreads else 0,
+            'avg_combined_score': np.mean([s['combined_score'] for s in all_spreads]) if all_spreads else 0
+        }
     }
     
-    filename = 'step5_delta_analysis.json'
+    filename = 'step7_complete_credit_spreads.json'
     with open(filename, 'w') as f:
         json.dump(result, f, indent=2)
     
-    print(f"\n✅ Saved analysis to: {filename}")
+    print(f"\n✅ Saved complete analysis to: {filename}")
+    
+    # Show strategy breakdown
+    if all_spreads:
+        best_call = next((s for s in all_spreads if s['spread_type'] == 'BEAR_CALL'), None)
+        best_put = next((s for s in all_spreads if s['spread_type'] == 'BULL_PUT'), None)
+        
+        print(f"\n💎 STRATEGY COMPARISON:")
+        if best_call:
+            print(f"   📈 Best Bear Call: {best_call['company']} ${best_call['short_strike']:.0f}/{best_call['long_strike']:.0f}")
+            print(f"      ROI: {best_call['roi_percent']:.1f}%, PoP: {best_call['probability_of_profit']:.1f}%")
+        
+        if best_put:
+            print(f"   📉 Best Bull Put: {best_put['company']} ${best_put['short_strike']:.0f}/{best_put['long_strike']:.0f}")
+            print(f"      ROI: {best_put['roi_percent']:.1f}%, PoP: {best_put['probability_of_profit']:.1f}%")
     
     return result
 
 if __name__ == "__main__":
-    find_deals_with_delta_analysis()
+    scan_all_credit_spreads()
 ```
 
 **Run:** `python3 find_tendies.py`
@@ -1056,25 +1377,28 @@ import os
 from datetime import datetime
 
 async def run_complete_analysis():
-    print("🤖 MASTER TRADING ROBOT - BLACK-SCHOLES EDITION")
+    print("🤖 MASTER TRADING ROBOT - COMPLETE CREDIT SPREAD SYSTEM")
     print("=" * 80)
-    print("🚀 Running complete Black-Scholes analysis in 5 steps...")
-    print("⏰ This will take about 5-7 minutes total")
-    print("🧮 Using sophisticated mathematical models for option pricing")
+    print("🚀 Running complete credit spread analysis in 7 steps...")
+    print("📈 Finding BOTH Bear Call and Bull Put Credit Spreads")
+    print("⏰ This will take about 8-10 minutes total")
+    print("🧮 Using Black-Scholes with real market data")
     print("=" * 80)
     
     steps = [
         ("stock_prices.py", "Getting current stock prices"),
-        ("options_chains.py", "Finding options contracts"), 
-        ("risk_analysis.py", "Analyzing risk with Greeks"),
-        ("market_prices.py", "Getting real-time market prices"),
-        ("find_tendies.py", "Black-Scholes credit spread analysis")
+        ("options_chains.py", "Finding all options contracts"), 
+        ("iv_data.py", "Collecting implied volatility data"),
+        ("market_prices.py", "Getting real-time bid/ask prices"),
+        ("risk_analysis.py", "Analyzing Greeks and risk metrics"),
+        ("iv_liquidity.py", "Advanced IV & liquidity analysis"),
+        ("find_tendies.py", "Elite credit spread scanner")
     ]
     
     start_time = datetime.now()
     
     for i, (script, description) in enumerate(steps, 1):
-        print(f"\n🎯 STEP {i}/5: {description}")
+        print(f"\n🎯 STEP {i}/7: {description}")
         print(f"🏃‍♂️ Running {script}...")
         
         try:
@@ -1089,9 +1413,10 @@ async def run_complete_analysis():
                 # Print some of the output so we can see progress
                 if result.stdout:
                     lines = result.stdout.strip().split('\n')
-                    # Show last few lines for progress indication
-                    for line in lines[-4:]:  # Show last 4 lines
-                        if line.strip():  # Only non-empty lines
+                    # Show last few meaningful lines
+                    meaningful_lines = [line for line in lines[-6:] if line.strip() and not line.startswith('   ')]
+                    for line in meaningful_lines[-3:]:  # Show last 3 meaningful lines
+                        if '✅' in line or '💎' in line or '🏆' in line or 'Found' in line:
                             print(f"      {line}")
             else:
                 print(f"   ❌ Step {i} failed!")
@@ -1116,67 +1441,74 @@ async def run_complete_analysis():
     print(f"📁 Files created:")
     print(f"   📊 step1_stock_prices.json")
     print(f"   🎰 step2_options_contracts.json") 
-    print(f"   🧮 step3_risk_analysis.json")
+    print(f"   📈 step3_iv_data.json")
     print(f"   💰 step4_market_prices.json")
-    print(f"   🏆 step5_delta_analysis.json (Black-Scholes results)")
+    print(f"   🧮 step5_risk_analysis.json")
+    print(f"   📊 step6_advanced_iv_liquidity.json")
+    print(f"   🏆 step7_elite_spreads.json")
     
-    # Show final summary from the Black-Scholes analysis
+    # Show final summary from the complete credit spread analysis
     try:
         import json
-        with open('step5_delta_analysis.json', 'r') as f:
+        with open('step7_elite_spreads.json', 'r') as f:
             final_data = json.load(f)
         
-        print(f"\n🏆 BLACK-SCHOLES ANALYSIS RESULTS:")
-        print(f"   🧮 Model used: Black-Scholes with real market data")
-        print(f"   📊 Filters applied: ROI > 10%, Probability > 66%")
-        print(f"   💡 Found {final_data['total_opportunities']} trading opportunities!")
+        print(f"\n🏆 COMPLETE CREDIT SPREAD RESULTS:")
+        print(f"   🧮 Model: Black-Scholes with real market data")
+        print(f"   📊 Total opportunities: {final_data['total_spreads_found']}")
+        print(f"   📈 Bear Call Spreads: {final_data['bear_call_spreads']}")
+        print(f"   📉 Bull Put Spreads: {final_data['bull_put_spreads']}")
         
-        if final_data.get('best_deals') and len(final_data['best_deals']) > 0:
-            best_deal = final_data['best_deals'][0]
-            print(f"   🥇 BEST DEAL: {best_deal['company']} Bear Call Spread")
-            print(f"      📈 Probability of Profit: {best_deal['probability_of_profit']:.1f}%")
-            print(f"      💰 ROI: {best_deal['roi_percent']:.1f}%")
-            print(f"      💵 Credit: ${best_deal['credit_collected']:.2f}")
-            print(f"      🎯 Delta: {best_deal['spread_delta']:.3f} (Market Neutral)")
-            print(f"      📝 {best_deal['explanation']}")
+        if final_data.get('elite_spreads') and len(final_data['elite_spreads']) > 0:
+            best_spread = final_data['elite_spreads'][0]
             
-            # Show top 3 companies
-            companies_shown = set()
-            top_companies = []
-            for deal in final_data['best_deals'][:10]:
-                if deal['company'] not in companies_shown:
-                    companies_shown.add(deal['company'])
-                    top_companies.append(deal)
-                if len(top_companies) >= 3:
-                    break
+            print(f"\n   🥇 BEST ELITE SPREAD:")
+            print(f"      📈 {best_spread['company']} Bear Call ${best_spread['short_strike']:.0f}/{best_spread['long_strike']:.0f}")
+            print(f"      💰 Credit: ${best_spread['credit']:.2f}")
+            print(f"      📊 Probability: {best_spread['probability_of_profit']:.1f}%")
+            print(f"      💎 ROI: {best_spread['roi_percent']:.1f}%")
+            print(f"      🏆 Master Score: {best_spread['master_score']:.1f}/100")
+            print(f"      📅 Days to expiration: {best_spread['days_to_expiration']}")
             
-            if len(top_companies) > 1:
-                print(f"\n   🏢 TOP COMPANIES FOR CREDIT SPREADS:")
-                for i, deal in enumerate(top_companies, 1):
-                    print(f"      {i}. {deal['company']}: {deal['probability_of_profit']:.1f}% PoP, {deal['roi_percent']:.1f}% ROI")
+            # Show top 3 elite spreads
+            top_spreads = final_data['elite_spreads'][:3]
+            print(f"\n   🏆 TOP 3 ELITE SPREADS:")
+            for i, spread in enumerate(top_spreads, 1):
+                print(f"      {i}. {spread['company']} ${spread['short_strike']:.0f}/{spread['long_strike']:.0f}: Score {spread['master_score']:.1f}, {spread['probability_of_profit']:.1f}% PoP, {spread['roi_percent']:.1f}% ROI")
         
-        # Show delta analysis summary
-        if 'delta_analysis' in final_data:
-            delta_info = final_data['delta_analysis']
-            print(f"\n   📊 DELTA ANALYSIS:")
-            print(f"      🎯 All {delta_info['no_delta_filter']} trades are market-neutral")
-            print(f"      ✅ No delta filtering needed - spreads naturally neutral")
+        # Show summary stats
+        if 'summary_stats' in final_data:
+            stats = final_data['summary_stats']
+            print(f"\n   📊 SUMMARY STATISTICS:")
+            print(f"      💰 Average ROI: {stats['avg_roi']:.1f}%")
+            print(f"      📈 Average Probability: {stats['avg_probability']:.1f}%")
+            print(f"      🏆 Average Master Score: {stats['avg_master_score']:.1f}/100")
+            print(f"      🔥 Average IV: {stats['avg_iv']:.3f}")
     
     except Exception as e:
         print(f"   ⚠️ Could not load final summary: {e}")
-        print(f"   📄 Check step5_delta_analysis.json for detailed results")
+        print(f"   📄 Check step7_elite_spreads.json for detailed results")
     
-    print(f"\n🎯 TRADING SYSTEM SUMMARY:")
+    print(f"\n🎯 COMPLETE TRADING SYSTEM SUMMARY:")
     print(f"   🔬 Mathematical Model: Black-Scholes option pricing")
     print(f"   📊 Data Sources: Real-time tastytrade market data")
-    print(f"   🎲 Strategy: Bear call credit spreads")
-    print(f"   🛡️ Risk Management: Greeks analysis with delta neutrality")
-    print(f"   💡 Probability Calculations: Log-normal distribution assumptions")
+    print(f"   📈 Strategies: Bear call spreads (profit when stock doesn't rise)")
+    print(f"   🏆 Analysis: 5 legendary trader frameworks combined")
+    print(f"   🛡️ Risk Management: Greeks analysis with full liquidity metrics")
+    print(f"   💡 Probability: Log-normal distribution with real IV")
+    print(f"   🎯 Filters: Master Score > 50, Probability > 65%, ROI > 10%")
+    
+    # Show which files to examine
+    print(f"\n📂 NEXT STEPS:")
+    print(f"   1. 🔍 Examine: step7_elite_spreads.json")
+    print(f"   2. 📈 Look for: High master score + probability spreads")
+    print(f"   3. 🛡️ Check: Liquidity and Greeks data")
+    print(f"   4. 🏆 Focus on: Spreads with multiple trader signals")
     
     return True
 
 if __name__ == "__main__":
-    # Run the complete Black-Scholes analysis system
+    # Run the complete analysis system
     asyncio.run(run_complete_analysis())
 ```
 
