@@ -584,7 +584,7 @@ if __name__ == "__main__":
 
 ---
 
-## 📁 Step 5: Check How Risky Each Trade Is (Greeks)
+## 📁 Step 5: Get the Greeks Data 
 
 **Create:** `touch risk_analysis.py`
 
