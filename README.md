@@ -142,7 +142,8 @@ else:
 
 ## 📁 Step 1: Get Stock Prices
 
-### Data: Bid, ask, mid-price, and timestamp for nine stocks.  Why useful: Gives a fresh “true price” for each underlying.
+### Data: Bid, ask, mid-price, and timestamp for nine stocks.  
+### Why useful: Gives a fresh “true price” for each underlying.
 
 **Create:** `touch stock_prices.py`
 
