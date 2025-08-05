@@ -142,6 +142,8 @@ else:
 
 ## 📁 Step 1: Get Stock Prices
 
+### Data: Bid, ask, mid-price, and timestamp for nine stocks.  Why useful: Gives a fresh “true price” for each underlying.
+
 **Create:** `touch stock_prices.py`
 
 **Query:** `open -e stock_prices.py`
@@ -234,6 +236,8 @@ if __name__ == "__main__":
 
 
 ## 📁 Step 2: Get All Options Contracts
+
+### Data: Every call and put that expires within 45 days for each stock—strike price, expiry date, days left, and ticker symbol.  Why useful: It lays out all near-term bets you can place.
 
 **Create:** `touch options_chains.py`
 
@@ -359,6 +363,8 @@ if __name__ == "__main__":
 
 ## 📁 Step 3: Get IV Data
 
+### Data: Implied volatility (IV) value for every option contract we found.  Why: IV shows how much the market thinks the stock might swing. Bigger IV = juicier option prices and more risk.
+
 **Create:** `touch iv_data.py`
 
 **Query:**  `open -e iv_data.py`
@@ -425,6 +431,8 @@ if __name__ == "__main__":
 ---
 
 ## 📁 Step 4: Get Buy/Sell Prices (Bid/Ask)
+
+### Data: bid, ask, midpoint, size, and spread for every option contract.  Why useful: reveals real trading price and liquidity.
 
 **Create:** `touch market_prices.py`
 
@@ -586,6 +594,8 @@ if __name__ == "__main__":
 
 ## 📁 Step 5: Get the Greeks Data 
 
+### Data: Delta, theta, gamma, vega, IV, and current option price for every contract.  Why useful: Greeks show how price, time, and volatility will hit your P/L.
+
 **Create:** `touch risk_analysis.py`
 
 **Query:** `open -e risk_analysis.py`
@@ -718,6 +728,8 @@ if __name__ == "__main__":
 
 
 ## 📁 Step 6: Find High IV and Liquidity
+
+### Data: each option’s open interest, trading volume, bid-ask spread, and existing IV.  Why useful: These numbers show how busy the contract is and how cheap it is to trade.
 
 **Create:** `touch iv_liquidity.py`
 
@@ -1048,7 +1060,7 @@ if __name__ == "__main__":
 
 ## 📁 Step 7: Find the Best Deals
 
-
+### Data: liquid call + put pairs with bid/ask, IV, open interest, strike width, days to expire.  Why useful: calculates credit, max loss, ROI, and probability to profit.
 
 **Create:** `touch find_tendies.py`
 
