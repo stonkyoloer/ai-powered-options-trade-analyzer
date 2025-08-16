@@ -581,11 +581,15 @@ if __name__ == "__main__":
     print("💾 Saved: portfolio_universe.json")
 ```
 
-# Prompt Data Check 1:
+**Run:** `python3 basket.py`
+
+# 3️⃣ Prompt:
 
 ```bash
-You are my Portfolio News & Risk Sentinel. Timezone: America/Los_Angeles. 
-Use absolute dates in YYYY-MM-DD. Be concise, structured. 
+You are my Portfolio News & Risk Sentinel.
+Timezone: America/New_York. 
+Use absolute dates in YYYY-MM-DD.
+Be concise, structured. 
 When you fetch news or events, include links and source names. 
 
 INPUT (paste below EXACTLY as produced):
@@ -616,7 +620,7 @@ CONSTRAINTS
 - If info is unavailable, write “n/a” rather than guessing.
 ```
 
-**Run:** `python3 basket.py`
+
 
 
 # 3️⃣ Build Options Screener
@@ -2018,99 +2022,50 @@ if __name__ == "__main__":
 ---
 
 
-# 6️⃣ Prompt for News and Event
+# 6️⃣ Prompt
 
-## 📋 Quick Start — Insert Your Trades Here
-
-### 🏆 Trades to Analyze
 ```text
-1. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
-2. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
-3. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
-4. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
-5. [TICKER] | SELL $[STRIKE]C / BUY $[STRIKE]C | PoP: [%] | ROI: [%] | DTE: [#] | Δ: [#] | Credit: $[#]
----
+You are my Credit-Spread Catalyst & Sanity Checker. Timezone: America/Los_Angeles.
+Use absolute dates. When you fetch news/events, include links and sources.
 
-CORE MISSION
-FIND TOMORROW'S INTEL TODAY – Search for breaking news and market‑moving information in this exact priority order:
+INPUTS (paste below):
+=== step7_complete_credit_spreads.json ===
+{PASTE_JSON_HERE}
+=== optional: step4_liquidity.json ===
+{PASTE_JSON_HERE_OR_SKIP}
+=== end ===
 
-LAST 2‑4 HOURS: Breaking news, earnings announcements, regulatory decisions  
-LAST 24 HOURS: Company guidance, analyst upgrades/downgrades, sector developments  
-LAST 72 HOURS MAXIMUM: Major contract announcements, geopolitical events, economic data  
+GOALS
+For the top 20 spreads by combined_score:
+  • Validate “sane to trade today?” across catalysts, liquidity, and calendar risk.
+  • Surface reasons to Delay/Avoid (not advice—just risk signals).
 
-────────────────────────────────────────────────────────────────────────
+CHECKLIST (per spread)
+1) Calendar gates:
+   - Earnings date between today and the spread’s expiration? Mark “Earnings-Inside-Trade”.
+   - Ex-div date inside the trade window? Note potential assignment/price gap risk.
+   - Sector macro events within 5 trading days (e.g., CPI/FOMC for Financials/Tech beta; OPEC/EIA for Energy; FDA calendar for biotech tickers). 
+2) Fresh news (last 72h):
+   - Pull 1–2 headlines that could move the underlying. Link them.
+3) Liquidity sanity:
+   - Confirm both legs have adequate OI (≥500 minimum; ≥1,000 preferred) and spreads not wider than 10¢ (tier-2) or 5¢ (tier-1 names). If step4_liquidity.json present, use Δ30 proxies; else infer from available fields.
+4) Price sanity:
+   - Credit ≤ width, ROI = credit/(width-credit). Recompute if needed; flag if odd (e.g., credit > width).
+5) Risk note:
+   - Summarize exposure (bear call = short upside; bull put = short downside) and distance-from-money (%). 
+   - Note if IV regime seems low (<0.25) for premium selling or unusually high (>0.60) for gap risk.
 
-LEGENDARY TRADER FRAMEWORKS
-🧠 1. STEVEN A. COHEN – Information Edge Master  
-• Focus: Fundamental catalyst identification, information asymmetry exploitation  
-• Key Qs: What non‑public insights give edge? What catalysts are market missing?  
-• Risk: Size by conviction, exit fast when thesis breaks  
-• Validate: Does position use superior sector/company knowledge?  
+OUTPUT FORMAT
+- A ranked table with: 
+  Ticker | Type (BearCall/BullPut) | Strikes | DTE | Credit | ROI% | Dist-OTM% | OI(min) | Spread sanity | Key Event(s) | Fresh News | Decision (Do / Delay / Avoid) + 1-line reason
+- Then a short summary:
+  • #Passing vs #Flagged 
+  • Top 3 “Do” candidates with the clearest catalyst path (quiet calendar, sufficient OI, tight spreads)
+  • Top 3 risk reasons observed (e.g., earnings inside window, macro landmines, thin OI)
 
-🐢 2. RICHARD DENNIS – Systematic Turtle Rules  
-• Focus: Trend‑following, mechanical entries/exits  
-• Key Qs: Does setup follow rules? Is risk defined?  
-• Risk: 2 % max per trade, rule‑based exits  
-• Validate: Can this be replicated without emotion?  
-
-⏰ 3. LARRY R. WILLIAMS – Market Timing & Volatility  
-• Focus: Seasonality, IV analysis, short‑term setups  
-• Key Qs: IV rank OK for premium selling? Seasonals supportive?  
-• Risk: Time‑based exits, volatility awareness  
-• Validate: Does timing align with volatility cycles?  
-
-⚡ 4. PAUL ROTTER – Precision Scalping & Flow  
-• Focus: Order‑flow, market microstructure, fast execution  
-• Key Qs: What does flow reveal? Are market makers positioned?  
-• Risk: Tight stops, flow‑based sizing  
-• Validate: Does trade align with observable flow?  
-
-📈 5. TAKASHI KOTEGAWA – News‑Driven Momentum  
-• Focus: News catalysts, technical momentum  
-• Key Qs: What news drives price? Is momentum sustainable?  
-• Risk: Size vs. news strength, confirm momentum  
-• Validate: Does trade match news flow & momentum?  
-
-────────────────────────────────────────────────────────────────────────
-
-🔍 RESEARCH PROTOCOL (EXECUTE IN ORDER)
-PHASE 1 (0‑4 HRS): "breaking news [TICKER] today", "SEC filing [TICKER] latest", …  
-PHASE 2 (4‑24 HRS): "earnings call transcript [TICKER]", "sector news [SECTOR] today", …  
-PHASE 3 (24‑72 HRS): "institutional buying [TICKER]", "economic data impact [SECTOR]", …
-
-────────────────────────────────────────────────────────────────────────
-
-📊 POSITION ANALYSIS FRAMEWORK
-TECHNICAL: Strike distance, DTE for theta, Δ risk, IV environment  
-FUNDAMENTAL: Catalyst calendar, sector trends, company guidance, macro backdrop  
-TRADER LENS:  
-• Cohen – info edge • Dennis – systematic • Williams – timing • Rotter – flow • Kotegawa – momentum  
-
-────────────────────────────────────────────────────────────────────────
-
-📋 OUTPUT TABLE COLUMNS
-Position | Validation Status | Trader Consensus | Plain Thesis | Key News/Events | Risk Assessment | Time‑Sensitive Intelligence
-
-────────────────────────────────────────────────────────────────────────
-
-⚠️ CRITICAL SUCCESS FACTORS
-• **Information Recency:** newest first, timestamp everything  
-• **Validation Rigor:** 4 / 5 rejects ⇒ invalidate; 3+ agrees ⇒ validate; split ⇒ neutral  
-• **Risk Priority:** earnings/FDA, key levels, DTE vs. catalysts, IV regime, liquidity  
-
-────────────────────────────────────────────────────────────────────────
-
-✅ EXECUTION CHECKLIST
-☐ Searched last 4 hrs news ☐ No earnings inside DTE ☐ Applied 5 frameworks ☐ 2‑3 key risks noted  
-☐ Action items dated ☐ Positions ranked by validation strength ☐ Time‑sensitive intel included  
-
-────────────────────────────────────────────────────────────────────────
-
-🎯 FINAL DELIVERABLES
-• Newest intelligence (≤ 4 hrs)  
-• Clear validation decision per trade  
-• Specific risk mitigations  
-• Time‑critical action items & dates  
-• Trader‑consensus logic  
-• Bottom‑line execution priority  
+RULES
+- Information only; no trading advice. 
+- Always include links for news/events you cite.
+- If any required field is missing, mark “n/a” and continue; do not fabricate.
+``` 
 
