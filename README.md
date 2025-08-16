@@ -260,7 +260,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 spot.py`
 
-## 📂 Step 5: Set DTE
+## 📂 Step 5: Filter for DTE, ATM IV, IVR(heuristic)
 
 **Create:** `touch atm_iv.py`
 
@@ -358,10 +358,230 @@ if __name__ == "__main__":
 
 **Run:** `python3 atm_iv.py`
 
+## 📂 Filter for Lquidity
 
+**Create:** `touch liquidity.py`
+**Query:** `open -e liquidity.py`
 
+```bash
+import asyncio, json, statistics
+from datetime import datetime, timezone
+from tastytrade import Session, DXLinkStreamer
+from tastytrade.dxfeed import Quote, Summary, Greeks
+from tastytrade.instruments import get_option_chain
+from config import USERNAME, PASSWORD
 
+SAMPLE_SEC = 15.0
+INSIDE_RATIO_MIN = 0.70
+NBBO_AGE_MS_MAX  = 1500
+TPM_MIN = 20
 
+T1_ABS, T1_REL, T1_OI = 0.05, 0.10, 20000
+T2_ABS, T2_REL, T2_OI = 0.10, 0.20, 1000
+
+def med(a): return statistics.median(a) if a else 0.0
+def now(): return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+def classify(spread_med, mid_med, oi_avg):
+    if spread_med<=T1_ABS and mid_med>0 and (spread_med/mid_med)<=T1_REL and oi_avg>=T1_OI: return "T1"
+    if spread_med<=T2_ABS and mid_med>0 and (spread_med/mid_med)<=T2_REL and oi_avg>=T2_OI: return "T2"
+    return "T3"
+
+def allowed(tier, mid):
+    if tier=="T1": return min(T1_ABS, T1_REL*max(mid,1e-9))
+    if tier=="T2": return min(T2_ABS, T2_REL*max(mid,1e-9))
+    return 0.0
+
+def nearest_delta(target_sign, target_abs, greeks, opt_meta):
+    best, diff_best = None, 1e9
+    for sym, g in greeks.items():
+        d = float(g.get("delta") or 0)
+        typ = opt_meta[sym]["type"]
+        if target_sign>0 and typ!="C": continue
+        if target_sign<0 and typ!="P": continue
+        diff = abs(abs(d)-target_abs)
+        if diff < diff_best: best, diff_best = sym, diff
+    return best
+
+async def analyze_one(sess, s, tkr, spot, exp_iso):
+    # load chain & filter expiry
+    chain = get_option_chain(sess, tkr)
+    exp = None
+    for d in chain.keys():
+        if d.isoformat()==exp_iso: exp = d; break
+    if not exp: return {"ticker":tkr,"status":"no_expiry"}
+    opts = chain[exp]
+    symbols = [o.streamer_symbol for o in opts]
+    meta = {o.streamer_symbol: {"strike": float(o.strike_price), "type": o.option_type.value} for o in opts}
+
+    greeks, summary, quotes = {}, {}, {}
+    await s.subscribe(Greeks, symbols); await s.subscribe(Summary, symbols); await s.subscribe(Quote, symbols)
+    start = asyncio.get_event_loop().time()
+    while (asyncio.get_event_loop().time()-start) < SAMPLE_SEC:
+        try:
+            g = await asyncio.wait_for(s.get_event(Greeks), timeout=0.5)
+            if g and g.event_symbol in symbols:
+                greeks[g.event_symbol] = {"delta": float(g.delta or 0), "iv": float(g.volatility or 0)}
+        except asyncio.TimeoutError:
+            pass
+        try:
+            q = await asyncio.wait_for(s.get_event(Quote), timeout=0.5)
+            if q and q.event_symbol in symbols:
+                bid, ask = float(q.bid_price or 0), float(q.ask_price or 0)
+                if bid>0 and ask>0 and ask>=bid:
+                    arr = quotes.setdefault(q.event_symbol, [])
+                    arr.append((bid,ask))
+        except asyncio.TimeoutError:
+            pass
+        try:
+            sm = await asyncio.wait_for(s.get_event(Summary), timeout=0.5)
+            if sm and sm.event_symbol in symbols:
+                summary[sm.event_symbol] = {"oi": int(sm.open_interest or 0)}
+        except asyncio.TimeoutError:
+            pass
+    await s.unsubscribe(Greeks, symbols); await s.unsubscribe(Summary, symbols); await s.unsubscribe(Quote, symbols)
+
+    call30 = nearest_delta(+1, 0.30, greeks, meta)
+    put30  = nearest_delta(-1, 0.30, greeks, meta)
+    if not call30 or not put30:
+        return {"ticker":tkr,"status":"no_delta30"}
+
+    def stats(sym):
+        pts = quotes.get(sym, [])
+        if not pts: return None
+        spreads = [a-b for (b,a) in pts if a>=b>0]
+        mids    = [(a+b)/2 for (b,a) in pts if a>=b>0]
+        if not spreads or not mids: return None
+        spread_med, mid_med = med(spreads), med(mids)
+        allowed_tmp = min(T2_ABS, T2_REL*max(mid_med,1e-9))
+        inside_ratio = sum(1 for s in spreads if s<=allowed_tmp)/max(len(spreads),1)
+        ticks_pm = 60*len(pts)/max(SAMPLE_SEC,1)
+        nbbo_age_ms = 1000*(SAMPLE_SEC/max(len(pts),1))
+        return dict(spread_med=spread_med, mid_med=mid_med, inside_ratio=inside_ratio, ticks_pm=ticks_pm, nbbo_age_ms=nbbo_age_ms)
+
+    cs, ps = stats(call30), stats(put30)
+    if not cs or not ps:
+        return {"ticker":tkr,"status":"insufficient_quotes"}
+
+    spread_med_30 = max(cs["spread_med"], ps["spread_med"])
+    mid_med_30    = med([cs["mid_med"], ps["mid_med"]])
+    inside_ratio  = (cs["inside_ratio"] + ps["inside_ratio"])/2
+    ticks_pm      = (cs["ticks_pm"] + ps["ticks_pm"])/2
+    nbbo_age_ms   = med([cs["nbbo_age_ms"], ps["nbbo_age_ms"]])
+    oi_min        = min(summary.get(call30,{}).get("oi",0), summary.get(put30,{}).get("oi",0))
+    tier          = classify(spread_med_30, mid_med_30, (summary.get(call30,{}).get("oi",0)+summary.get(put30,{}).get("oi",0))/2)
+    spread_ok     = spread_med_30 <= allowed(tier, mid_med_30)
+    oi_ok         = oi_min >= (T1_OI if tier=="T1" else T2_OI)
+
+    gates = {
+        "inside_ratio_ok": inside_ratio >= INSIDE_RATIO_MIN,
+        "nbbo_fresh_ok": nbbo_age_ms <= NBBO_AGE_MS_MAX,
+        "ticks_ok": ticks_pm >= TPM_MIN,
+        "spread_ok": spread_ok,
+        "oi_ok": oi_ok
+    }
+    passed = all(gates.values())
+
+    return {
+        "ticker": tkr, "status": "ok" if passed else "failed_gates",
+        "tier": tier, "metrics": {
+            "spread_med_Δ30": round(spread_med_30,4),
+            "mid_med_Δ30": round(mid_med_30,4),
+            "inside_threshold_ratio_Δ30": round(inside_ratio,3),
+            "ticks_per_min": round(ticks_pm,2),
+            "nbbo_age_ms_med": round(nbbo_age_ms,0),
+            "oi_min_Δ30": int(oi_min)
+        },
+        "failure_reasons": [k for k,v in gates.items() if not v]
+    }
+
+async def main():
+    with open("step3_atm_iv.json") as f: base = {r["ticker"]: r for r in json.load(f) if r["status"]=="ok"}
+    sess = Session(USERNAME, PASSWORD)
+    results = {}
+    async with DXLinkStreamer(sess) as s:
+        for tkr, r in base.items():
+            res = await analyze_one(sess, s, tkr, r["spot"], r["target_expiry"])
+            res.update({"sector": None, "spot": r["spot"], "target_expiry": r["target_expiry"], "dte": r["dte"], "atm_iv": r["atm_iv"], "ivr": r["ivr"]})
+            results[tkr] = res
+    with open("step4_liquidity.json","w") as f: json.dump(results, f, indent=2)
+    ok = sum(1 for x in results.values() if x["status"]=="ok" and x.get("ivr",0)>=30)
+    print("✅ liquid Δ30 names (ivr≥30):", ok, "/", len(results))
+
+if __name__ == "__main__":
+    asyncio.run(main())
+```
+**Run:** `python3 liquidity.py`
+
+## 📂 Build Trading Basket 
+
+**Create:** `touch basket.py`
+**Query:** `open -e basket.py`
+
+```bash
+import json, math
+from sectors import SECTORS
+# weights (same idea as before)
+W_IVR, W_SPREAD, W_DEPTH, W_ABSIV = 0.40, 0.25, 0.25, 0.10
+
+def score(ivr, spread_med, oi_min, abs_iv):
+    spread_score = max(0.0, 1.0 - min(spread_med, 0.30)/0.30)
+    depth_score  = min((oi_min or 0)/20000.0, 1.0)
+    absiv_score  = min((abs_iv or 0)/1.00, 1.0)
+    return (W_IVR*(ivr/100.0) + W_SPREAD*spread_score + W_DEPTH*depth_score + W_ABSIV*absiv_score)*100.0
+
+if __name__ == "__main__":
+    with open("universe_raw.json") as f: U = json.load(f)
+    with open("step4_liquidity.json") as f: LQ = json.load(f)
+    with open("step3_atm_iv.json") as f: IVS = {r["ticker"]: r for r in json.load(f)}
+
+    # map sector -> tickers
+    sector_map = {}
+    for r in U:
+        if r["status"]!="ok": continue
+        sector_map.setdefault(r["sector"], []).append(r["ticker"])
+
+    portfolio = []
+    for sector, meta in SECTORS.items():
+        tickers = sector_map.get(sector, [])
+        cands = []
+        for t in tickers:
+            liq = LQ.get(t)
+            ivr = IVS.get(t,{}).get("ivr",0)
+            atm_iv = IVS.get(t,{}).get("atm_iv",0)
+            if not liq or liq["status"]!="ok" or ivr<30: continue
+            m = liq["metrics"]
+            s = round(score(ivr, m["spread_med_Δ30"], m["oi_min_Δ30"], atm_iv), 1)
+            cands.append({"sector":sector,"ticker":t,"tier":liq.get("tier"),"ivr":ivr,"atm_iv":atm_iv,"score":s,"metrics":m})
+        if cands:
+            best = max(cands, key=lambda x:x["score"])
+            best["status"]="ok"; best["reason_codes"]=["IVR≥30","Δ30_spread_ok","OI_ok"]
+            portfolio.append(best)
+        else:
+            portfolio.append({"sector":sector,"ticker":f"NO PICK ({sector})","status":"no_qualifying_ticker"})
+
+    out = {
+        "scan_id": IVS[next(iter(IVS))]["target_expiry"] if IVS else "",
+        "portfolio": portfolio,
+        "qualified_tickers": [p["ticker"] for p in portfolio if p["status"]=="ok"],
+        "universe_quality": {
+            "sectors_qualified": sum(1 for p in portfolio if p["status"]=="ok"),
+            "sectors_total": len(SECTORS)
+        }
+    }
+    with open("portfolio_universe.json","w") as f: json.dump(out, f, indent=2)
+
+    print(f"{'Sector':<22} {'Ticker':<8} {'Score':>6} {'Tier':>4} {'IVR':>6} {'SpreadΔ30':>10} {'OIminΔ30':>10} {'Status':>10}")
+    for p in portfolio:
+        if p["status"]=="ok":
+            m=p["metrics"]
+            print(f"{p['sector']:<22} {p['ticker']:<8} {p['score']:>6.1f} {p['tier']:>4} {p['ivr']:>6.1f} {m['spread_med_Δ30']:>10.3f} {m['oi_min_Δ30']:>10} {'OK':>10}")
+        else:
+            print(f"{p['sector']:<22} {p['ticker']:<8} {'-':>6} {'-':>4} {'-':>6} {'-':>10} {'-':>10} {p['status']:>10}")
+    print("💾 Saved: portfolio_universe.json")
+```
+
+**Run:** `python3 basket.py`
 
 
 # 3️⃣ Build Options Screener
