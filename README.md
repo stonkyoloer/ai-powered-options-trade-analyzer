@@ -79,75 +79,187 @@ else:
 
 # 2️⃣ Build Ticker Screener
 
-## Step 1: Get Options Chain Data
+## 📂 Step 1: Set Up Login
+**Create:** `config.py`
+**Query:** `open -e config.py`
 
-**Create:** `touch ticker_data.py`
-
-**Query:** `open -e ticker_data.py`
-
+```bash
+# config.py
+USERNAME = "YOUR_TASTYTRADE_USERNAME"
+PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 ```
-# step2_test_single_ticker.py
-"""
-Step 2: Test getting option chain for ONE ticker (AAPL)
-"""
+**Run:** `python 3 config.py`
 
+## 📂 Step 2: Create Sectors
+
+**Create:** `sectors.py`
+**Query:** `open -e sectors.py`
+
+```bash
+# sectors.py
+SECTORS = {
+    "Information Technology": {
+        "etf": "XLK",
+        "description": "growth/innovation beta",
+        "tickers": [
+            "NVDA","AAPL","MSFT","AVGO","ADBE","CRM","ORCL","AMD","INTC",
+            "CSCO","QCOM","TXN","AMAT","LRCX","MU","KLAC","SNPS","CDNS"
+        ],
+    },
+    "Communication Services": {
+        "etf": "XLC",
+        "description": "ads, platforms, media",
+        "tickers": [
+            "META","GOOGL","GOOG","NFLX","DIS","CMCSA","T","VZ","TMUS",
+            "CHTR","EA","TTWO","MTCH","ROKU","SNAP","PINS"  # (TWTR removed)
+        ],
+    },
+    "Consumer Discretionary": {
+        "etf": "XLY",
+        "description": "cyclical demand, sentiment",
+        "tickers": [
+            "AMZN","TSLA","HD","MCD","NKE","SBUX","LOW","TJX","BKNG",
+            "CMG","TGT","ROST","AZO","ORLY","DHI","LEN","GM","F"
+        ],
+    },
+    "Consumer Staples": {
+        "etf": "XLP",
+        "description": "defensive cashflows, low vol",
+        "tickers": [
+            "WMT","PG","KO","PEP","COST","MDLZ","MO","PM","CL","GIS",
+            "ADM","KMB","KHC","STZ","MNST","KDP","SYY","HSY"
+        ],
+    },
+    "Health Care": {
+        "etf": "XLV",
+        "description": "defensive + policy/innovation mix",
+        "tickers": [
+            "UNH","JNJ","LLY","ABBV","PFE","MRK","TMO","ABT","DHR",
+            "CVS","AMGN","MDT","BMY","GILD","ISRG","VRTX","REGN","CI"
+        ],
+    },
+    "Financials": {
+        "etf": "XLF",
+        "description": "rate curve/credit sensitivity",
+        "tickers": [
+            "BRK.B","JPM","BAC","WFC","GS","MS","SCHW","BLK","C",
+            "AXP","USB","PNC","TFC","COF","MET","PRU","AIG","SPGI"
+        ],
+    },
+    "Industrials": {
+        "etf": "XLI",
+        "description": "capex, global trade, PMIs",
+        "tickers": [
+            "CAT","BA","UNP","HON","UPS","RTX","DE","LMT","GE",
+            "MMM","CSX","NSC","WM","EMR","FDX","ETN","ITW","PH"
+        ],
+    },
+    "Energy": {
+        "etf": "XLE",
+        "description": "commodity/inflation shock hedge",
+        "tickers": [
+            "XOM","CVX","COP","SLB","EOG","MPC","PSX","VLO",
+            "OXY","DVN","HES","FANG","HAL","BKR","KMI","WMB","CTRA"  # PXD removed
+        ],
+    },
+    "Utilities": {
+        "etf": "XLU",
+        "description": "bond-proxy, duration sensitivity",
+        "tickers": [
+            "NEE","SO","DUK","SRE","AEP","D","PCG","EXC","XEL",
+            "ED","WEC","ES","DTE","AWK","PPL","AEE","CMS","CNP"
+        ],
+    },
+}
+
+SYMBOL_ALIASES = { "BRK.B": ["BRK.B","BRK-B","BRK/B"] }
+def alias_candidates(sym: str): return [sym] + SYMBOL_ALIASES.get(sym, [])
+```
+
+
+**Run:** `python3 sectors.py`
+
+---
+
+## 📂 Step 3: Verify Ticker list 
+
+
+**Create:** `touch universe.py`
+**Query:** `open -e universe.py`
+
+```bash
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
-from datetime import datetime
+from config import USERNAME, PASSWORD
+from sectors import SECTORS, alias_candidates
+import json, collections
 
-USERNAME = "YOUR_USERNAME"
-PASSWORD = "YOUR_PASSWORD"
-
-def test_single_ticker():
-    """Test getting option chain for AAPL"""
-    print("🍎 Testing Single Ticker: AAPL")
-    print("-" * 40)
-    
-    try:
-        session = Session(USERNAME, PASSWORD)
-        print("✅ Connected to TastyTrade")
-        
-        # Try to get option chain for AAPL
-        print("\n📊 Getting option chain for AAPL...")
-        option_chain = get_option_chain(session, 'AAPL')
-        
-        if option_chain:
-            print(f"✅ Found option chain!")
-            print(f"📅 Number of expirations: {len(option_chain)}")
-            
-            # Show first 3 expirations
-            for i, exp_date in enumerate(list(option_chain.keys())[:3]):
-                contracts = option_chain[exp_date]
-                print(f"  Expiration {i+1}: {exp_date} - {len(contracts)} contracts")
-            
-            return True
-        else:
-            print("❌ No option chain found")
-            return False
-            
-    except Exception as e:
-        print(f"❌ Error: {e}")
-        return False
+def has_chain(sess, sym):
+    for c in alias_candidates(sym):
+        try:
+            oc = get_option_chain(sess, c)
+            if oc: return c
+        except Exception:
+            pass
+    return None
 
 if __name__ == "__main__":
-    success = test_single_ticker()
-    
-    if success:
-        print("\n✅ Step 2 Complete!")
-        print("Next: Run step3_get_iv_single.py")
-    else:
-        print("\n❌ Fix option chain access before proceeding")
+    sess = Session(USERNAME, PASSWORD)
+    cleaned, seen = [], set()
+    for sector, meta in SECTORS.items():
+        for t in meta["tickers"]:
+            if t in seen: continue
+            seen.add(t)
+            live = has_chain(sess, t)
+            cleaned.append({"sector":sector, "ticker": live or t, "requested": t, "status": "ok" if live else "no_chain"})
+    with open("universe_raw.json","w") as f: json.dump(cleaned, f, indent=2)
+    ok = [x for x in cleaned if x["status"]=="ok"]
+    by = collections.Counter(x["sector"] for x in ok)
+    print("✅ chains ok:", len(ok), "/", len(cleaned))
+    print("by sector:", dict(by))
 ```
 
-**Run:** `python3 ticker_data.py`
+**Run:** `python3 universe.py`
 
+## Step 4: Spot Snapshot
 
+**Create:** `touch spot.py`
+**Query:** `open -e spot.py`
 
+```bash
+import asyncio, json
+from datetime import datetime, timezone
+from tastytrade import Session, DXLinkStreamer
+from tastytrade.dxfeed import Quote
+from config import USERNAME, PASSWORD
 
+def now(): return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
 
+async def main():
+    with open("universe_raw.json") as f:
+        names = [r["ticker"] for r in json.load(f) if r["status"]=="ok"]
+    sess = Session(USERNAME, PASSWORD)
+    out = {}
+    async with DXLinkStreamer(sess) as s:
+        await s.subscribe(Quote, names)
+        start = asyncio.get_event_loop().time()
+        while (asyncio.get_event_loop().time()-start) < 12 and len(out) < len(names):
+            try:
+                q = await asyncio.wait_for(s.get_event(Quote), timeout=1.5)
+            except asyncio.TimeoutError:
+                continue
+            if not q or q.event_symbol not in names: continue
+            bid, ask = float(q.bid_price or 0), float(q.ask_price or 0)
+            if bid>0 and ask>0 and ask>=bid:
+                out[q.event_symbol] = {"bid":bid, "ask":ask, "mid":(bid+ask)/2, "ts":now()}
+    with open("step2_spot.json","w") as f: json.dump(out, f, indent=2)
+    print("✅ spot quotes:", len(out), "/", len(names))
 
+if __name__ == "__main__":
+    asyncio.run(main())
+```
 
-
+**Run:** `python3 spot.py`
 
 # 3️⃣ Build Options Screener
 
