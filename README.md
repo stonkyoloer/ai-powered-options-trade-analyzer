@@ -4,67 +4,7 @@ I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I a
 
 ---
 
-
-# 1️⃣  Portfolio Construction
-
-## 👨‍💻 Get Data
-
-**Source**: Stocks are Nasdaq-100 constituents or related, aligned with [Nasdaq-100 Index](https://www.nasdaq.com/market-activity/quotes/nasdaq-ndx-index)
-
----
-## ✍️ Prompt 
-### Attachment
-- us_tickers.csv
----
-### Instructions 
-
-**Goal**  
-Construct a 9-ticker, sector-diversified options portfolio emphasizing:  
-- **High Implied Volatility (IV)** (rich premiums & IV Rank ≥ 30%)  
-- **Deep Liquidity** (OI ≥ 1,000 per leg; spreads ≤ $0.05 for top names, ≤ $0.10 for moderately liquid)  
-- **Strong Short-Term Swings** (same-day to 30 days)  
-- **Industry-Leading AI Exposure** in each sector  
-- **Significant Market Attention** (institutional/retail hype)  
-
-**Selection Criteria (ALL must be met)**  
-1. **AI Leadership**: Core business or initiative is AI-driven.  
-2. **Options Liquidity**: Weekly/monthly chains, ≥ 1,000 OI on each leg, tight spreads.  
-3. **Elevated IV + IV Rank ≥ 30%**: Ensure options are richly priced relative to their history.  
-4. **Public Buzz**: Recent catalysts, heavy newsflow, or social/institutional interest.  
-5. **Robinhood-Available**: U.S.-listed and accessible to retail traders.  
-
-**Technical & Risk Filters**  
-- **Primary Signal (RSI(5))**: Confirm short-term momentum (oversold/overbought swings).  
-- **Secondary Signal (MACD Crossover)**: Validate momentum for directional plays (debit spreads, straddles).  
-
-**Rebalance Triggers**  
-- **IV Rank < 30%** → remove/replace  
-- **Stop-Loss Hit** → exit and free capital  
-- **Profit Target Hit** → lock in gains  
-- **Rebalance Cadence**: Event-driven only (no routine weekly unless a trigger fires)  
-
-**Portfolio Construction**  
-Select exactly one ticker per sector (no duplicates), drawn from the NASDAQ,  include any high-IV recent IPOs or AI spin-outs that meet all criteria.
----
-### Prompt
-**Goal**
-1. Refer to the Goal, Selection Criteria, Filters, and Construction above.  
-2. Use the attachments as your candidate universe.  
-3. Be resourceful—pull live or most recent data (IV%, IV Rank, OI, spreads, RSI(5), MACD) from public APIs or data feeds.  
-4. Exclude all tickers not traded on Robinhood.  
-
-**Task**  
-- Shortlist all holdings by sector.  
-- Filter by AI exposure, liquidity, IV & IVR ≥ 30%, OI ≥ 1,000, spread ≤ $0.05/0.10, and RSI+MACD confirmation.  
-- Select the single best ticker per sector.  
-- Output a markdown table with columns:  
-  `| Ticker | Sector | AI Leadership Summary | Avg IV % | IV Rank | RSI(5) | MACD Signal | Daily Volume | Liquidity Grade |`  
-  - Liquidity Grade: A (ideal), B (acceptable), C (avoid).  
-- Explain any sector where no perfect match exists by proposing the next best alternative and rationale.  
-- Include rebalancing triggers and signal filters in your commentary block below the table.  
----
-
-# 2️⃣ Setup & Install Tasty Trade API
+# 1️⃣  Setup & Install Tasty Trade API
 
 ## 🛠 Create a Project
 
@@ -137,7 +77,79 @@ else:
 **Run:** `python3 auth_test.py`
 
 
-# 3️⃣ Build Data Tables
+# 2️⃣ Build Ticker Screener
+
+## Step 1: Get Options Chain Data
+
+**Create:** `touch ticker_data.py`
+
+**Query:** `open -e ticker_data.py`
+
+```
+# step2_test_single_ticker.py
+"""
+Step 2: Test getting option chain for ONE ticker (AAPL)
+"""
+
+from tastytrade import Session
+from tastytrade.instruments import get_option_chain
+from datetime import datetime
+
+USERNAME = "YOUR_USERNAME"
+PASSWORD = "YOUR_PASSWORD"
+
+def test_single_ticker():
+    """Test getting option chain for AAPL"""
+    print("🍎 Testing Single Ticker: AAPL")
+    print("-" * 40)
+    
+    try:
+        session = Session(USERNAME, PASSWORD)
+        print("✅ Connected to TastyTrade")
+        
+        # Try to get option chain for AAPL
+        print("\n📊 Getting option chain for AAPL...")
+        option_chain = get_option_chain(session, 'AAPL')
+        
+        if option_chain:
+            print(f"✅ Found option chain!")
+            print(f"📅 Number of expirations: {len(option_chain)}")
+            
+            # Show first 3 expirations
+            for i, exp_date in enumerate(list(option_chain.keys())[:3]):
+                contracts = option_chain[exp_date]
+                print(f"  Expiration {i+1}: {exp_date} - {len(contracts)} contracts")
+            
+            return True
+        else:
+            print("❌ No option chain found")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error: {e}")
+        return False
+
+if __name__ == "__main__":
+    success = test_single_ticker()
+    
+    if success:
+        print("\n✅ Step 2 Complete!")
+        print("Next: Run step3_get_iv_single.py")
+    else:
+        print("\n❌ Fix option chain access before proceeding")
+```
+
+**Run:** `python3 ticker_data.py`
+
+
+
+
+
+
+
+
+
+# 3️⃣ Build Options Screener
 
 
 ## 📁 Step 1: Get Stock Prices
