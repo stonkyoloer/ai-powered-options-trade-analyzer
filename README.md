@@ -1,10 +1,10 @@
-# 📈 StonkYoloer Portfolio & Daily Trade Screener
+# 📈 Daily Portfolio and Options Trade Screeners
 
-I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I am not responsible for my actions.  No DD.  No Brains.  JUST VIBES!  
+"I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I am not responsible for my actions.  No DD.  No Brains.  JUST VIBES!"  
 
 ---
 
-# 1️⃣  Setup & Install Tasty Trade API
+# 1️⃣  Configure TastyTrade
 
 ## 🛠 Create a Project
 
@@ -77,9 +77,9 @@ else:
 **Run:** `python3 auth_test.py`
 
 
-# 2️⃣ Build Ticker Screener
+# 2️⃣ Build a Daily Portfolio Screener
 
-## 📂 Step 1: Set Up Login
+## 📂 Step 1: Configuration
 **Create:** `config.py`
 **Query:** `open -e config.py`
 
@@ -181,7 +181,7 @@ def alias_candidates(sym: str): return [sym] + SYMBOL_ALIASES.get(sym, [])
 
 ---
 
-## 📂 Step 3: Verify Ticker list 
+## 📂 Step 3: Verify Ticker Data 
 
 **Create:** `touch universe.py`
 **Query:** `open -e universe.py`
@@ -220,7 +220,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 universe.py`
 
-## 📂 Step 4: Spot Snapshot
+## 📂 Step 4: Bid, Ask, Mid, TS Snapshot
 
 **Create:** `touch spot.py`
 **Query:** `open -e spot.py`
@@ -358,7 +358,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 atm_iv.py`
 
-## 📂 Filter for Lquidity
+## 📂 Step 6: Filter for Liquidity
 
 **Create:** `touch liquidity.py`
 **Query:** `open -e liquidity.py`
@@ -513,7 +513,7 @@ if __name__ == "__main__":
 ```
 **Run:** `python3 liquidity.py`
 
-## 📂 Build Trading Basket 
+## 📂 Step 7: Build Trading Basket 
 
 **Create:** `touch basket.py`
 **Query:** `open -e basket.py`
@@ -583,7 +583,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 basket.py`
 
-# 3️⃣ Prompt:
+# 3️⃣ Prompt for News, Earnings, Macro
 
 ```bash
 You are my Portfolio News & Risk Sentinel.
@@ -608,7 +608,7 @@ TASKS
    - Flag “Earnings inside DTE window” if earnings date is ≤ target_expiry DTE. 
    - Flag liquidity concerns if spread_med_Δ30 > 0.10 or oi_min_Δ30 < 1,000.
 4) Output as a compact table with these columns:
-   Sector | Ticker | IVR | ATM_IV | Δ30 Spread | OI_min | DTE | NewsHeat(0-5) | Next Event(s) | Risk Flags
+   Sector | Ticker | NewsHeat(0-5) | Next Event(s) | Risk Flags
 5) Add a brief 3-bullet portfolio summary:
    - Diversification status (sectors filled/empty)
    - Top 2 risk clusters (e.g., multiple rate-sensitive names)
@@ -620,10 +620,7 @@ CONSTRAINTS
 - If info is unavailable, write “n/a” rather than guessing.
 ```
 
-
-
-
-# 3️⃣ Build Options Screener
+# 4️⃣ Build a Daily Options Screener
 
 
 ## 📁 Step 1: Get Stock Prices
