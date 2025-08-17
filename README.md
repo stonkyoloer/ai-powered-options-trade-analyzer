@@ -77,10 +77,7 @@ else:
 
 **Run:** `python3 auth_test.py`
 
-
-# 2️⃣ Build a Daily Portfolio Screener
-
-## 📂 Step 1: Configuration
+## 📂 Configuration
 
 **Create:** `config.py`
 
@@ -93,7 +90,12 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 ```
 **Run:** `python 3 config.py`
 
-## 📂 Step 2: Create Sectors
+
+# 2️⃣ Build a Daily Portfolio Screener
+
+
+
+## 📂 Create Sectors
 
 **Create:** `sectors.py`
 
@@ -185,7 +187,7 @@ def alias_candidates(sym: str): return [sym] + SYMBOL_ALIASES.get(sym, [])
 
 ---
 
-## 📂 Step 3: Verify Ticker Data 
+## 📂 Verify Ticker Data 
 
 **Create:** `touch universe.py`
 
@@ -225,7 +227,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 universe.py`
 
-## 📂 Step 4: Bid, Ask, Mid, TS Snapshot
+## 📂 Bid, Ask, Mid, TS Snapshot
 
 **Create:** `touch spot.py`
 
@@ -266,7 +268,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 spot.py`
 
-## 📂 Step 5: Filter for DTE, ATM IV, IVR(heuristic)
+## 📂 Filter for DTE, ATM IV, IVR
 
 **Create:** `touch atm_iv.py`
 
@@ -364,7 +366,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 atm_iv.py`
 
-## 📂 Step 6: Filter for Liquidity
+## 📂 Filter for Liquidity
 
 **Create:** `touch liquidity.py`
 **Query:** `open -e liquidity.py`
@@ -519,7 +521,7 @@ if __name__ == "__main__":
 ```
 **Run:** `python3 liquidity.py`
 
-## 📂 Step 7: Build Trading Basket 
+## 📂 Build Trading Basket 
 
 **Create:** `touch basket.py`
 **Query:** `open -e basket.py`
