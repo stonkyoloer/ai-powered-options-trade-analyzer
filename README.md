@@ -20,7 +20,7 @@
   - `httpx` and `certifi`: Make secure connections to the internet.
 
 
-## 🔐 Test Tastytrade Login
+## 🔐 Test Tastytrade Connection
 
 
 **Create:** `touch test_connection.py`
