@@ -44,6 +44,7 @@ print("Ready for authentication test")
 ## 🔑 Authenticate & Get Account Info
 
 **Create:** touch auth_test.py
+
 **Query:** open -e auth_test.py
 
 ```python
@@ -80,7 +81,9 @@ else:
 # 2️⃣ Build a Daily Portfolio Screener
 
 ## 📂 Step 1: Configuration
+
 **Create:** `config.py`
+
 **Query:** `open -e config.py`
 
 ```bash
@@ -93,6 +96,7 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 ## 📂 Step 2: Create Sectors
 
 **Create:** `sectors.py`
+
 **Query:** `open -e sectors.py`
 
 ```bash
@@ -184,6 +188,7 @@ def alias_candidates(sym: str): return [sym] + SYMBOL_ALIASES.get(sym, [])
 ## 📂 Step 3: Verify Ticker Data 
 
 **Create:** `touch universe.py`
+
 **Query:** `open -e universe.py`
 
 ```bash
@@ -223,6 +228,7 @@ if __name__ == "__main__":
 ## 📂 Step 4: Bid, Ask, Mid, TS Snapshot
 
 **Create:** `touch spot.py`
+
 **Query:** `open -e spot.py`
 
 ```bash
