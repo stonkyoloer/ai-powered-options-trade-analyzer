@@ -3,11 +3,14 @@
 "I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I am not responsible for my actions.  No DD.  No Brains.  JUST VIBES!"  
 
 ---
+# 🛠 Configure TastyTrade
+
+Steps located in `Configure TastyTrade`
 
 
-# ✒️ Prompt for Trading Basket
+# 💡 Prompt for Trading Basket
 
-## Download Trading Universe CSV
+## Download the Trading Universe CSV
 
 `XLK` https://www.sectorspdrs.com/mainfund/XLK
 
@@ -28,52 +31,29 @@
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 
-
-## Prompt
-
+## Enter Prompt (CSV attached)
 ```
 Use the attached ticker basket files as the universe.
 Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
 Apply this strict filter framework (real-time only):
+  1. Earnings & Macro Events (Scheduled) – Must verify in today’s/week’s earnings calendars or official macro event schedules (Fed, CPI, jobs, OPEC, regulatory). Exclude if unverified.
+  2. Headline & News Drivers – Must be sourced from live headlines (upgrades/downgrades, strikes, lawsuits, product launches, sector disruptions). Rank by strength of catalyst.
+  3. Implied Volatility Context (Event-Driven) – Only flag if real-time news or analyst notes explicitly cite elevated IV or “fear premium.” Ignore historical averages.
+  4. Directional Tilt – Classify bias as bullish, bearish, or neutral only if justified by current event/news flow. If unclear, mark as “Neutral.”
+  5. Shock Disconnection / Factor Buckets  – Ensure coverage across growth (Tech/Discretionary), rates (Financials/Utilities), commodities (Energy/Industrials), and defensives (Staples/Healthcare). Avoid clustering.
 
-  1. Earnings & Macro Events (Scheduled)
-
-– Must verify in today’s/week’s earnings calendars or official macro event schedules (Fed, CPI, jobs, OPEC, regulatory). Exclude if unverified.
-
-  2. Headline & News Drivers
-
-  – Must be sourced from live headlines (upgrades/downgrades, strikes, lawsuits, product launches, sector disruptions). Rank by strength of catalyst.
-
-  3. Implied Volatility Context (Event-Driven)
-
-  – Only flag if real-time news or analyst notes explicitly cite elevated IV or “fear premium.” Ignore historical averages.
-
-  4. Directional Tilt
-
-  – Classify bias as bullish, bearish, or neutral only if justified by current event/news flow. If unclear, mark as “Neutral.”
-
-  5. Shock Disconnection / Factor Buckets
-
-  – Ensure coverage across growth (Tech/Discretionary), rates (Financials/Utilities), commodities (Energy/Industrials), and defensives (Staples/Healthcare). Avoid clustering.
-
-Output format (table):
-
-  Sector | Ticker | Event/News Driver (1 short sentence, real-time) | IV Context | Tilt (Bullish/Bearish/Neutral)
-
-Final step:
-
-  – Provide a Risk Map summary showing which macro shocks (growth, rates, oil, defensives) are represented, and whether the basket is balanced.
+Output 1 format (table):
+  Sector | Ticker | Event/News Driver (1 short sentence, real-time) | Tilt (Bullish/Bearish/Neutral)
+ 
 
 Rules:
-
-Use only real-time, verifiable data.
-Exclude any ticker where data cannot be confirmed.
-Look ahead for scheduled events today/this week.
+  1. Use only real-time, verifiable data.
+  2. Exclude any ticker where data cannot be confirmed.
+  3. Look ahead for scheduled events today/this week.
 ```
 ---
 
 # ✒️ Build a Daily Portfolio Screener
-
 
 
 ## 📂 Create Sectors
