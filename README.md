@@ -8,7 +8,7 @@
 Steps located in `Configure TastyTrade`
 
 
-# 💡 Prompt for Trading Basket
+# 💡 Prompt to Build Sector Baskets
 
 ## Download the Trading Universe CSV
 
@@ -31,7 +31,7 @@ Steps located in `Configure TastyTrade`
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 
-## Enter Prompt (CSV attached)
+## Enter Prompt (CSV's attached)
 ```
 Use the attached ticker basket files as the universe.
 Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
