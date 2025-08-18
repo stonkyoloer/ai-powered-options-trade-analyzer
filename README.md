@@ -114,35 +114,48 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
-`
 
 
-
+## Prompt for Portfolio
 
 ```
-Prompt:
+Use the attached ticker basket files as the universe.
+Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
+Apply this strict filter framework (real-time only):
 
-Use the attached ticker basket files as the universe. Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
+  1. Earnings & Macro Events (Scheduled)
 
-Apply a professional filter framework:
+– Must verify in today’s/week’s earnings calendars or official macro event schedules (Fed, CPI, jobs, OPEC, regulatory). Exclude if unverified.
 
-Earnings & Macro Events – Identify which tickers in the basket have scheduled earnings (today/this week) or exposure to major macro events (Fed, CPI, jobs, OPEC, regulatory). Flag them.
+  2. Headline & News Drivers
 
-Headline & News Drivers – Scan for upgrades/downgrades, strikes, lawsuits, product launches, sector disruptions. Rank by significance of catalyst.
+  – Must be sourced from live headlines (upgrades/downgrades, strikes, lawsuits, product launches, sector disruptions). Rank by strength of catalyst.
 
-Implied Volatility Context (News-Driven) – Highlight names where implied volatility is reported elevated in news or analyst notes (fear premium). Treat these as high-priority spread candidates.
+  3. Implied Volatility Context (Event-Driven)
 
-Directional Tilt – For each candidate, based on current news/event flow, classify bias as bullish tilt, bearish tilt, or neutral premium harvest.
+  – Only flag if real-time news or analyst notes explicitly cite elevated IV or “fear premium.” Ignore historical averages.
 
-Shock Disconnection / Factor Buckets – Ensure the final set covers multiple macro risk buckets: growth (Tech/Discretionary), rates (Financials/Utilities), commodities (Energy/Industrials), and defensives (Staples/Healthcare). Avoid correlation clustering.
+  4. Directional Tilt
 
-Output format:
+  – Classify bias as bullish, bearish, or neutral only if justified by current event/news flow. If unclear, mark as “Neutral.”
 
-Present results in a table with columns: Sector | Ticker | Event/News Driver | IV Context | Tilt (Bullish/Bearish/Neutral)
+  5. Shock Disconnection / Factor Buckets
 
-Keep explanations concise: one short sentence per ticker.
+  – Ensure coverage across growth (Tech/Discretionary), rates (Financials/Utilities), commodities (Energy/Industrials), and defensives (Staples/Healthcare). Avoid clustering.
 
-End with a “Risk Map” summary: which macro shocks (growth, rates, oil, defensives) are represented, and whether the basket is balanced.
+Output format (table):
+
+  Sector | Ticker | Event/News Driver (1 short sentence, real-time) | IV Context | Tilt (Bullish/Bearish/Neutral)
+
+Final step:
+
+  – Provide a Risk Map summary showing which macro shocks (growth, rates, oil, defensives) are represented, and whether the basket is balanced.
+
+Rules:
+
+Use only real-time, verifiable data.
+Exclude any ticker where data cannot be confirmed.
+Look ahead for scheduled events today/this week.
 ```
 ---
 
