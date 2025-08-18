@@ -42,9 +42,93 @@ Apply this strict filter framework (real-time only):
   4. Directional Tilt – Classify bias as bullish, bearish, or neutral only if justified by current event/news flow. If unclear, mark as “Neutral.”
   5. Shock Disconnection / Factor Buckets  – Ensure coverage across growth (Tech/Discretionary), rates (Financials/Utilities), commodities (Energy/Industrials), and defensives (Staples/Healthcare). Avoid clustering.
 
-Output 1 format (table):
+Output format (table):
   Sector | Ticker | Event/News Driver (1 short sentence, real-time) | Tilt (Bullish/Bearish/Neutral)
- 
+
+ Output format (portfolio):
+
+You are my Daily Sector Basket Refresher for 0–45 DTE credit spreads.
+
+CONTEXT & RULES
+- Timezone: America/Los_Angeles. Use absolute dates (YYYY-MM-DD).
+- Universe: Use ONLY the attached sector basket files I provide (e.g., XLK/XLC/... holding lists). Do not add off-universe tickers.
+- Goal: Pick EXACTLY 4 tickers per sector (9 sectors total) that are sensible to trade today for credit spreads (0–45 DTE).
+- Filters (must be real-time verified):
+  1) Earnings & Macro (scheduled) — confirm from current calendars (this week). Exclude unverified.
+  2) Headlines/Catalysts — upgrades/downgrades, strikes, lawsuits, guidance, M&A, launches, regulatory, sector disruptions. Must cite live sources.
+  3) IV Context — only if news/notes explicitly mention elevated IV/fear premium. Ignore historical averages.
+  4) Directional Tilt — Bullish/Bearish/Neutral based on TODAY’S flow; if unclear, mark Neutral.
+  5) Shock Disconnection — Maintain coverage across growth (Tech/Disc), rates (Financials/Utilities), commodities (Energy/Industrials), defensives (Staples/Health Care). Avoid clustering.
+
+OUTPUT FORMAT (return BOTH sections below, in this order):
+A) PYTHON_PATCH (paste-ready for scripts/sectors.py)
+- Return ONLY the `SECTORS_GPT` dict with updated "tickers" arrays (keep existing `etf` and `description` text; do not change keys, casing, or order of sectors).
+- EXACTLY 4 uppercase tickers per sector; dedupe within sector; all must be in the provided universe and optionable.
+- No comments or extra prose in this block.
+
+B) AUDIT_TABLE (for my README)
+- A compact 9×4 table: Sector | Ticker | Event/News Driver (short) | Tilt
+- Each ticker gets 1 short sentence for the driver with 1 inline link to the source (earnings page, news, filing, etc.).
+- If any pick conflicts (earnings inside 0–45 DTE or big macro in ≤5 trading days), still include the ticker but note the risk in the sentence.
+
+STRICTNESS
+- If a candidate fails verification, replace it with the next best verified name in the same sector so there are always 4 per sector.
+- Never invent sources; always include links for drivers.
+- Do not output anything else besides sections A and B.
+
+TEMPLATE TO FOLLOW
+
+A) PYTHON_PATCH
+```python
+SECTORS_GPT = {
+    "Information Technology": {
+        "etf": "XLK",
+        "description": "growth/innovation beta",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Communication Services": {
+        "etf": "XLC",
+        "description": "ads, platforms, media",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Consumer Discretionary": {
+        "etf": "XLY",
+        "description": "cyclical demand, sentiment",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Consumer Staples": {
+        "etf": "XLP",
+        "description": "defensive cashflows, low vol",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Health Care": {
+        "etf": "XLV",
+        "description": "defensive + policy/innovation mix",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Financials": {
+        "etf": "XLF",
+        "description": "rate curve/credit sensitivity",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Industrials": {
+        "etf": "XLI",
+        "description": "capex, global trade, PMIs",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Energy": {
+        "etf": "XLE",
+        "description": "commodity/inflation shock hedge",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+    "Utilities": {
+        "etf": "XLU",
+        "description": "bond-proxy, duration sensitivity",
+        "tickers": ["T1","T2","T3","T4"],
+    },
+}
+
+
 
 Rules:
   1. Use only real-time, verifiable data.
@@ -53,8 +137,7 @@ Rules:
 ```
 ---
 
-# ✒️ Build a Daily Portfolio Screener
-
+# 🪛 Build the Daily Portfolio Screener (use prompt results as universe)
 
 ## 📂 Create Sectors
 
