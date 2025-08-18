@@ -8,7 +8,7 @@
 Steps located in `Configure TastyTrade`
 
 
-# 💡 Prompt to Build Sector Baskets
+# 💡 Build Sector Baskets
 
 ## Download the Trading Universe CSV
 
