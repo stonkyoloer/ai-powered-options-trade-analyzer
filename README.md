@@ -90,6 +90,45 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 ```
 **Run:** `python 3 config.py`
 
+---
+
+# 🟣 Prompt for Trading Basket
+
+## Select Trading Universe
+
+`xlk` https://www.sectorspdrs.com/mainfund/xlk
+
+`xlc` https://www.sectorspdrs.com/mainfund/XLC
+
+
+
+
+```
+Prompt:
+
+Use the attached ticker basket file as the universe. Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
+
+Apply a professional filter framework:
+
+Earnings & Macro Events – Identify which tickers in the basket have scheduled earnings (today/this week) or exposure to major macro events (Fed, CPI, jobs, OPEC, regulatory). Flag them.
+
+Headline & News Drivers – Scan for upgrades/downgrades, strikes, lawsuits, product launches, sector disruptions. Rank by significance of catalyst.
+
+Implied Volatility Context (News-Driven) – Highlight names where implied volatility is reported elevated in news or analyst notes (fear premium). Treat these as high-priority spread candidates.
+
+Directional Tilt – For each candidate, based on current news/event flow, classify bias as bullish tilt, bearish tilt, or neutral premium harvest.
+
+Shock Disconnection / Factor Buckets – Ensure the final set covers multiple macro risk buckets: growth (Tech/Discretionary), rates (Financials/Utilities), commodities (Energy/Industrials), and defensives (Staples/Healthcare). Avoid correlation clustering.
+
+Output format:
+
+Present results in a table with columns: Sector | Ticker | Event/News Driver | IV Context | Tilt (Bullish/Bearish/Neutral)
+
+Keep explanations concise: one short sentence per ticker.
+
+End with a “Risk Map” summary: which macro shocks (growth, rates, oil, defensives) are represented, and whether the basket is balanced.
+```
+---
 
 # 🟣 Build a Daily Portfolio Screener
 
