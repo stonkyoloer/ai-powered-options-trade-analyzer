@@ -1,10 +1,10 @@
-# 📈 Daily Portfolio and Options Trade Screeners
+#  Daily Portfolio and Options Trade Screeners
 
 "I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I am not responsible for my actions.  No DD.  No Brains.  JUST VIBES!"  
 
 ---
 
-# 1️⃣  Configure TastyTrade
+# 🟣 Configure TastyTrade
 
 ## 🛠 Create a Project
 
@@ -91,7 +91,7 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 **Run:** `python 3 config.py`
 
 
-# 2️⃣ Build a Daily Portfolio Screener
+# 🟣 Build a Daily Portfolio Screener
 
 
 
@@ -591,7 +591,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 basket.py`
 
-# 3️⃣ Prompt for News, Earnings, Macro
+# 🟣 Prompt for News, Earnings, Macro
 
 ```bash
 You are my Portfolio News & Risk Sentinel.
@@ -628,10 +628,10 @@ CONSTRAINTS
 - If info is unavailable, write “n/a” rather than guessing.
 ```
 
-# 4️⃣ Build a Daily Options Screener
+# 🟣 Build a Daily Options Screener
 
 
-## 📁 Step 1: Get Stock Prices
+## 📁 Get Stock Prices
 
 ### Data: Bid, ask, mid-price, and timestamp for nine stocks.  
 ### Why useful: Gives a fresh “true price” for each underlying.
@@ -727,7 +727,7 @@ if __name__ == "__main__":
 ---
 
 
-## 📁 Step 2: Get All Options Contracts
+## 📁 Get All Options Contracts
 
 ### Data: Every call and put that expires within 45 days for each stock—strike price, expiry date, days left, and ticker symbol.  
 ### Why useful: It lays out all near-term bets you can place.
@@ -854,7 +854,7 @@ if __name__ == "__main__":
 ---
 
 
-## 📁 Step 3: Get IV Data
+## 📁 Get IV Data
 
 ### Data: Implied volatility (IV) value for every option contract we found.  
 ### Why: IV shows how much the market thinks the stock might swing. Bigger IV = juicier option prices and more risk.
@@ -924,7 +924,7 @@ if __name__ == "__main__":
 
 ---
 
-## 📁 Step 4: Get Buy/Sell Prices (Bid/Ask)
+## 📁 Get Buy/Sell Prices (Bid/Ask)
 
 ### Data: bid, ask, midpoint, size, and spread for every option contract.  
 ### Why useful: reveals real trading price and liquidity.
@@ -1087,7 +1087,7 @@ if __name__ == "__main__":
 
 ---
 
-## 📁 Step 5: Get the Greeks Data 
+## 📁 Get the Greeks Data 
 
 ### Data: Delta, theta, gamma, vega, IV, and current option price for every contract.  
 ### Why useful: Greeks show how price, time, and volatility will hit your P/L.
@@ -1220,10 +1220,10 @@ if __name__ == "__main__":
 
 ---
 
-# 4️⃣ IV and Liquidity Analysis 
+# 🟣 IV and Liquidity Analysis 
 
 
-## 📁 Step 6: Find High IV and Liquidity
+## 📁 Find High IV and Liquidity
 
 ### Data: each option’s open interest, trading volume, bid-ask spread, and existing IV.  
 ### Why useful: These numbers show how busy the contract is and how cheap it is to trade.
@@ -1552,10 +1552,10 @@ if __name__ == "__main__":
 ```
 **Run:** `python3 iv_liquidity.py`
 
-# 5️⃣ Black Scholes Analysis
+# 🟣 Black Scholes Analysis
 
 
-## 📁 Step 7: Find the Best Deals
+## 📁 Find the Best Deals
 
 ### Data: liquid call + put pairs with bid/ask, IV, open interest, strike width, days to expire.  
 ### Why useful: calculates credit, max loss, ROI, and probability to profit.
@@ -2027,7 +2027,7 @@ if __name__ == "__main__":
 ---
 
 
-# 6️⃣ Prompt
+# 🟣 Prompt
 
 ```text
 You are my Credit-Spread Catalyst & Sanity Checker. Timezone: America/Los_Angeles.
