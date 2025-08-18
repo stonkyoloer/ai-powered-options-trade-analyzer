@@ -4,7 +4,7 @@
 
 ---
 
-# 🟣 Configure TastyTrade
+# ✒️ Configure TastyTrade
 
 ## 🛠 Create a Project
 
@@ -92,13 +92,21 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 
 ---
 
-# 🟣 Prompt for Trading Basket
+# ✒️ Prompt for Trading Basket
 
 ## Select Trading Universe
 
-`xlk` https://www.sectorspdrs.com/mainfund/xlk
+`XLK` https://www.sectorspdrs.com/mainfund/xlk
 
-`xlc` https://www.sectorspdrs.com/mainfund/XLC
+`XLC` https://www.sectorspdrs.com/mainfund/XLC
+
+`XLY` https://www.sectorspdrs.com/mainfund/XLY
+
+`XLP` https://www.sectorspdrs.com/mainfund/XLP
+
+`XLV` https://www.sectorspdrs.com/mainfund/XLV
+
+`
 
 
 
@@ -106,7 +114,7 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 ```
 Prompt:
 
-Use the attached ticker basket file as the universe. Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
+Use the attached ticker basket files as the universe. Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
 
 Apply a professional filter framework:
 
@@ -130,7 +138,7 @@ End with a “Risk Map” summary: which macro shocks (growth, rates, oil, defen
 ```
 ---
 
-# 🟣 Build a Daily Portfolio Screener
+# ✒️ Build a Daily Portfolio Screener
 
 
 
@@ -630,7 +638,7 @@ if __name__ == "__main__":
 
 **Run:** `python3 basket.py`
 
-# 🟣 Prompt for News, Earnings, Macro
+# ✒️ Prompt for News, Earnings, Macro
 
 ```bash
 You are my Portfolio News & Risk Sentinel.
@@ -667,7 +675,7 @@ CONSTRAINTS
 - If info is unavailable, write “n/a” rather than guessing.
 ```
 
-# 🟣 Build a Daily Options Screener
+# ✒️ Build a Daily Options Screener
 
 
 ## 📁 Get Stock Prices
@@ -1259,7 +1267,7 @@ if __name__ == "__main__":
 
 ---
 
-# 🟣 IV and Liquidity Analysis 
+# ✒️ IV and Liquidity Analysis 
 
 
 ## 📁 Find High IV and Liquidity
@@ -1591,7 +1599,7 @@ if __name__ == "__main__":
 ```
 **Run:** `python3 iv_liquidity.py`
 
-# 🟣 Black Scholes Analysis
+# ✒️ Black Scholes Analysis
 
 
 ## 📁 Find the Best Deals
@@ -2066,7 +2074,7 @@ if __name__ == "__main__":
 ---
 
 
-# 🟣 Prompt
+# ✒️ Prompt
 
 ```text
 You are my Credit-Spread Catalyst & Sanity Checker. Timezone: America/Los_Angeles.
