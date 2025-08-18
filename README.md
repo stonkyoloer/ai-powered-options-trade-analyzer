@@ -1,4 +1,4 @@
-# 🧮 Daily Portfolio and Credit Spread Screeners
+# 🚀 Daily Portfolio and Credit Spread Screeners
 
 "I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I am not responsible for my actions.  No DD.  No Brains.  JUST VIBES!"  
 
