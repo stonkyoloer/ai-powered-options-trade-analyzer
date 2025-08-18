@@ -96,7 +96,7 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 
 ## Select Trading Universe
 
-`XLK` https://www.sectorspdrs.com/mainfund/xlk
+`XLK` https://www.sectorspdrs.com/mainfund/XLK
 
 `XLC` https://www.sectorspdrs.com/mainfund/XLC
 
@@ -105,6 +105,14 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 `XLP` https://www.sectorspdrs.com/mainfund/XLP
 
 `XLV` https://www.sectorspdrs.com/mainfund/XLV
+
+'XLF` https://www.sectorspdrs.com/mainfund/XLF
+
+`XLI` https://www.sectorspdrs.com/mainfund/XLI
+
+`XLE` https://www.sectorspdrs.com/mainfund/XLE
+
+`XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 `
 
