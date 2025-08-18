@@ -171,83 +171,161 @@ Look ahead for scheduled events today/this week.
 
 ```bash
 # sectors.py
-SECTORS = {
+"""
+Sector universes and symbol helpers.
+
+Toggle which universe to use by setting PORTFOLIO_MODE to one of:
+  - "gpt"     -> SECTORS_GPT (9 sectors × 4 = 36 tickers)
+  - "grok"    -> SECTORS_GROK (9 sectors × 4 = 36 tickers)
+  - "merged"  -> union of GPT+Grok tickers per sector (deduped, order-preserved)
+"""
+
+# -----------------------------
+# GPT Portfolio
+# -----------------------------
+SECTORS_GPT = {
     "Information Technology": {
         "etf": "XLK",
         "description": "growth/innovation beta",
-        "tickers": [
-            "NVDA","AAPL","MSFT","AVGO","ADBE","CRM","ORCL","AMD","INTC",
-            "CSCO","QCOM","TXN","AMAT","LRCX","MU","KLAC","SNPS","CDNS"
-        ],
+        "tickers": ["ADI", "INTU", "NVDA", "PANW"],
     },
     "Communication Services": {
         "etf": "XLC",
         "description": "ads, platforms, media",
-        "tickers": [
-            "META","GOOGL","GOOG","NFLX","DIS","CMCSA","T","VZ","TMUS",
-            "CHTR","EA","TTWO","MTCH","ROKU","SNAP","PINS"  # (TWTR removed)
-        ],
+        "tickers": ["DIS", "GOOGL", "META", "TMUS"],
     },
     "Consumer Discretionary": {
         "etf": "XLY",
         "description": "cyclical demand, sentiment",
-        "tickers": [
-            "AMZN","TSLA","HD","MCD","NKE","SBUX","LOW","TJX","BKNG",
-            "CMG","TGT","ROST","AZO","ORLY","DHI","LEN","GM","F"
-        ],
+        "tickers": ["HD", "LOW", "ROST", "TJX"],
     },
     "Consumer Staples": {
         "etf": "XLP",
         "description": "defensive cashflows, low vol",
-        "tickers": [
-            "WMT","PG","KO","PEP","COST","MDLZ","MO","PM","CL","GIS",
-            "ADM","KMB","KHC","STZ","MNST","KDP","SYY","HSY"
-        ],
+        "tickers": ["EL", "MDLZ", "TGT", "WMT"],
     },
     "Health Care": {
         "etf": "XLV",
         "description": "defensive + policy/innovation mix",
-        "tickers": [
-            "UNH","JNJ","LLY","ABBV","PFE","MRK","TMO","ABT","DHR",
-            "CVS","AMGN","MDT","BMY","GILD","ISRG","VRTX","REGN","CI"
-        ],
+        "tickers": ["ABBV", "CAH", "LLY", "MDT"],
     },
     "Financials": {
         "etf": "XLF",
         "description": "rate curve/credit sensitivity",
-        "tickers": [
-            "BRK.B","JPM","BAC","WFC","GS","MS","SCHW","BLK","C",
-            "AXP","USB","PNC","TFC","COF","MET","PRU","AIG","SPGI"
-        ],
+        "tickers": ["BAC", "GS", "JPM", "MS"],
     },
     "Industrials": {
         "etf": "XLI",
         "description": "capex, global trade, PMIs",
-        "tickers": [
-            "CAT","BA","UNP","HON","UPS","RTX","DE","LMT","GE",
-            "MMM","CSX","NSC","WM","EMR","FDX","ETN","ITW","PH"
-        ],
+        "tickers": ["CAT", "DE", "LMT", "UNP"],
     },
     "Energy": {
         "etf": "XLE",
         "description": "commodity/inflation shock hedge",
-        "tickers": [
-            "XOM","CVX","COP","SLB","EOG","MPC","PSX","VLO",
-            "OXY","DVN","HES","FANG","HAL","BKR","KMI","WMB","CTRA"  # PXD removed
-        ],
+        "tickers": ["COP", "CVX", "SLB", "XOM"],
     },
     "Utilities": {
         "etf": "XLU",
         "description": "bond-proxy, duration sensitivity",
-        "tickers": [
-            "NEE","SO","DUK","SRE","AEP","D","PCG","EXC","XEL",
-            "ED","WEC","ES","DTE","AWK","PPL","AEE","CMS","CNP"
-        ],
+        "tickers": ["DUK", "NEE", "PCG", "SO"],
     },
 }
 
-SYMBOL_ALIASES = { "BRK.B": ["BRK.B","BRK-B","BRK/B"] }
-def alias_candidates(sym: str): return [sym] + SYMBOL_ALIASES.get(sym, [])
+# -----------------------------
+# Grok Portfolio
+# -----------------------------
+SECTORS_GROK = {
+    "Information Technology": {
+        "etf": "XLK",
+        "description": "growth/innovation beta",
+        "tickers": ["AAPL", "AVGO", "MSFT", "NVDA"],
+    },
+    "Communication Services": {
+        "etf": "XLC",
+        "description": "ads, platforms, media",
+        "tickers": ["GOOG", "GOOGL", "META", "NFLX"],
+    },
+    "Consumer Discretionary": {
+        "etf": "XLY",
+        "description": "cyclical demand, sentiment",
+        "tickers": ["AMZN", "HD", "MCD", "TSLA"],
+    },
+    "Consumer Staples": {
+        "etf": "XLP",
+        "description": "defensive cashflows, low vol",
+        "tickers": ["COST", "KO", "PG", "WMT"],
+    },
+    "Health Care": {
+        "etf": "XLV",
+        "description": "defensive + policy/innovation mix",
+        "tickers": ["ABBV", "JNJ", "LLY", "UNH"],
+    },
+    "Financials": {
+        "etf": "XLF",
+        "description": "rate curve/credit sensitivity",
+        "tickers": ["BRK.B", "JPM", "MA", "V"],
+    },
+    "Industrials": {
+        "etf": "XLI",
+        "description": "capex, global trade, PMIs",
+        "tickers": ["CAT", "GE", "RTX", "UBER"],
+    },
+    "Energy": {
+        "etf": "XLE",
+        "description": "commodity/inflation shock hedge",
+        "tickers": ["COP", "CVX", "EOG", "XOM"],
+    },
+    "Utilities": {
+        "etf": "XLU",
+        "description": "bond-proxy, duration sensitivity",
+        "tickers": ["CEG", "DUK", "NEE", "SO"],
+    },
+}
+
+# -----------------------------
+# Mode & merge
+# -----------------------------
+PORTFOLIO_MODE = "gpt"  # "gpt", "grok", or "merged"
+
+def _merge_sectors(a: dict, b: dict) -> dict:
+    out = {}
+    keys = set(a) | set(b)
+    for k in keys:
+        ea, eb = a.get(k, {}), b.get(k, {})
+        etf = ea.get("etf") or eb.get("etf")
+        desc = ea.get("description") or eb.get("description")
+        tickers = []
+        for src in (ea.get("tickers", []), eb.get("tickers", [])):
+            for t in src:
+                if t not in tickers:
+                    tickers.append(t)
+        out[k] = {"etf": etf, "description": desc, "tickers": tickers}
+    return out
+
+def get_sectors(mode: str = PORTFOLIO_MODE) -> dict:
+    mode = (mode or "").lower()
+    if mode == "gpt":
+        return SECTORS_GPT
+    if mode == "grok":
+        return SECTORS_GROK
+    if mode == "merged":
+        return _merge_sectors(SECTORS_GPT, SECTORS_GROK)
+    raise ValueError(f"Unknown PORTFOLIO_MODE '{mode}' (use 'gpt' | 'grok' | 'merged')")
+
+SECTORS = get_sectors()
+
+# -----------------------------
+# Symbol aliases
+# -----------------------------
+SYMBOL_ALIASES = {
+    "BRK.B": ["BRK.B", "BRK-B", "BRK/B"],
+    "GOOGL": ["GOOGL", "GOOG"],
+    "GOOG": ["GOOG", "GOOGL"],
+}
+
+def alias_candidates(sym: str) -> list[str]:
+    """Return preferred symbol + any alias candidates to try for data providers."""
+    return [sym] + SYMBOL_ALIASES.get(sym, [])
 ```
 
 
@@ -262,35 +340,83 @@ def alias_candidates(sym: str): return [sym] + SYMBOL_ALIASES.get(sym, [])
 **Query:** `open -e universe.py`
 
 ```bash
+# build_universe.py
+import json
+import collections
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
 from config import USERNAME, PASSWORD
-from sectors import SECTORS, alias_candidates
-import json, collections
+from sectors import get_sectors, alias_candidates  # from sectors.py I sent earlier
+
+# Which universes to build in one go
+BUILD_MODES = ["gpt", "grok", "merged"]  # edit to ["gpt","grok"] if you don't want merged
 
 def has_chain(sess, sym):
+    """Return the first alias that has an options chain, else None."""
     for c in alias_candidates(sym):
         try:
             oc = get_option_chain(sess, c)
-            if oc: return c
+            if oc:
+                return c
         except Exception:
             pass
     return None
 
-if __name__ == "__main__":
-    sess = Session(USERNAME, PASSWORD)
-    cleaned, seen = [], set()
-    for sector, meta in SECTORS.items():
-        for t in meta["tickers"]:
-            if t in seen: continue
+def build_for_mode(sess, mode):
+    sectors = get_sectors(mode)
+    cleaned = []
+    seen = set()
+    dedup_global = (mode == "merged")  # only dedup across sectors for the merged universe
+
+    for sector, meta in sectors.items():
+        for t in meta.get("tickers", []):
+            if dedup_global and t in seen:
+                continue
             seen.add(t)
-            live = has_chain(sess, t)
-            cleaned.append({"sector":sector, "ticker": live or t, "requested": t, "status": "ok" if live else "no_chain"})
-    with open("universe_raw.json","w") as f: json.dump(cleaned, f, indent=2)
-    ok = [x for x in cleaned if x["status"]=="ok"]
-    by = collections.Counter(x["sector"] for x in ok)
-    print("✅ chains ok:", len(ok), "/", len(cleaned))
-    print("by sector:", dict(by))
+
+            resolved = has_chain(sess, t)
+            cleaned.append({
+                "sector": sector,
+                "ticker": resolved or t,
+                "requested": t,
+                "status": "ok" if resolved else "no_chain",
+            })
+
+    return cleaned
+
+def main():
+    sess = Session(USERNAME, PASSWORD)
+    index = {}
+
+    for mode in BUILD_MODES:
+        cleaned = build_for_mode(sess, mode)
+
+        # Save per-mode universe
+        out_path = f"universe_{mode}.json"
+        with open(out_path, "w") as f:
+            json.dump(cleaned, f, indent=2)
+
+        ok = [x for x in cleaned if x["status"] == "ok"]
+        by_sector = collections.Counter(x["sector"] for x in ok)
+
+        print(f"[{mode}] ✅ chains ok: {len(ok)} / {len(cleaned)}")
+        print(f"[{mode}] by sector:", dict(by_sector))
+        print(f"[{mode}] wrote: {out_path}")
+
+        index[mode] = {
+            "total": len(cleaned),
+            "ok": len(ok),
+            "by_sector": dict(by_sector),
+            "file": out_path,
+        }
+
+    # Write a tiny index with counts/paths
+    with open("universe_index.json", "w") as f:
+        json.dump(index, f, indent=2)
+    print("Wrote: universe_index.json")
+
+if __name__ == "__main__":
+    main()
 ```
 
 **Run:** `python3 universe.py`
