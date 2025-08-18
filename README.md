@@ -94,7 +94,7 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 
 # ✒️ Prompt for Trading Basket
 
-## Select Trading Universe
+## Download Trading Universe CSV
 
 `XLK` https://www.sectorspdrs.com/mainfund/XLK
 
@@ -116,7 +116,7 @@ PASSWORD = "YOUR_TASTYTRADE_PASSWORD"
 
 
 
-## Prompt for Portfolio
+## Prompt
 
 ```
 Use the attached ticker basket files as the universe.
