@@ -8,7 +8,7 @@
 ## `Configure TastyTrade`
 
 
-# 1️⃣ Select a 72 ticker trading universe
+# 1️⃣ Select Trading Universe
 
 ## Download the Trading Universe
 
@@ -31,7 +31,7 @@
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 
-## Prompt [gpt5|grok4]
+## Prompt
 ```
 Use the attached ticker basket files as the universe.
 Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
@@ -159,11 +159,16 @@ python3 runpipeline.py
 
 ## `master.py`
 
+```bash
+python3 master.py`
+```
 
 ---
 
 
-# [GPT/GROK] Prompt
+## 4️⃣ AI Driven News Screener 
+
+## Prompt
 
 ```text
 You are my Credit-Spread Catalyst & Sanity Checker. Timezone: America/Los_Angeles.
