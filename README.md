@@ -127,9 +127,6 @@ open sectors.py
 
 ## `run_pipeline.py`
 
-```python
-python3 runpipeline.py
-```
 
 ---
 
