@@ -31,7 +31,7 @@ Steps located in `Configure TastyTrade`
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 
-## Enter Prompt (CSV's attached)
+## First Prompt
 ```
 Use the attached ticker basket files as the universe.
 Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
@@ -105,105 +105,30 @@ Rules:
 ```
 ---
 
-# 🪛 Build Daily Screener
+# 🪛 Build universe, dedupe, then score GPT and Grok separately.
 
 ## `sectors.py` Defines the tradable universe.
 
 Paste the prompt above’s Python output before running, open saved script, replace the GPT and Grok universes with today’s lists to maintain a real-time, daily news-driven ticker selection before running trades.
 
----
-
 ## `build_universe.py` Builds GPT/Grok/merged universes. 
 
 Verify options-chain availability, deduping, writing JSONs, summarizing coverage, and setting `universe_active.json` from `PORTFOLIO_MODE`.
-
----
 
 ## `spot.py` Streams live quotes for the active universe  
 
 Writes `step2_spot.json` with `bid/ask/mid snapshots`.
 
----
-
 ## `atm_iv.py` Computes 30–45 DTE ATM IV
 
 Per ticker via `dxFeed Greeks`, derives a heuristic `IV rank`, and writes results to `step3_atm_iv.json`.
 
----
-
 ## `liquidity.py`
 
+
+## `run_pipeline.py` 
+
 ---
-
-## 📂 Build Trading Basket 
-
-**Create:** `touch basket.py`
-**Query:** `open -e basket.py`
-
-```bash
-import json, math
-from sectors import SECTORS
-# weights (same idea as before)
-W_IVR, W_SPREAD, W_DEPTH, W_ABSIV = 0.40, 0.25, 0.25, 0.10
-
-def score(ivr, spread_med, oi_min, abs_iv):
-    spread_score = max(0.0, 1.0 - min(spread_med, 0.30)/0.30)
-    depth_score  = min((oi_min or 0)/20000.0, 1.0)
-    absiv_score  = min((abs_iv or 0)/1.00, 1.0)
-    return (W_IVR*(ivr/100.0) + W_SPREAD*spread_score + W_DEPTH*depth_score + W_ABSIV*absiv_score)*100.0
-
-if __name__ == "__main__":
-    with open("universe_raw.json") as f: U = json.load(f)
-    with open("step4_liquidity.json") as f: LQ = json.load(f)
-    with open("step3_atm_iv.json") as f: IVS = {r["ticker"]: r for r in json.load(f)}
-
-    # map sector -> tickers
-    sector_map = {}
-    for r in U:
-        if r["status"]!="ok": continue
-        sector_map.setdefault(r["sector"], []).append(r["ticker"])
-
-    portfolio = []
-    for sector, meta in SECTORS.items():
-        tickers = sector_map.get(sector, [])
-        cands = []
-        for t in tickers:
-            liq = LQ.get(t)
-            ivr = IVS.get(t,{}).get("ivr",0)
-            atm_iv = IVS.get(t,{}).get("atm_iv",0)
-            if not liq or liq["status"]!="ok" or ivr<30: continue
-            m = liq["metrics"]
-            s = round(score(ivr, m["spread_med_Δ30"], m["oi_min_Δ30"], atm_iv), 1)
-            cands.append({"sector":sector,"ticker":t,"tier":liq.get("tier"),"ivr":ivr,"atm_iv":atm_iv,"score":s,"metrics":m})
-        if cands:
-            best = max(cands, key=lambda x:x["score"])
-            best["status"]="ok"; best["reason_codes"]=["IVR≥30","Δ30_spread_ok","OI_ok"]
-            portfolio.append(best)
-        else:
-            portfolio.append({"sector":sector,"ticker":f"NO PICK ({sector})","status":"no_qualifying_ticker"})
-
-    out = {
-        "scan_id": IVS[next(iter(IVS))]["target_expiry"] if IVS else "",
-        "portfolio": portfolio,
-        "qualified_tickers": [p["ticker"] for p in portfolio if p["status"]=="ok"],
-        "universe_quality": {
-            "sectors_qualified": sum(1 for p in portfolio if p["status"]=="ok"),
-            "sectors_total": len(SECTORS)
-        }
-    }
-    with open("portfolio_universe.json","w") as f: json.dump(out, f, indent=2)
-
-    print(f"{'Sector':<22} {'Ticker':<8} {'Score':>6} {'Tier':>4} {'IVR':>6} {'SpreadΔ30':>10} {'OIminΔ30':>10} {'Status':>10}")
-    for p in portfolio:
-        if p["status"]=="ok":
-            m=p["metrics"]
-            print(f"{p['sector']:<22} {p['ticker']:<8} {p['score']:>6.1f} {p['tier']:>4} {p['ivr']:>6.1f} {m['spread_med_Δ30']:>10.3f} {m['oi_min_Δ30']:>10} {'OK':>10}")
-        else:
-            print(f"{p['sector']:<22} {p['ticker']:<8} {'-':>6} {'-':>4} {'-':>6} {'-':>10} {'-':>10} {p['status']:>10}")
-    print("💾 Saved: portfolio_universe.json")
-```
-
-**Run:** `python3 basket.py`
 
 # ✒️ Prompt for News, Earnings, Macro
 
