@@ -107,19 +107,19 @@ Rules:
 
 # 🪛 Build universe, dedupe, then score GPT and Grok separately.
 
-## `sectors.py` Defines the tradable universe.
+## `sectors.py`
 
 Paste the prompt above’s Python output before running, open saved script, replace the GPT and Grok universes with today’s lists to maintain a real-time, daily news-driven ticker selection before running trades.
 
-## `build_universe.py` Builds GPT/Grok/merged universes. 
+## `build_universe.py` 
 
 Verify options-chain availability, deduping, writing JSONs, summarizing coverage, and setting `universe_active.json` from `PORTFOLIO_MODE`.
 
-## `spot.py` Streams live quotes for the active universe  
+## `spot.py` 
 
 Writes `step2_spot.json` with `bid/ask/mid snapshots`.
 
-## `atm_iv.py` Computes 30–45 DTE ATM IV
+## `atm_iv.py`
 
 Per ticker via `dxFeed Greeks`, derives a heuristic `IV rank`, and writes results to `step3_atm_iv.json`.
 
@@ -127,6 +127,9 @@ Per ticker via `dxFeed Greeks`, derives a heuristic `IV rank`, and writes result
 
 
 ## `run_pipeline.py` 
+
+**Run:** 
+```bash python3 runpipeline.py ```
 
 ---
 
