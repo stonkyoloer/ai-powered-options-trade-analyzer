@@ -3,99 +3,124 @@
 **Query:** `open -e universe.py`
 
 ```bash
-# build_universe.py - Options Chain Validation
+# build_universe.py - Optimized Universe Builder
 """
-Validates which tickers actually have tradeable options chains.
-Only keeps tickers with real options data.
+KEEP - optimize for 20min runtime target.
+Validates options chains with early exit at 95% success.
 """
 import json
-import collections
+import time
+from datetime import datetime
 from pathlib import Path
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
 from config import USERNAME, PASSWORD
-from sectors import get_sectors
+from sectors import get_sectors, alias_candidates, PORTFOLIO_MODE, PerfTimer
 
-def validate_universe(mode, verbose=True):
-    """Validate options chains for a specific universe (gpt/grok)"""
-    if verbose:
-        print(f"🔨 Validating {mode.upper()} Universe Options Chains")
-        print("=" * 60)
+BUILD_MODES = ["gpt", "grok"]
+
+def validate_chain_fast(sess, sym, timeout=3):
+    """Fast chain validation with timeout"""
+    start_time = time.time()
     
-    # Get tickers for this mode
-    sectors = get_sectors(mode)
-    sess = Session(USERNAME, PASSWORD)
+    for alias in alias_candidates(sym):
+        if time.time() - start_time > timeout:
+            break
+            
+        try:
+            chain = get_option_chain(sess, alias)
+            if chain and len(chain) > 0:
+                print(f"  ✅ {sym} -> {alias}")
+                return alias
+        except Exception as e:
+            print(f"  ❌ {sym} -> {alias} ({str(e)[:30]})")
+            continue
     
-    valid_tickers = []
-    failed_tickers = []
+    print(f"  ⚠️ {sym} -> NO CHAIN")
+    return None
+
+def build_universe_optimized(sess, mode):
+    """Build universe with optimized validation"""
+    print(f"\n🔨 Building {mode.upper()} universe...")
     
-    for sector_name, sector_data in sectors.items():
-        if verbose:
-            print(f"\n📂 {sector_name}:")
+    with PerfTimer(f"{mode.upper()} universe build"):
+        sectors = get_sectors(mode)
+        validated_tickers = []
+        failed_tickers = []
         
-        for ticker in sector_data["tickers"]:
-            try:
-                chain = get_option_chain(sess, ticker)
-                if chain and len(chain) > 0:
-                    valid_tickers.append({
-                        "ticker": ticker,
-                        "sector": sector_name,
-                        "status": "ok",
-                        "expiries": len(chain)
-                    })
-                    if verbose:
-                        print(f"  ✅ {ticker}: {len(chain)} expiries")
-                else:
-                    failed_tickers.append({
-                        "ticker": ticker,
-                        "sector": sector_name,
-                        "status": "no_chain"
-                    })
-                    if verbose:
-                        print(f"  ❌ {ticker}: No options chain")
-                        
-            except Exception as e:
-                failed_tickers.append({
-                    "ticker": ticker,
-                    "sector": sector_name,
-                    "status": f"error: {str(e)[:50]}"
-                })
-                if verbose:
-                    print(f"  ❌ {ticker}: {e}")
+        # Get all tickers
+        all_tickers = []
+        ticker_to_sector = {}
+        for sector, meta in sectors.items():
+            for ticker in meta["tickers"]:
+                all_tickers.append(ticker)
+                ticker_to_sector[ticker] = sector
+        
+        print(f"📋 Validating {len(all_tickers)} tickers...")
+        
+        # Process with early exit
+        for i, ticker in enumerate(all_tickers, 1):
+            print(f"[{i}/{len(all_tickers)}] {ticker}:")
+            
+            validated_alias = validate_chain_fast(sess, ticker)
+            
+            record = {
+                "ticker": validated_alias or ticker,
+                "requested": ticker,
+                "sector": ticker_to_sector[ticker],
+                "status": "ok" if validated_alias else "no_chain"
+            }
+            
+            if validated_alias:
+                validated_tickers.append(record)
+            else:
+                failed_tickers.append(record)
+            
+            # Early exit at 95% if we have enough
+            success_rate = len(validated_tickers) / i
+            if i >= 20 and success_rate >= 0.95:
+                print(f"🚀 Early exit at 95% success rate ({i} processed)")
+                break
     
-    result = {
-        "mode": mode,
-        "valid_tickers": valid_tickers,
-        "failed_tickers": failed_tickers,
-        "summary": {
-            "total_attempted": len(valid_tickers) + len(failed_tickers),
-            "valid": len(valid_tickers),
-            "failed": len(failed_tickers),
-            "success_rate": len(valid_tickers) / (len(valid_tickers) + len(failed_tickers)) * 100
-        }
-    }
+    all_results = validated_tickers + failed_tickers
     
-    # Save results
-    filename = f"universe_{mode}.json"
-    with open(filename, "w") as f:
-        json.dump(result, f, indent=2)
+    print(f"📊 Results: {len(validated_tickers)} OK, {len(failed_tickers)} failed")
+    if failed_tickers:
+        failed_symbols = [f["requested"] for f in failed_tickers]
+        print(f"❌ Failed: {failed_symbols}")
     
-    if verbose:
-        print(f"\n📊 {mode.upper()} Results:")
-        print(f"  ✅ Valid: {len(valid_tickers)}/{len(valid_tickers) + len(failed_tickers)}")
-        print(f"  📁 Saved: {filename}")
-    
-    return result
+    return all_results
 
 def main():
-    """Main function for standalone execution"""
-    print("🚀 Options Universe Validator")
-    print("=" * 50)
+    """Main universe builder"""
+    start_time = time.time()
+    print("🚀 Optimized Universe Builder")
+    print(f"📅 Target: 20min runtime | Mode: {PORTFOLIO_MODE}")
     
-    # Validate both universes
-    for mode in ["gpt", "grok"]:
-        validate_universe(mode, verbose=True)
-        print()
+    sess = Session(USERNAME, PASSWORD)
+    
+    for mode in BUILD_MODES:
+        results = build_universe_optimized(sess, mode)
+        
+        # Save results
+        filename = f"universe_{mode}.json"
+        with open(filename, "w") as f:
+            json.dump(results, f, indent=2)
+        
+        print(f"💾 Saved: {filename}")
+    
+    # Set active universe
+    active_file = f"universe_{PORTFOLIO_MODE}.json"
+    if Path(active_file).exists():
+        with open(active_file, "r") as f:
+            active_data = f.read()
+        with open("universe_active.json", "w") as f:
+            f.write(active_data)
+        print(f"🔗 Active: universe_active.json -> {PORTFOLIO_MODE}")
+    
+    total_time = time.time() - start_time
+    print(f"\n⏱️ Total time: {total_time:.1f}s")
+    print(f"🎯 Next: python spot.py")
 
 if __name__ == "__main__":
     main()
