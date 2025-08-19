@@ -3,106 +3,97 @@
 **Query:** `open -e spot.py`
 
 ```bash
-# spot.py - Live Stock Quote Collection
+# spot.py - Optimized Live Quote Collection
 """
-Streams live stock quotes for all valid tickers.
-Gets real-time bid/ask/mid prices.
+CHANGE - optimize for 20min runtime with aggressive timeouts.
+Gets quotes for all 72 tickers (36 GPT + 36 Grok).
 """
 import asyncio
 import json
+import time
 from datetime import datetime, timezone
 from tastytrade import Session, DXLinkStreamer
 from tastytrade.dxfeed import Quote
 from config import USERNAME, PASSWORD
+from sectors import PerfTimer
 
-async def collect_live_quotes(tickers, mode, verbose=True):
-    """Collect live quotes for a list of tickers"""
-    if verbose:
-        print(f"📊 Collecting Live Quotes - {mode.upper()}")
-        print("=" * 60)
-        print(f"🎯 Streaming quotes for {len(tickers)} tickers...")
+async def collect_quotes_fast(tickers, mode, timeout=8):
+    """Collect quotes with aggressive timeout"""
+    print(f"📊 Collecting quotes for {len(tickers)} {mode.upper()} tickers")
+    print(f"⏱️ Timeout: {timeout}s")
     
     sess = Session(USERNAME, PASSWORD)
     quotes = {}
-    quotes_received = 0
+    events_received = 0
     
-    async with DXLinkStreamer(sess) as streamer:
-        if verbose:
-            print("🔌 Connected to live market data")
-        
-        await streamer.subscribe(Quote, tickers)
-        if verbose:
-            print(f"📡 Subscribed to {len(tickers)} symbols")
-        
-        start_time = asyncio.get_event_loop().time()
-        last_report = start_time
-        
-        # Collect for up to 15 seconds or until we have all quotes
-        while True:
-            now_time = asyncio.get_event_loop().time()
-            elapsed = now_time - start_time
+    with PerfTimer(f"{mode.upper()} quote collection"):
+        async with DXLinkStreamer(sess) as streamer:
+            print("📡 Subscribing to quotes...")
+            await streamer.subscribe(Quote, tickers)
             
-            # Progress report every 3 seconds
-            if verbose and now_time - last_report >= 3.0:
-                coverage = len(quotes)
-                print(f"📈 Progress: {coverage}/{len(tickers)} quotes ({coverage/len(tickers)*100:.1f}%) | {elapsed:.1f}s elapsed")
-                last_report = now_time
+            start_time = time.time()
+            last_report = start_time
+            collected = set()
             
-            # Exit conditions
-            if elapsed >= 15.0:
-                if verbose:
-                    print("⏰ Time limit reached (15s)")
-                break
-            if len(quotes) >= len(tickers):
-                if verbose:
-                    print("✅ All quotes collected!")
-                break
-            
-            try:
-                q = await asyncio.wait_for(streamer.get_event(Quote), timeout=1.0)
-                quotes_received += 1
+            while time.time() - start_time < timeout:
+                elapsed = time.time() - start_time
                 
-                if q and q.event_symbol in tickers:
-                    bid, ask = float(q.bid_price or 0), float(q.ask_price or 0)
+                # Progress report every 2s
+                if time.time() - last_report >= 2:
+                    rate = len(collected) / len(tickers) * 100
+                    print(f"  📈 {len(collected)}/{len(tickers)} ({rate:.1f}%) | {elapsed:.1f}s")
+                    last_report = time.time()
+                
+                # Early exit at 95% after 3s
+                if len(collected) >= len(tickers) * 0.95 and elapsed > 3:
+                    print("  🚀 Early exit at 95%")
+                    break
+                
+                try:
+                    quote = await asyncio.wait_for(streamer.get_event(Quote), timeout=0.3)
+                    events_received += 1
                     
-                    if bid > 0 and ask > 0 and ask >= bid:
-                        if q.event_symbol not in quotes:  # First valid quote wins
+                    if quote and quote.event_symbol in tickers and quote.event_symbol not in collected:
+                        bid, ask = float(quote.bid_price or 0), float(quote.ask_price or 0)
+                        
+                        if bid > 0 and ask > 0 and ask >= bid:
                             mid = (bid + ask) / 2
                             spread = ask - bid
-                            quotes[q.event_symbol] = {
-                                "ticker": q.event_symbol,
+                            
+                            quotes[quote.event_symbol] = {
+                                "ticker": quote.event_symbol,
                                 "bid": round(bid, 4),
-                                "ask": round(ask, 4),
+                                "ask": round(ask, 4), 
                                 "mid": round(mid, 4),
                                 "spread": round(spread, 4),
                                 "spread_pct": round(100 * spread / mid, 3) if mid > 0 else 0,
                                 "timestamp": datetime.now(timezone.utc).isoformat()
                             }
+                            collected.add(quote.event_symbol)
                             
-                            if verbose and len(quotes) <= 5:
-                                print(f"  💰 {q.event_symbol}: ${mid:.2f} (spread: {spread:.3f})")
-                
-            except asyncio.TimeoutError:
-                continue
-            except Exception as e:
-                if verbose:
-                    print(f"⚠️ Quote error: {e}")
-                continue
-        
-        await streamer.unsubscribe(Quote, tickers)
+                except asyncio.TimeoutError:
+                    continue
+                except Exception as e:
+                    print(f"  ⚠️ Quote error: {e}")
+                    continue
+            
+            await streamer.unsubscribe(Quote, tickers)
     
-    # Results
+    # Results summary
+    success_rate = len(quotes) / len(tickers) * 100
+    elapsed = time.time() - start_time
+    
     result = {
         "mode": mode,
-        "collection_stats": {
-            "tickers_requested": len(tickers),
-            "quotes_collected": len(quotes),
-            "total_events_received": quotes_received,
-            "success_rate": len(quotes) / len(tickers) * 100,
-            "collection_time_seconds": elapsed
+        "stats": {
+            "requested": len(tickers),
+            "collected": len(quotes),
+            "success_rate": round(success_rate, 1),
+            "events_received": events_received,
+            "elapsed_seconds": round(elapsed, 2)
         },
         "quotes": quotes,
-        "missing_tickers": [t for t in tickers if t not in quotes]
+        "missing": [t for t in tickers if t not in quotes]
     }
     
     # Save results
@@ -110,76 +101,40 @@ async def collect_live_quotes(tickers, mode, verbose=True):
     with open(filename, "w") as f:
         json.dump(result, f, indent=2)
     
-    if verbose:
-        print(f"\n📊 {mode.upper()} Quote Collection Results:")
-        print(f"  ✅ Success: {len(quotes)}/{len(tickers)} ({len(quotes)/len(tickers)*100:.1f}%)")
-        print(f"  📡 Events received: {quotes_received}")
-        print(f"  📁 Saved: {filename}")
-        
-        if result["missing_tickers"]:
-            print(f"  ⚠️ Missing: {result['missing_tickers']}")
+    print(f"📊 {mode.upper()} Results: {len(quotes)}/{len(tickers)} ({success_rate:.1f}%)")
+    print(f"📁 Saved: {filename}")
+    
+    if result["missing"]:
+        print(f"❌ Missing: {result['missing']}")
     
     return result
 
 def main():
-    """Main function for standalone execution"""
-    print("🚀 Live Quote Collector")
+    """Main quote collection"""
+    print("🚀 Optimized Quote Collector")
     print("=" * 50)
     
     for mode in ["gpt", "grok"]:
-        # Load valid tickers from previous step
         try:
+            # Load universe
             with open(f"universe_{mode}.json", "r") as f:
-                universe_data = json.load(f)
+                universe = json.load(f)
             
-            # Debug: Print the structure of the loaded data
-            print(f"\n🔍 Debug: Loaded {mode} universe data type: {type(universe_data)}")
+            # Extract valid tickers
+            valid_tickers = [
+                item["ticker"] for item in universe 
+                if isinstance(item, dict) and item.get("status") == "ok"
+            ]
             
-            # Handle different possible structures
-            tickers = []
-            
-            if isinstance(universe_data, dict):
-                if "valid_tickers" in universe_data:
-                    # Expected structure: {"valid_tickers": [{"ticker": "AAPL", ...}, ...]}
-                    valid_tickers = universe_data["valid_tickers"]
-                    if isinstance(valid_tickers, list):
-                        if len(valid_tickers) > 0 and isinstance(valid_tickers[0], dict):
-                            tickers = [t["ticker"] for t in valid_tickers if "ticker" in t]
-                        elif len(valid_tickers) > 0 and isinstance(valid_tickers[0], str):
-                            tickers = valid_tickers
-                elif "tickers" in universe_data:
-                    # Alternative structure: {"tickers": ["AAPL", "MSFT", ...]}
-                    tickers = universe_data["tickers"]
-                else:
-                    # Maybe it's a dict with ticker symbols as keys
-                    print(f"🔍 Debug: Dict keys: {list(universe_data.keys())[:5]}...")
-                    if all(isinstance(k, str) for k in universe_data.keys()):
-                        tickers = list(universe_data.keys())
-                    
-            elif isinstance(universe_data, list):
-                # Structure is a list
-                if len(universe_data) > 0:
-                    if isinstance(universe_data[0], dict):
-                        # List of dicts: [{"ticker": "AAPL", ...}, ...]
-                        tickers = [t.get("ticker") or t.get("symbol", "") for t in universe_data if isinstance(t, dict)]
-                        tickers = [t for t in tickers if t]  # Remove empty strings
-                    elif isinstance(universe_data[0], str):
-                        # List of strings: ["AAPL", "MSFT", ...]
-                        tickers = universe_data
-            
-            print(f"🔍 Debug: Extracted {len(tickers)} tickers")
-            if tickers:
-                print(f"🔍 Debug: First 5 tickers: {tickers[:5]}")
-                asyncio.run(collect_live_quotes(tickers, mode))
+            if valid_tickers:
+                asyncio.run(collect_quotes_fast(valid_tickers, mode))
             else:
-                print(f"❌ No valid tickers found for {mode}")
-                print(f"🔍 Debug: Raw data preview: {str(universe_data)[:200]}...")
+                print(f"❌ No valid tickers for {mode}")
                 
         except FileNotFoundError:
-            print(f"❌ universe_{mode}.json not found. Run build_universe.py first.")
+            print(f"❌ universe_{mode}.json not found")
         except Exception as e:
-            print(f"❌ Error loading {mode} universe: {e}")
-            print(f"🔍 Debug: Exception type: {type(e)}")
+            print(f"❌ Error processing {mode}: {e}")
 
 if __name__ == "__main__":
     main()
