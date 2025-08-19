@@ -107,7 +107,7 @@ Rules:
 
 # 🪛 Build Daily Screener
 
-## `sectors.py`
+## `sectors.py` can be found in this projects files.  copy and past the python output from prompt directly above, open the saved script file and replace the grok and gpt trading universes with the fresh outputs  
 ---
 
 ## 📂 Verify Ticker Data 
