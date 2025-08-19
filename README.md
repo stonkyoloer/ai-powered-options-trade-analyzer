@@ -111,17 +111,21 @@ Rules:
 
 Defines sector portfolios, merges them, manages symbols.
 
-
 ## `build_universe.py`
 
+Validates tickers' options chains, saves results, logs status.
 
 ## `spot.py`
 
+Streams live stock quotes, saves bid/ask/mid prices.
 
 ## `atm_iv.py`
 
+Calculates ATM implied volatility, IV rank for tickers.
 
 ## `liquidity.py`
+
+Analyzes options liquidity, creates sector-based trading baskets.
 
 ---
 
@@ -130,12 +134,15 @@ Defines sector portfolios, merges them, manages symbols.
 
 ## `stock_prices.py`
 
+Collects live stock prices for universe tickers.
 
 ## `options_chains.py`
 
+Discovers options contracts for credit spread analysis.
 
 ## `iv_data.py`
 
+Collects implied volatility data for options contracts.
 
 ## `market_prices.py`
 
