@@ -128,8 +128,10 @@ Per ticker via `dxFeed Greeks`, derives a heuristic `IV rank`, and writes result
 
 ## `run_pipeline.py` 
 
-**Run:** 
-```bash python3 runpipeline.py ```
+
+```python
+python3 runpipeline.py
+```
 
 ---
 
