@@ -107,38 +107,38 @@ Rules:
 
 # 2️⃣ Select 36 tickers; find 1 ticker per sector:
 
-## `sectors.py` Step_1
+## `sectors.py`
 
 ```python
 python3 sectors.py
 ```
 
-## `build_universe.py` Step_2
+## `build_universe.py`
 
 ```python
 python3 build_universe.py
 ```
 
-## `spot.py` Step_3
+## `spot.py`
 
 ```python
 python3 spot.py
 ```
 
-## `atm_iv.py` Step_4
+## `atm_iv.py`
 
 ```python
 python3 atm_iv.py
 ```
 
-## `liquidity.py` Step_5
+## `liquidity.py`
 
 ```python
 python3 liquidity.py
 ```
 
 
-## `run_pipeline.py` (Master_Script)
+## `run_pipeline.py`
 
 ```python
 python3 runpipeline.py
