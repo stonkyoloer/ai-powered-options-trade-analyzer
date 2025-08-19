@@ -22,7 +22,7 @@
 
 `XLV` https://www.sectorspdrs.com/mainfund/XLV
 
-'XLF` https://www.sectorspdrs.com/mainfund/XLF
+`XLF` https://www.sectorspdrs.com/mainfund/XLF
 
 `XLI` https://www.sectorspdrs.com/mainfund/XLI
 
