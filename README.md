@@ -164,7 +164,11 @@ Scans for optimal credit spreads using Black-Scholes.
 
 ## `master.py`
 
-Orchestrates complete credit spread analysis pipeline, generates all reports.
+Orchestrates trading pipeline, runs analyses, generates reports.
+
+```python
+python3 master.py
+```
 
 ---
 
