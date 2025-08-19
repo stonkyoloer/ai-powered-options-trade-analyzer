@@ -8,7 +8,7 @@
 Steps located in `Configure TastyTrade`
 
 
-# 💡 Select nine sectors; four tickers each; Python ready filters
+# 1️⃣ Select nine sectors; find four tickers per sector
 
 ## Download the Trading Universe CSV
 
@@ -31,7 +31,7 @@ Steps located in `Configure TastyTrade`
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 
-## First Prompt
+## Prompt [gpt 5 / grok 4]
 ```
 Use the attached ticker basket files as the universe.
 Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
@@ -105,7 +105,7 @@ Rules:
 ```
 ---
 
-# 🪛 Build universe, dedupe, then score GPT and Grok separately.
+# 2️⃣ Select 36 tickers; find 1 ticker per sector:
 
 ## `sectors.py` Step_1
 
@@ -146,7 +146,9 @@ python3 runpipeline.py
 
 ---
 
-# ✒️ Prompt for News, Earnings, Macro
+# 3️⃣ Prompt for News, Earnings, Macro.
+
+## Prompt [GPT 5 /GROK 4] 
 
 ```bash
 You are my Portfolio News & Risk Sentinel.
@@ -156,7 +158,7 @@ Be concise, structured.
 When you fetch news or events, include links and source names. 
 
 INPUT (paste below EXACTLY as produced):
-=== portfolio_universe.json ===
+=== step4_liquidity.json ===
 {PASTE_JSON_HERE}
 === end ===
 
@@ -1582,7 +1584,7 @@ if __name__ == "__main__":
 ---
 
 
-# ✒️ Prompt
+# [GPT/GROK] Prompt
 
 ```text
 You are my Credit-Spread Catalyst & Sanity Checker. Timezone: America/Los_Angeles.
