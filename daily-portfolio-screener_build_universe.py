@@ -3,86 +3,99 @@
 **Query:** `open -e universe.py`
 
 ```bash
-# build_universe.py
+# build_universe.py - Options Chain Validation
+"""
+Validates which tickers actually have tradeable options chains.
+Only keeps tickers with real options data.
+"""
 import json
 import collections
 from pathlib import Path
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
 from config import USERNAME, PASSWORD
-from sectors import get_sectors, alias_candidates, PORTFOLIO_MODE
+from sectors import get_sectors
 
-# Which universes to build in one go
-BUILD_MODES = ["gpt", "grok", "merged"]  # edit to ["gpt","grok"] if you don't want merged
-
-def has_chain(sess, sym):
-    """Return the first alias that has an options chain, else None."""
-    for c in alias_candidates(sym):
-        try:
-            oc = get_option_chain(sess, c)
-            if oc:
-                return c
-        except Exception:
-            pass
-    return None
-
-def build_for_mode(sess, mode):
+def validate_universe(mode, verbose=True):
+    """Validate options chains for a specific universe (gpt/grok)"""
+    if verbose:
+        print(f"🔨 Validating {mode.upper()} Universe Options Chains")
+        print("=" * 60)
+    
+    # Get tickers for this mode
     sectors = get_sectors(mode)
-    cleaned = []
-    seen = set()
-    dedup_global = (mode == "merged")  # only dedup across sectors for the merged universe
-
-    for sector, meta in sectors.items():
-        for t in meta.get("tickers", []):
-            if dedup_global and t in seen:
-                continue
-            seen.add(t)
-            resolved = has_chain(sess, t)
-            cleaned.append({
-                "sector": sector,
-                "ticker": resolved or t,
-                "requested": t,
-                "status": "ok" if resolved else "no_chain",
-            })
-    return cleaned
+    sess = Session(USERNAME, PASSWORD)
+    
+    valid_tickers = []
+    failed_tickers = []
+    
+    for sector_name, sector_data in sectors.items():
+        if verbose:
+            print(f"\n📂 {sector_name}:")
+        
+        for ticker in sector_data["tickers"]:
+            try:
+                chain = get_option_chain(sess, ticker)
+                if chain and len(chain) > 0:
+                    valid_tickers.append({
+                        "ticker": ticker,
+                        "sector": sector_name,
+                        "status": "ok",
+                        "expiries": len(chain)
+                    })
+                    if verbose:
+                        print(f"  ✅ {ticker}: {len(chain)} expiries")
+                else:
+                    failed_tickers.append({
+                        "ticker": ticker,
+                        "sector": sector_name,
+                        "status": "no_chain"
+                    })
+                    if verbose:
+                        print(f"  ❌ {ticker}: No options chain")
+                        
+            except Exception as e:
+                failed_tickers.append({
+                    "ticker": ticker,
+                    "sector": sector_name,
+                    "status": f"error: {str(e)[:50]}"
+                })
+                if verbose:
+                    print(f"  ❌ {ticker}: {e}")
+    
+    result = {
+        "mode": mode,
+        "valid_tickers": valid_tickers,
+        "failed_tickers": failed_tickers,
+        "summary": {
+            "total_attempted": len(valid_tickers) + len(failed_tickers),
+            "valid": len(valid_tickers),
+            "failed": len(failed_tickers),
+            "success_rate": len(valid_tickers) / (len(valid_tickers) + len(failed_tickers)) * 100
+        }
+    }
+    
+    # Save results
+    filename = f"universe_{mode}.json"
+    with open(filename, "w") as f:
+        json.dump(result, f, indent=2)
+    
+    if verbose:
+        print(f"\n📊 {mode.upper()} Results:")
+        print(f"  ✅ Valid: {len(valid_tickers)}/{len(valid_tickers) + len(failed_tickers)}")
+        print(f"  📁 Saved: {filename}")
+    
+    return result
 
 def main():
-    Path(".").mkdir(exist_ok=True)
-    sess = Session(USERNAME, PASSWORD)
-    index = {}
-
-    for mode in BUILD_MODES:
-        cleaned = build_for_mode(sess, mode)
-        out_path = f"universe_{mode}.json"
-        with open(out_path, "w") as f:
-            json.dump(cleaned, f, indent=2)
-
-        ok = [x for x in cleaned if x["status"] == "ok"]
-        by_sector = collections.Counter(x["sector"] for x in ok)
-        print(f"[{mode}] ✅ chains ok: {len(ok)} / {len(cleaned)}")
-        print(f"[{mode}] by sector:", dict(by_sector))
-        print(f"[{mode}] wrote: {out_path}")
-
-        index[mode] = {
-            "total": len(cleaned),
-            "ok": len(ok),
-            "by_sector": dict(by_sector),
-            "file": out_path,
-        }
-
-    with open("universe_index.json", "w") as f:
-        json.dump(index, f, indent=2)
-    print("Wrote: universe_index.json")
-
-    # Link active universe to the selected PORTFOLIO_MODE
-    active_mode = PORTFOLIO_MODE
-    src = Path(f"universe_{active_mode}.json")
-    dst = Path("universe_active.json")
-    if src.exists():
-        dst.write_text(src.read_text())
-        print(f"🔗 active universe -> universe_active.json ({active_mode})")
-    else:
-        print(f"⚠️ active source {src} not found")
+    """Main function for standalone execution"""
+    print("🚀 Options Universe Validator")
+    print("=" * 50)
+    
+    # Validate both universes
+    for mode in ["gpt", "grok"]:
+        validate_universe(mode, verbose=True)
+        print()
 
 if __name__ == "__main__":
     main()
