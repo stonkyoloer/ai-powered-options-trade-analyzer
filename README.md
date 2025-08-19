@@ -121,10 +121,6 @@ Rules:
 
 ## `liquidity.py`
 
-
-## `run_pipeline.py`
-
-
 ---
 
 # 3️⃣ Daily Credit Spread Screener
