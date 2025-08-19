@@ -132,16 +132,54 @@ def main():
             with open(f"universe_{mode}.json", "r") as f:
                 universe_data = json.load(f)
             
-            tickers = [t["ticker"] for t in universe_data["valid_tickers"]]
+            # Debug: Print the structure of the loaded data
+            print(f"\n🔍 Debug: Loaded {mode} universe data type: {type(universe_data)}")
+            
+            # Handle different possible structures
+            tickers = []
+            
+            if isinstance(universe_data, dict):
+                if "valid_tickers" in universe_data:
+                    # Expected structure: {"valid_tickers": [{"ticker": "AAPL", ...}, ...]}
+                    valid_tickers = universe_data["valid_tickers"]
+                    if isinstance(valid_tickers, list):
+                        if len(valid_tickers) > 0 and isinstance(valid_tickers[0], dict):
+                            tickers = [t["ticker"] for t in valid_tickers if "ticker" in t]
+                        elif len(valid_tickers) > 0 and isinstance(valid_tickers[0], str):
+                            tickers = valid_tickers
+                elif "tickers" in universe_data:
+                    # Alternative structure: {"tickers": ["AAPL", "MSFT", ...]}
+                    tickers = universe_data["tickers"]
+                else:
+                    # Maybe it's a dict with ticker symbols as keys
+                    print(f"🔍 Debug: Dict keys: {list(universe_data.keys())[:5]}...")
+                    if all(isinstance(k, str) for k in universe_data.keys()):
+                        tickers = list(universe_data.keys())
+                    
+            elif isinstance(universe_data, list):
+                # Structure is a list
+                if len(universe_data) > 0:
+                    if isinstance(universe_data[0], dict):
+                        # List of dicts: [{"ticker": "AAPL", ...}, ...]
+                        tickers = [t.get("ticker") or t.get("symbol", "") for t in universe_data if isinstance(t, dict)]
+                        tickers = [t for t in tickers if t]  # Remove empty strings
+                    elif isinstance(universe_data[0], str):
+                        # List of strings: ["AAPL", "MSFT", ...]
+                        tickers = universe_data
+            
+            print(f"🔍 Debug: Extracted {len(tickers)} tickers")
             if tickers:
+                print(f"🔍 Debug: First 5 tickers: {tickers[:5]}")
                 asyncio.run(collect_live_quotes(tickers, mode))
             else:
                 print(f"❌ No valid tickers found for {mode}")
+                print(f"🔍 Debug: Raw data preview: {str(universe_data)[:200]}...")
                 
         except FileNotFoundError:
             print(f"❌ universe_{mode}.json not found. Run build_universe.py first.")
         except Exception as e:
             print(f"❌ Error loading {mode} universe: {e}")
+            print(f"🔍 Debug: Exception type: {type(e)}")
 
 if __name__ == "__main__":
     main()
