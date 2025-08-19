@@ -3,279 +3,22 @@
 **Query:** `touch iv_liquidity.py`
 
 ```bash
-# advanced_iv_liquidity.py - STEP 6: Fixed version with better data collection
+# iv_liquidity.py - Advanced IV & Liquidity Analysis
+"""
+Comprehensive IV analysis and liquidity scoring for credit spread selection.
+Combines multiple data sources for optimal contract selection.
+"""
+import asyncio
 import json
 import numpy as np
-from datetime import datetime
-import asyncio
+from datetime import datetime, timezone
+from collections import defaultdict
 from tastytrade import Session, DXLinkStreamer
 from tastytrade.dxfeed import Summary
 from config import USERNAME, PASSWORD
 
-async def analyze_iv_and_liquidity():
-    print("📊 STEP 6: Advanced IV & Liquidity Analysis")
-    print("=" * 70)
-    print("🎯 Collecting comprehensive market data...")
-    
-    # Load previous data
-    with open('step1_stock_prices.json', 'r') as f:
-        stock_data = json.load(f)
-    
-    with open('step2_options_contracts.json', 'r') as f:
-        options_data = json.load(f)
-    
-    with open('step3_iv_data.json', 'r') as f:
-        iv_data = json.load(f)
-    
-    with open('step4_market_prices.json', 'r') as f:
-        price_data = json.load(f)
-    
-    print(f"✅ Loaded data: {options_data['total_contracts_found']} contracts to analyze")
-    
-    session = Session(USERNAME, PASSWORD)
-    
-    # Create lookups
-    price_lookup = {}
-    for company, prices_list in price_data['prices_by_company'].items():
-        for price in prices_list:
-            price_lookup[price['contract_name']] = price
-    
-    companies = list(stock_data['stock_prices'].keys())
-    enhanced_options = {}
-    
-    # Collect ALL contract symbols
-    all_symbols = []
-    symbol_to_company = {}
-    
-    for company, company_data in options_data['options_by_company'].items():
-        for exp_data in company_data['expiration_dates'].values():
-            for contract in exp_data['contracts']:
-                symbol = contract['streamer_symbol']
-                all_symbols.append(symbol)
-                symbol_to_company[symbol] = company
-    
-    print(f"📡 Need to get Summary data for {len(all_symbols)} contracts...")
-    
-    # Process in batches to avoid overwhelming the connection
-    batch_size = 500
-    summary_data = {}
-    
-    async with DXLinkStreamer(session) as streamer:
-        for batch_start in range(0, len(all_symbols), batch_size):
-            batch_end = min(batch_start + batch_size, len(all_symbols))
-            batch_symbols = all_symbols[batch_start:batch_end]
-            
-            print(f"\n   📊 Processing batch {batch_start//batch_size + 1}/{(len(all_symbols) + batch_size - 1)//batch_size}")
-            print(f"      Symbols {batch_start + 1} to {batch_end} of {len(all_symbols)}")
-            
-            # Subscribe to this batch
-            await streamer.subscribe(Summary, batch_symbols)
-            
-            # Collect data for this batch
-            batch_collected = 0
-            start_time = asyncio.get_event_loop().time()
-            no_data_timeout = 0
-            
-            # Collect for up to 30 seconds per batch or until we stop getting new data
-            while (asyncio.get_event_loop().time() - start_time) < 30 and no_data_timeout < 5:
-                try:
-                    summary = await asyncio.wait_for(streamer.get_event(Summary), timeout=1.0)
-                    if summary and summary.event_symbol in batch_symbols:
-                        summary_data[summary.event_symbol] = {
-                            'open_interest': int(summary.open_interest) if summary.open_interest else 0,
-                            'volume': int(summary.prev_day_volume) if summary.prev_day_volume else 0,
-                            'day_high': float(summary.day_high_price) if summary.day_high_price else 0,
-                            'day_low': float(summary.day_low_price) if summary.day_low_price else 0
-                        }
-                        batch_collected += 1
-                        no_data_timeout = 0  # Reset timeout counter
-                        
-                        if batch_collected % 50 == 0:
-                            print(f"      Collected: {batch_collected} summaries")
-                        
-                except asyncio.TimeoutError:
-                    no_data_timeout += 1
-                    continue
-                except Exception as e:
-                    continue
-            
-            print(f"      ✅ Batch complete: {batch_collected} summaries collected")
-            
-            # Unsubscribe from this batch before moving to next
-            await streamer.unsubscribe(Summary, batch_symbols)
-            
-            # Small delay between batches
-            await asyncio.sleep(0.5)
-    
-    print(f"\n✅ Total Summary data collected: {len(summary_data)} contracts")
-    
-    # Now analyze each company with all the data
-    for company in companies:
-        print(f"\n🏢 Analyzing {company}...")
-        
-        company_options = options_data['options_by_company'].get(company, {})
-        if not company_options:
-            continue
-        
-        current_price = company_options['current_stock_price']
-        company_contracts = []
-        
-        # Stats tracking
-        stats = {
-            'total_analyzed': 0,
-            'has_iv': 0,
-            'has_price': 0,
-            'has_summary': 0,
-            'has_all_data': 0
-        }
-        
-        for exp_data in company_options['expiration_dates'].values():
-            for contract in exp_data['contracts']:
-                symbol = contract['streamer_symbol']
-                stats['total_analyzed'] += 1
-                
-                # Check data availability
-                has_iv = symbol in iv_data['iv_by_contract']
-                has_price = symbol in price_lookup
-                has_summary = symbol in summary_data
-                
-                if has_iv:
-                    stats['has_iv'] += 1
-                if has_price:
-                    stats['has_price'] += 1
-                if has_summary:
-                    stats['has_summary'] += 1
-                
-                # Only analyze if we have at least IV and price data
-                if not (has_iv and has_price):
-                    continue
-                
-                stats['has_all_data'] += 1
-                
-                # Get all data
-                current_iv = iv_data['iv_by_contract'][symbol]
-                price_info = price_lookup[symbol]
-                
-                # Get summary data or use defaults
-                if has_summary:
-                    liquidity = summary_data[symbol]
-                else:
-                    liquidity = {'open_interest': 0, 'volume': 0}
-                
-                # Calculate metrics
-                bid = price_info['what_buyers_pay']
-                ask = price_info['what_sellers_want']
-                spread = ask - bid
-                
-                # Calculate liquidity score
-                liquidity_score = calculate_liquidity_score(
-                    liquidity['open_interest'],
-                    liquidity['volume'],
-                    spread,
-                    company
-                )
-                
-                contract_analysis = {
-                    'symbol': symbol,
-                    'strike': contract['strike_price'],
-                    'type': contract['contract_type'],
-                    'days_to_exp': contract['days_until_expires'],
-                    'current_iv': current_iv,
-                    'open_interest': liquidity['open_interest'],
-                    'volume': liquidity['volume'],
-                    'bid': bid,
-                    'ask': ask,
-                    'bid_ask_spread': spread,
-                    'liquidity_score': liquidity_score,
-                    'liquid': liquidity_score >= 70,
-                    'has_summary_data': has_summary
-                }
-                
-                company_contracts.append(contract_analysis)
-        
-        # Calculate company metrics
-        if company_contracts:
-            liquid_contracts = [c for c in company_contracts if c['liquid']]
-            high_volume = [c for c in company_contracts if c['volume'] >= 100]
-            high_oi = [c for c in company_contracts if c['open_interest'] >= 1000]
-            tight_spreads = [c for c in company_contracts if c['bid_ask_spread'] <= 0.10]
-            
-            avg_iv = np.mean([c['current_iv'] for c in company_contracts])
-            
-            enhanced_options[company] = {
-                'current_stock_price': current_price,
-                'avg_implied_volatility': avg_iv,
-                'data_coverage': stats,
-                'metrics': {
-                    'total_contracts_analyzed': len(company_contracts),
-                    'liquid_contracts': len(liquid_contracts),
-                    'high_volume_contracts': len(high_volume),
-                    'high_oi_contracts': len(high_oi),
-                    'tight_spread_contracts': len(tight_spreads),
-                    'contracts_with_summary': sum(1 for c in company_contracts if c['has_summary_data'])
-                },
-                'top_liquid_contracts': sorted(
-                    company_contracts, 
-                    key=lambda x: (x['liquidity_score'], x['open_interest']), 
-                    reverse=True
-                )[:20]
-            }
-            
-            print(f"   📊 Avg IV: {avg_iv:.3f}")
-            print(f"   📈 Contracts analyzed: {len(company_contracts)}")
-            print(f"   💧 Liquid contracts: {len(liquid_contracts)}")
-            print(f"   📊 High OI (≥1000): {len(high_oi)}")
-            print(f"   📊 Summary data coverage: {stats['has_summary']}/{stats['total_analyzed']} ({stats['has_summary']/stats['total_analyzed']*100:.1f}%)")
-    
-    # Find best opportunities
-    all_liquid_contracts = []
-    for company, data in enhanced_options.items():
-        for contract in data['top_liquid_contracts']:
-            if contract['liquid']:
-                contract['company'] = company
-                all_liquid_contracts.append(contract)
-    
-    # Sort by liquidity score
-    all_liquid_contracts.sort(key=lambda x: (x['liquidity_score'], x['open_interest']), reverse=True)
-    
-    # Save results
-    result = {
-        'step': 6,
-        'what_we_did': 'Comprehensive IV & Liquidity Analysis',
-        'timestamp': datetime.now().isoformat(),
-        'data_summary': {
-            'total_contracts': options_data['total_contracts_found'],
-            'contracts_with_iv': len(iv_data['iv_by_contract']),
-            'contracts_with_prices': price_data['total_prices_collected'],
-            'contracts_with_summary': len(summary_data)
-        },
-        'companies_analyzed': len(enhanced_options),
-        'enhanced_options': enhanced_options,
-        'top_liquid_contracts': all_liquid_contracts[:50],
-        'liquidity_criteria': {
-            'score_threshold': 70,
-            'oi_threshold': 1000,
-            'volume_threshold': 100,
-            'spread_thresholds': {
-                'top_names': 0.05,
-                'others': 0.10
-            }
-        }
-    }
-    
-    filename = 'step6_advanced_iv_liquidity.json'
-    with open(filename, 'w') as f:
-        json.dump(result, f, indent=2)
-    
-    print(f"\n✅ Analysis complete!")
-    print(f"📊 Summary data coverage: {len(summary_data)}/{len(all_symbols)} contracts ({len(summary_data)/len(all_symbols)*100:.1f}%)")
-    print(f"💧 Total liquid contracts found: {len(all_liquid_contracts)}")
-    print(f"📁 Results saved to: {filename}")
-    
-    return result
-
-def calculate_liquidity_score(open_interest, volume, spread, company):
-    """Calculate 0-100 liquidity score"""
+def calculate_liquidity_score(open_interest, volume, spread, spread_pct, ticker):
+    """Calculate comprehensive liquidity score (0-100)"""
     score = 0
     
     # Open interest component (40 points)
@@ -288,36 +31,259 @@ def calculate_liquidity_score(open_interest, volume, spread, company):
     elif open_interest > 0:
         score += min(20, (open_interest / 100) * 20)
     
-    # Volume component (30 points)
+    # Volume component (25 points)
     if volume >= 1000:
-        score += 30
+        score += 25
     elif volume >= 500:
         score += 20
     elif volume >= 100:
+        score += 15
+    elif volume >= 50:
         score += 10
     elif volume > 0:
-        score += min(10, (volume / 100) * 10)
+        score += min(10, (volume / 50) * 10)
     
-    # Spread component (30 points)
-    if spread >= 0:
-        if company in ['NVDA', 'TSLA', 'AMZN']:
-            if spread <= 0.05:
-                score += 30
-            elif spread <= 0.10:
-                score += 20
-            elif spread <= 0.20:
-                score += 10
-        else:
-            if spread <= 0.10:
-                score += 30
-            elif spread <= 0.20:
-                score += 20
-            elif spread <= 0.50:
-                score += 10
+    # Spread component (35 points)
+    # Adjust thresholds based on ticker liquidity
+    liquid_tickers = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "GOOGL"]
+    
+    if ticker in liquid_tickers:
+        # Tighter spreads expected for liquid names
+        if spread <= 0.05:
+            score += 35
+        elif spread <= 0.10:
+            score += 25
+        elif spread <= 0.20:
+            score += 15
+        elif spread <= 0.50:
+            score += 5
+    else:
+        # More lenient for other tickers
+        if spread <= 0.10:
+            score += 35
+        elif spread <= 0.20:
+            score += 25
+        elif spread <= 0.50:
+            score += 15
+        elif spread <= 1.00:
+            score += 5
     
     return min(100, score)
 
+async def analyze_iv_liquidity(mode, verbose=True):
+    """Perform advanced IV and liquidity analysis"""
+    if verbose:
+        print(f"📊 Advanced IV & Liquidity Analysis - {mode.upper()}")
+        print("=" * 60)
+    
+    # Load previous data
+    try:
+        with open(f"market_prices_{mode}.json", "r") as f:
+            price_data = json.load(f)
+        
+        with open(f"risk_analysis_{mode}.json", "r") as f:
+            risk_data = json.load(f)
+        
+        with open(f"iv_data_{mode}.json", "r") as f:
+            iv_data = json.load(f)
+    except FileNotFoundError as e:
+        print(f"❌ Missing required file: {e}")
+        print("   Run market_prices.py and risk_analysis.py first.")
+        return None
+    
+    # Get all symbols with complete data
+    symbols_with_data = set(price_data["market_prices"].keys()) & set(risk_data["greeks_data"].keys())
+    
+    if verbose:
+        print(f"🎯 Analyzing {len(symbols_with_data):,} contracts with complete data...")
+    
+    sess = Session(USERNAME, PASSWORD)
+    summary_data = {}
+    
+    # Convert to list for batching
+    symbols_list = list(symbols_with_data)
+    batch_size = 500
+    
+    async with DXLinkStreamer(sess) as streamer:
+        for batch_start in range(0, len(symbols_list), batch_size):
+            batch_end = min(batch_start + batch_size, len(symbols_list))
+            batch_symbols = symbols_list[batch_start:batch_end]
+            
+            if verbose:
+                batch_num = batch_start // batch_size + 1
+                total_batches = (len(symbols_list) + batch_size - 1) // batch_size
+                print(f"\n📦 Batch {batch_num}/{total_batches} - Getting Summary data")
+            
+            # Subscribe to Summary
+            await streamer.subscribe(Summary, batch_symbols)
+            
+            # Collect Summary data
+            batch_summary = {}
+            start_time = asyncio.get_event_loop().time()
+            no_data_timeout = 0
+            
+            while (asyncio.get_event_loop().time() - start_time) < 30 and no_data_timeout < 5:
+                try:
+                    summary = await asyncio.wait_for(streamer.get_event(Summary), timeout=1.0)
+                    
+                    if summary and summary.event_symbol in batch_symbols:
+                        if summary.event_symbol not in batch_summary:
+                            batch_summary[summary.event_symbol] = {
+                                "open_interest": int(summary.open_interest or 0),
+                                "volume": int(summary.prev_day_volume or 0),
+                                "day_high": float(summary.day_high_price or 0),
+                                "day_low": float(summary.day_low_price or 0)
+                            }
+                            no_data_timeout = 0
+                
+                except asyncio.TimeoutError:
+                    no_data_timeout += 1
+                    continue
+            
+            # Unsubscribe
+            await streamer.unsubscribe(Summary, batch_symbols)
+            
+            summary_data.update(batch_summary)
+            
+            if verbose:
+                print(f"    ✅ Collected {len(batch_summary)} summaries")
+            
+            await asyncio.sleep(0.5)
+    
+    # Combine all data and calculate scores
+    enhanced_contracts = {}
+    
+    for symbol in symbols_with_data:
+        price_info = price_data["market_prices"][symbol]
+        greek_info = risk_data["greeks_data"][symbol]
+        
+        # Get summary data or use defaults
+        if symbol in summary_data:
+            sum_info = summary_data[symbol]
+        else:
+            sum_info = {"open_interest": 0, "volume": 0}
+        
+        # Calculate liquidity score
+        liquidity_score = calculate_liquidity_score(
+            sum_info["open_interest"],
+            sum_info["volume"],
+            price_info["spread"],
+            price_info["spread_pct"],
+            price_info["ticker"]
+        )
+        
+        enhanced_contracts[symbol] = {
+            "symbol": symbol,
+            "ticker": price_info["ticker"],
+            "strike": price_info["strike"],
+            "type": price_info["type"],
+            "dte": price_info["dte"],
+            "bid": price_info["bid"],
+            "ask": price_info["ask"],
+            "mid": price_info["mid"],
+            "spread": price_info["spread"],
+            "spread_pct": price_info["spread_pct"],
+            "iv": greek_info["iv"],
+            "delta": greek_info["delta"],
+            "theta": greek_info["theta"],
+            "gamma": greek_info["gamma"],
+            "vega": greek_info["vega"],
+            "open_interest": sum_info["open_interest"],
+            "volume": sum_info["volume"],
+            "liquidity_score": liquidity_score,
+            "is_liquid": liquidity_score >= 70
+        }
+    
+    # Organize by ticker
+    contracts_by_ticker = defaultdict(list)
+    for contract in enhanced_contracts.values():
+        contracts_by_ticker[contract["ticker"]].append(contract)
+    
+    # Calculate ticker-level statistics
+    ticker_stats = {}
+    for ticker, contracts in contracts_by_ticker.items():
+        liquid_contracts = [c for c in contracts if c["is_liquid"]]
+        
+        ticker_stats[ticker] = {
+            "ticker": ticker,
+            "total_contracts": len(contracts),
+            "liquid_contracts": len(liquid_contracts),
+            "avg_iv": np.mean([c["iv"] for c in contracts]) if contracts else 0,
+            "avg_liquidity_score": np.mean([c["liquidity_score"] for c in contracts]) if contracts else 0,
+            "max_open_interest": max((c["open_interest"] for c in contracts), default=0),
+            "max_volume": max((c["volume"] for c in contracts), default=0),
+            "contracts_30_45_dte": len([c for c in contracts if 30 <= c["dte"] <= 45]),
+            "high_iv_contracts": len([c for c in contracts if c["iv"] > 0.30])
+        }
+    
+    # Find best contracts for credit spreads
+    # Focus on 30-45 DTE with good liquidity
+    credit_spread_candidates = []
+    for contract in enhanced_contracts.values():
+        if (30 <= contract["dte"] <= 45 and 
+            contract["is_liquid"] and 
+            contract["iv"] > 0.20):
+            credit_spread_candidates.append(contract)
+    
+    # Sort by liquidity score
+    credit_spread_candidates.sort(key=lambda x: x["liquidity_score"], reverse=True)
+    
+    # Create output
+    result = {
+        "mode": mode,
+        "analysis_stats": {
+            "total_contracts_analyzed": len(enhanced_contracts),
+            "contracts_with_summary": len(summary_data),
+            "liquid_contracts": len([c for c in enhanced_contracts.values() if c["is_liquid"]]),
+            "tickers_analyzed": len(ticker_stats),
+            "credit_spread_candidates": len(credit_spread_candidates),
+            "avg_liquidity_score": np.mean([c["liquidity_score"] for c in enhanced_contracts.values()]) if enhanced_contracts else 0
+        },
+        "enhanced_contracts": enhanced_contracts,
+        "ticker_stats": ticker_stats,
+        "credit_spread_candidates": credit_spread_candidates[:100],  # Top 100
+        "liquidity_thresholds": {
+            "min_score": 70,
+            "min_open_interest": 100,
+            "max_spread_liquid": 0.10,
+            "max_spread_other": 0.50
+        },
+        "timestamp": datetime.now(timezone.utc).isoformat()
+    }
+    
+    # Save results
+    filename = f"iv_liquidity_{mode}.json"
+    with open(filename, "w") as f:
+        json.dump(result, f, indent=2)
+    
+    if verbose:
+        print(f"\n📊 {mode.upper()} IV & Liquidity Results:")
+        print(f"  ✅ Contracts analyzed: {len(enhanced_contracts):,}")
+        print(f"  💧 Liquid contracts: {result['analysis_stats']['liquid_contracts']:,}")
+        print(f"  🎯 Credit spread candidates: {len(credit_spread_candidates)}")
+        print(f"  📈 Avg liquidity score: {result['analysis_stats']['avg_liquidity_score']:.1f}")
+        print(f"  📁 Saved: {filename}")
+        
+        # Show top tickers by liquidity
+        if ticker_stats:
+            top_tickers = sorted(ticker_stats.values(), 
+                               key=lambda x: x["avg_liquidity_score"], reverse=True)[:5]
+            print(f"\n  🏆 Top tickers by liquidity:")
+            for t in top_tickers:
+                print(f"    {t['ticker']}: Score {t['avg_liquidity_score']:.1f}, {t['liquid_contracts']}/{t['total_contracts']} liquid")
+    
+    return result
+
+def main():
+    """Main function for standalone execution"""
+    print("🚀 Advanced IV & Liquidity Analyzer")
+    print("=" * 50)
+    
+    for mode in ["gpt", "grok"]:
+        asyncio.run(analyze_iv_liquidity(mode))
+        print()
+
 if __name__ == "__main__":
-    asyncio.run(analyze_iv_and_liquidity())
+    main()
 ```
 **Run:** `python3 iv_liquidity.py`
