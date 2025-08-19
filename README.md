@@ -109,11 +109,10 @@ Rules:
 
 ## `sectors.py`
 
-**Remember to copy and paste the output from prompt output directly above into `sectors.py` and save it before executing the workflow below.**
-
 ```python
 open sectors.py
 ```
+Remember to copy and paste the output from prompt output directly above into `sectors.py` and save it before executing the workflow below.
 
 ## `build_universe.py`
 
@@ -129,14 +128,13 @@ open sectors.py
 
 ## `run_pipeline.py`
 
-**Run this script to pick the daily trading tickers.  9 sectors, 4 tickers per sectors.  ChatGPT and Grok have each selected their own tickers from the ETF's listed above.**
-
 ```python
 python3 runpipeline.py
 ```
 
----
+Run this script to pick the daily trading tickers.  9 sectors, 4 tickers per sectors.  ChatGPT and Grok have each selected their own tickers from the ETF's listed above.
 
+---
 
 # 3️⃣ Daily Credit Spread Screener
 
