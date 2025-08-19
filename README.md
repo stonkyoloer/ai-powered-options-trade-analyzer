@@ -166,7 +166,7 @@ python3 master.py`
 ---
 
 
-## 4️⃣ AI Driven News Screener 
+# 4️⃣ AI Driven News Screener 
 
 ## Prompt
 
