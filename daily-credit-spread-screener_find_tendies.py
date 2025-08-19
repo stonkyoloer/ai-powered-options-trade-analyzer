@@ -3,308 +3,345 @@
 **Query:** `open -e find_tendies.py`
 
 ```bash
-# enhanced_find_tendies.py - STEP 7: Both Call and Put Credit Spreads
+# find_tendies.py - Elite Credit Spread Scanner
+"""
+Advanced credit spread scanner using Black-Scholes probability modeling.
+Finds both bear call and bull put credit spreads with optimal risk/reward.
+"""
 import json
 import numpy as np
 from datetime import datetime
 from scipy.stats import norm
+from collections import defaultdict
 
-class EliteCreditSpreadScanner:
-    """Advanced credit spread scanner for BOTH calls and puts"""
+class CreditSpreadScanner:
+    """Elite credit spread scanner with probability modeling"""
     
     def __init__(self, risk_free_rate=0.05):
         self.risk_free_rate = risk_free_rate
-    
-    def black_scholes_probability(self, S, K, T, sigma, option_type='call'):
-        """Calculate probability of staying OTM for calls or puts"""
+        
+    def black_scholes_probability_otm(self, S, K, T, sigma, option_type='call'):
+        """Calculate probability of staying OTM using Black-Scholes"""
         if T <= 0 or sigma <= 0:
             return 0
         
         d2 = (np.log(S / K) + (self.risk_free_rate - 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
         
         if option_type == 'call':
-            # Probability call stays OTM (stock stays below K)
+            # Probability call stays OTM (stock stays below strike)
             return norm.cdf(-d2) * 100
         else:
-            # Probability put stays OTM (stock stays above K)  
+            # Probability put stays OTM (stock stays above strike)
             return norm.cdf(d2) * 100
     
-    def scan_call_spreads(self, liquid_contracts, current_price, company, price_lookup, avg_iv):
-        """Scan for bear call credit spreads (calls above current price)"""
-        call_spreads = []
+    def calculate_master_score(self, roi, probability, iv_rank, liquidity_score, dte):
+        """Calculate composite score for spread quality"""
+        # Weight factors
+        roi_weight = 0.25
+        prob_weight = 0.35
+        iv_weight = 0.20
+        liquidity_weight = 0.15
+        dte_weight = 0.05
+        
+        # Normalize components
+        roi_score = min(100, roi * 2)  # 50% ROI = 100 score
+        prob_score = probability
+        iv_score = min(100, iv_rank * 100)  # IV rank already 0-1
+        liq_score = liquidity_score
+        dte_score = 100 if 30 <= dte <= 45 else 50  # Prefer sweet spot
+        
+        master_score = (
+            roi_score * roi_weight +
+            prob_score * prob_weight +
+            iv_score * iv_weight +
+            liq_score * liquidity_weight +
+            dte_score * dte_weight
+        )
+        
+        return round(master_score, 1)
+    
+    def find_bear_call_spreads(self, contracts, current_price, ticker):
+        """Find bear call credit spreads"""
+        spreads = []
         
         # Get calls above current price
-        calls_above = []
-        for contract in liquid_contracts:
-            if (contract['type'] == 'CALL' and 
-                contract['strike'] > current_price and
-                contract['liquid'] and
-                contract['symbol'] in price_lookup):
-                calls_above.append(contract)
+        otm_calls = [c for c in contracts 
+                     if c["type"] == "C" and 
+                     c["strike"] > current_price * 1.02 and  # At least 2% OTM
+                     c["is_liquid"]]
         
-        calls_above.sort(key=lambda x: x['strike'])
+        # Sort by strike
+        otm_calls.sort(key=lambda x: x["strike"])
         
-        # Create call spreads
-        for i in range(len(calls_above) - 1):
-            short_call = calls_above[i]
-            long_call = calls_above[i + 1]
-            
-            spread = self.analyze_credit_spread(
-                short_call, long_call, current_price, company, 
-                price_lookup, avg_iv, 'BEAR_CALL'
-            )
-            if spread:
-                call_spreads.append(spread)
+        # Create spreads
+        for i in range(len(otm_calls) - 1):
+            for j in range(i + 1, min(i + 4, len(otm_calls))):  # Look at next 3 strikes
+                short_call = otm_calls[i]
+                long_call = otm_calls[j]
+                
+                spread = self.analyze_vertical_spread(
+                    short_call, long_call, current_price, ticker, "BEAR_CALL"
+                )
+                
+                if spread:
+                    spreads.append(spread)
         
-        return call_spreads
+        return spreads
     
-    def scan_put_spreads(self, liquid_contracts, current_price, company, price_lookup, avg_iv):
-        """Scan for bull put credit spreads (puts below current price)"""
-        put_spreads = []
+    def find_bull_put_spreads(self, contracts, current_price, ticker):
+        """Find bull put credit spreads"""
+        spreads = []
         
         # Get puts below current price
-        puts_below = []
-        for contract in liquid_contracts:
-            if (contract['type'] == 'PUT' and 
-                contract['strike'] < current_price and
-                contract['liquid'] and
-                contract['symbol'] in price_lookup):
-                puts_below.append(contract)
+        otm_puts = [c for c in contracts 
+                    if c["type"] == "P" and 
+                    c["strike"] < current_price * 0.98 and  # At least 2% OTM
+                    c["is_liquid"]]
         
-        puts_below.sort(key=lambda x: x['strike'], reverse=True)  # Highest to lowest
+        # Sort by strike (descending for puts)
+        otm_puts.sort(key=lambda x: x["strike"], reverse=True)
         
-        # Create put spreads
-        for i in range(len(puts_below) - 1):
-            short_put = puts_below[i]      # Higher strike (short)
-            long_put = puts_below[i + 1]   # Lower strike (long)
-            
-            spread = self.analyze_credit_spread(
-                short_put, long_put, current_price, company, 
-                price_lookup, avg_iv, 'BULL_PUT'
-            )
-            if spread:
-                put_spreads.append(spread)
+        # Create spreads
+        for i in range(len(otm_puts) - 1):
+            for j in range(i + 1, min(i + 4, len(otm_puts))):  # Look at next 3 strikes
+                short_put = otm_puts[i]  # Higher strike (short)
+                long_put = otm_puts[j]   # Lower strike (long)
+                
+                spread = self.analyze_vertical_spread(
+                    short_put, long_put, current_price, ticker, "BULL_PUT"
+                )
+                
+                if spread:
+                    spreads.append(spread)
         
-        return put_spreads
+        return spreads
     
-    def analyze_credit_spread(self, short_option, long_option, current_price, 
-                            company, price_lookup, avg_iv, spread_type):
-        """Analyze a credit spread (works for both calls and puts)"""
+    def analyze_vertical_spread(self, short_option, long_option, current_price, ticker, spread_type):
+        """Analyze a vertical credit spread"""
+        # Calculate strike width
+        strike_width = abs(long_option["strike"] - short_option["strike"])
         
-        strike_width = abs(long_option['strike'] - short_option['strike'])
-        if strike_width > 10:
+        # Skip if strikes too wide
+        if strike_width > 10 or strike_width < 1:
             return None
         
-        short_symbol = short_option['symbol']
-        long_symbol = long_option['symbol']
+        # Calculate credit received
+        credit = short_option["bid"] - long_option["ask"]
         
-        # Get price data
-        short_price = price_lookup[short_symbol]
-        long_price = price_lookup[long_symbol]
-        
-        # Calculate credit (what we collect)
-        credit = short_price['what_buyers_pay'] - long_price['what_sellers_want']
-        if credit <= 0:
+        # Skip if credit too small or negative
+        if credit <= 0.05:
             return None
         
+        # Calculate max risk and ROI
         max_risk = strike_width - credit
-        roi = (credit / max_risk * 100) if max_risk > 0 else 0
+        if max_risk <= 0:
+            return None
         
-        # Skip low ROI
+        roi = (credit / max_risk) * 100
+        
+        # Skip low ROI spreads
         if roi < 10:
             return None
         
-        # Get IV for probability calculation
-        short_iv = short_option.get('current_iv', avg_iv)
-        time_to_exp = short_option['days_to_exp'] / 365
+        # Calculate probability of profit
+        time_to_exp = short_option["dte"] / 365
+        iv = short_option["iv"]
         
-        # Calculate probability based on spread type
-        if spread_type == 'BEAR_CALL':
-            # For bear call: want stock to stay BELOW short strike
-            prob_profit = self.black_scholes_probability(
-                current_price, short_option['strike'], time_to_exp, short_iv, 'call'
+        if spread_type == "BEAR_CALL":
+            prob_otm = self.black_scholes_probability_otm(
+                current_price, short_option["strike"], time_to_exp, iv, "call"
             )
-            distance_from_money = ((short_option['strike'] - current_price) / current_price) * 100
+            distance = ((short_option["strike"] - current_price) / current_price) * 100
         else:  # BULL_PUT
-            # For bull put: want stock to stay ABOVE short strike  
-            prob_profit = self.black_scholes_probability(
-                current_price, short_option['strike'], time_to_exp, short_iv, 'put'
+            prob_otm = self.black_scholes_probability_otm(
+                current_price, short_option["strike"], time_to_exp, iv, "put"
             )
-            distance_from_money = ((current_price - short_option['strike']) / current_price) * 100
+            distance = ((current_price - short_option["strike"]) / current_price) * 100
         
-        # Skip low probability
-        if prob_profit < 65:
+        # Skip low probability spreads
+        if prob_otm < 65:
             return None
         
-        # Check minimum liquidity
-        min_oi = min(short_option['open_interest'], long_option['open_interest'])
-        if min_oi < 500:
+        # Calculate IV rank (simplified)
+        iv_rank = min(1.0, iv / 0.50)  # Normalize to 0.50 as high IV
+        
+        # Get average liquidity score
+        avg_liquidity = (short_option["liquidity_score"] + long_option["liquidity_score"]) / 2
+        
+        # Calculate master score
+        master_score = self.calculate_master_score(
+            roi, prob_otm, iv_rank, avg_liquidity, short_option["dte"]
+        )
+        
+        # Skip low scoring spreads
+        if master_score < 50:
             return None
         
         return {
-            'company': company,
-            'spread_type': spread_type,
-            'short_strike': short_option['strike'],
-            'long_strike': long_option['strike'],
-            'strike_width': strike_width,
-            'days_to_expiration': short_option['days_to_exp'],
-            'credit': credit,
-            'max_risk': max_risk,
-            'roi_percent': roi,
-            'probability_of_profit': prob_profit,
-            'current_stock_price': current_price,
-            'distance_from_money': distance_from_money,
-            'short_iv': short_iv,
-            'min_open_interest': min_oi,
-            'short_symbol': short_symbol,
-            'long_symbol': long_symbol,
-            'strategy_explanation': self.get_strategy_explanation(spread_type, short_option['strike'], long_option['strike'])
+            "ticker": ticker,
+            "spread_type": spread_type,
+            "short_strike": short_option["strike"],
+            "long_strike": long_option["strike"],
+            "strike_width": round(strike_width, 2),
+            "dte": short_option["dte"],
+            "credit": round(credit, 2),
+            "max_risk": round(max_risk, 2),
+            "max_profit": round(credit, 2),
+            "roi_percent": round(roi, 1),
+            "probability_otm": round(prob_otm, 1),
+            "current_price": round(current_price, 2),
+            "distance_otm": round(distance, 1),
+            "iv": round(iv, 3),
+            "iv_rank": round(iv_rank, 2),
+            "liquidity_score": round(avg_liquidity, 1),
+            "master_score": master_score,
+            "short_symbol": short_option["symbol"],
+            "long_symbol": long_option["symbol"],
+            "breakeven": self.calculate_breakeven(spread_type, short_option["strike"], credit),
+            "risk_reward_ratio": round(max_risk / credit, 2) if credit > 0 else 0
         }
     
-    def get_strategy_explanation(self, spread_type, short_strike, long_strike):
-        """Explain the strategy"""
-        if spread_type == 'BEAR_CALL':
-            return f"Sell ${short_strike} call, buy ${long_strike} call. Profit if stock stays below ${short_strike}"
-        else:
-            return f"Sell ${short_strike} put, buy ${long_strike} put. Profit if stock stays above ${short_strike}"
+    def calculate_breakeven(self, spread_type, short_strike, credit):
+        """Calculate breakeven price"""
+        if spread_type == "BEAR_CALL":
+            return round(short_strike + credit, 2)
+        else:  # BULL_PUT
+            return round(short_strike - credit, 2)
 
-def scan_all_credit_spreads():
-    print("🏆 STEP 7: Complete Credit Spread Scanner")
-    print("=" * 70)
-    print("🎯 Scanning BOTH Call and Put Credit Spreads...")
-    print("📈 Bear Call Spreads: Profit when stock doesn't go UP")
-    print("📉 Bull Put Spreads: Profit when stock doesn't go DOWN")
+def scan_credit_spreads(mode, verbose=True):
+    """Main function to scan for credit spreads"""
+    if verbose:
+        print(f"🏆 Elite Credit Spread Scanner - {mode.upper()}")
+        print("=" * 60)
     
-    # Load all data
-    with open('step1_stock_prices.json', 'r') as f:
-        stock_data = json.load(f)
+    # Load required data
+    try:
+        with open(f"stock_prices_{mode}.json", "r") as f:
+            stock_data = json.load(f)
+        
+        with open(f"iv_liquidity_{mode}.json", "r") as f:
+            liquidity_data = json.load(f)
+    except FileNotFoundError as e:
+        print(f"❌ Missing required file: {e}")
+        return None
     
-    with open('step2_options_contracts.json', 'r') as f:
-        options_data = json.load(f)
-    
-    with open('step3_iv_data.json', 'r') as f:
-        iv_data = json.load(f)
-    
-    with open('step4_market_prices.json', 'r') as f:
-        price_data = json.load(f)
-    
-    with open('step6_advanced_iv_liquidity.json', 'r') as f:
-        iv_liquidity_data = json.load(f)
-    
-    scanner = EliteCreditSpreadScanner()
-    
-    # Create price lookup
-    price_lookup = {}
-    for company, prices_list in price_data['prices_by_company'].items():
-        for price in prices_list:
-            price_lookup[price['contract_name']] = price
-    
+    scanner = CreditSpreadScanner()
     all_spreads = []
-    call_spreads_total = 0
-    put_spreads_total = 0
+    spreads_by_ticker = defaultdict(list)
     
-    # Scan each company
-    for company, company_options in options_data['options_by_company'].items():
-        current_price = company_options['current_stock_price']
-        company_iv_data = iv_liquidity_data['enhanced_options'].get(company, {})
-        avg_iv = company_iv_data.get('avg_implied_volatility', 0.3)
-        
-        print(f"\n🏢 Scanning {company} (Price: ${current_price:.2f}, Avg IV: {avg_iv:.3f})...")
-        
-        # Skip if IV too low
-        if avg_iv < 0.25:
-            print(f"   ⚠️ IV too low ({avg_iv:.3f}), skipping...")
+    # Get enhanced contracts and organize by ticker
+    contracts_by_ticker = defaultdict(list)
+    for contract in liquidity_data["enhanced_contracts"].values():
+        contracts_by_ticker[contract["ticker"]].append(contract)
+    
+    if verbose:
+        print(f"🎯 Scanning {len(contracts_by_ticker)} tickers for credit spreads...")
+    
+    # Scan each ticker
+    for ticker in contracts_by_ticker:
+        if ticker not in stock_data["stock_prices"]:
             continue
         
-        liquid_contracts = company_iv_data.get('top_liquid_contracts', [])
+        current_price = stock_data["stock_prices"][ticker]["current_price"]
+        contracts = contracts_by_ticker[ticker]
         
-        # Scan call credit spreads (bear call spreads)
-        call_spreads = scanner.scan_call_spreads(
-            liquid_contracts, current_price, company, price_lookup, avg_iv
-        )
-        call_spreads_total += len(call_spreads)
+        # Find bear call spreads
+        bear_calls = scanner.find_bear_call_spreads(contracts, current_price, ticker)
         
-        # Scan put credit spreads (bull put spreads)  
-        put_spreads = scanner.scan_put_spreads(
-            liquid_contracts, current_price, company, price_lookup, avg_iv
-        )
-        put_spreads_total += len(put_spreads)
+        # Find bull put spreads
+        bull_puts = scanner.find_bull_put_spreads(contracts, current_price, ticker)
         
-        all_spreads.extend(call_spreads)
-        all_spreads.extend(put_spreads)
+        # Combine and track
+        ticker_spreads = bear_calls + bull_puts
+        all_spreads.extend(ticker_spreads)
+        spreads_by_ticker[ticker] = ticker_spreads
         
-        print(f"   📈 Bear Call Spreads: {len(call_spreads)}")
-        print(f"   📉 Bull Put Spreads: {len(put_spreads)}")
-        print(f"   🎯 Total for {company}: {len(call_spreads) + len(put_spreads)}")
+        if verbose and ticker_spreads:
+            print(f"  📊 {ticker}: Found {len(bear_calls)} bear calls, {len(bull_puts)} bull puts")
     
-    # Sort by ROI * Probability score
-    for spread in all_spreads:
-        spread['combined_score'] = spread['roi_percent'] * (spread['probability_of_profit'] / 100)
+    # Sort by master score
+    all_spreads.sort(key=lambda x: x["master_score"], reverse=True)
     
-    all_spreads.sort(key=lambda x: x['combined_score'], reverse=True)
+    # Get top spreads
+    elite_spreads = [s for s in all_spreads if s["master_score"] >= 70]
+    good_spreads = [s for s in all_spreads if 60 <= s["master_score"] < 70]
     
-    print(f"\n💎 TOTAL CREDIT SPREADS FOUND: {len(all_spreads)}")
-    print(f"📈 Bear Call Spreads: {call_spreads_total}")
-    print(f"📉 Bull Put Spreads: {put_spreads_total}")
-    print("=" * 70)
-    
-    # Show top 15 - mixed calls and puts
-    print(f"\n🏆 TOP 15 CREDIT SPREADS (Both Types):")
-    print("-" * 120)
-    
-    for i, spread in enumerate(all_spreads[:15]):
-        spread_icon = "📈" if spread['spread_type'] == 'BEAR_CALL' else "📉"
-        spread_name = "Bear Call" if spread['spread_type'] == 'BEAR_CALL' else "Bull Put"
+    # Calculate statistics
+    if all_spreads:
+        avg_roi = np.mean([s["roi_percent"] for s in all_spreads])
+        avg_prob = np.mean([s["probability_otm"] for s in all_spreads])
+        avg_score = np.mean([s["master_score"] for s in all_spreads])
         
-        print(f"{i+1:2}. {spread_icon} {spread['company']:4} {spread_name:9} | "
-              f"${spread['short_strike']:.0f}/{spread['long_strike']:.0f} | "
-              f"Score: {spread['combined_score']:.1f} | "
-              f"PoP: {spread['probability_of_profit']:.1f}% | "
-              f"ROI: {spread['roi_percent']:.1f}% | "
-              f"Credit: ${spread['credit']:.2f} | "
-              f"DTE: {spread['days_to_expiration']}")
-        print(f"     📝 {spread['strategy_explanation']}")
+        bear_calls = [s for s in all_spreads if s["spread_type"] == "BEAR_CALL"]
+        bull_puts = [s for s in all_spreads if s["spread_type"] == "BULL_PUT"]
+    else:
+        avg_roi = avg_prob = avg_score = 0
+        bear_calls = bull_puts = []
     
-    # Save results
+    # Create output
     result = {
-        'step': 7,
-        'what_we_did': 'Complete Credit Spread Analysis - Both Calls and Puts',
-        'timestamp': datetime.now().isoformat(),
-        'total_spreads_found': len(all_spreads),
-        'bear_call_spreads': call_spreads_total,
-        'bull_put_spreads': put_spreads_total,
-        'all_spreads': all_spreads[:100],  # Top 100
-        'summary_stats': {
-            'avg_roi': np.mean([s['roi_percent'] for s in all_spreads]) if all_spreads else 0,
-            'avg_probability': np.mean([s['probability_of_profit'] for s in all_spreads]) if all_spreads else 0,
-            'avg_combined_score': np.mean([s['combined_score'] for s in all_spreads]) if all_spreads else 0
-        }
+        "mode": mode,
+        "scan_stats": {
+            "tickers_scanned": len(contracts_by_ticker),
+            "total_spreads_found": len(all_spreads),
+            "elite_spreads": len(elite_spreads),
+            "good_spreads": len(good_spreads),
+            "bear_call_spreads": len(bear_calls),
+            "bull_put_spreads": len(bull_puts),
+            "avg_roi": round(avg_roi, 1),
+            "avg_probability": round(avg_prob, 1),
+            "avg_master_score": round(avg_score, 1)
+        },
+        "elite_spreads": elite_spreads[:50],  # Top 50 elite
+        "good_spreads": good_spreads[:50],    # Top 50 good
+        "all_spreads": all_spreads[:200],     # Top 200 overall
+        "spreads_by_ticker": dict(spreads_by_ticker),
+        "scoring_criteria": {
+            "elite_threshold": 70,
+            "good_threshold": 60,
+            "min_probability": 65,
+            "min_roi": 10,
+            "min_liquidity": 70
+        },
+        "timestamp": datetime.now().isoformat()
     }
     
-    filename = 'step7_complete_credit_spreads.json'
-    with open(filename, 'w') as f:
+    # Save results
+    filename = f"credit_spreads_{mode}.json"
+    with open(filename, "w") as f:
         json.dump(result, f, indent=2)
     
-    print(f"\n✅ Saved complete analysis to: {filename}")
-    
-    # Show strategy breakdown
-    if all_spreads:
-        best_call = next((s for s in all_spreads if s['spread_type'] == 'BEAR_CALL'), None)
-        best_put = next((s for s in all_spreads if s['spread_type'] == 'BULL_PUT'), None)
+    if verbose:
+        print(f"\n📊 {mode.upper()} Credit Spread Results:")
+        print(f"  🎯 Total spreads found: {len(all_spreads)}")
+        print(f"  🏆 Elite spreads (70+): {len(elite_spreads)}")
+        print(f"  ✅ Good spreads (60-70): {len(good_spreads)}")
+        print(f"  📈 Bear call spreads: {len(bear_calls)}")
+        print(f"  📉 Bull put spreads: {len(bull_puts)}")
+        print(f"  📁 Saved: {filename}")
         
-        print(f"\n💎 STRATEGY COMPARISON:")
-        if best_call:
-            print(f"   📈 Best Bear Call: {best_call['company']} ${best_call['short_strike']:.0f}/{best_call['long_strike']:.0f}")
-            print(f"      ROI: {best_call['roi_percent']:.1f}%, PoP: {best_call['probability_of_profit']:.1f}%")
-        
-        if best_put:
-            print(f"   📉 Best Bull Put: {best_put['company']} ${best_put['short_strike']:.0f}/{best_put['long_strike']:.0f}")
-            print(f"      ROI: {best_put['roi_percent']:.1f}%, PoP: {best_put['probability_of_profit']:.1f}%")
+        # Show top 5 elite spreads
+        if elite_spreads:
+            print(f"\n🏆 TOP 5 ELITE SPREADS:")
+            for i, spread in enumerate(elite_spreads[:5], 1):
+                icon = "📈" if spread["spread_type"] == "BEAR_CALL" else "📉"
+                print(f"  {i}. {icon} {spread['ticker']} ${spread['short_strike']:.0f}/{spread['long_strike']:.0f}")
+                print(f"     Score: {spread['master_score']:.1f} | PoP: {spread['probability_otm']:.1f}% | ROI: {spread['roi_percent']:.1f}%")
+                print(f"     Credit: ${spread['credit']:.2f} | Risk: ${spread['max_risk']:.2f} | DTE: {spread['dte']}")
     
     return result
 
+def main():
+    """Main function for standalone execution"""
+    print("🚀 Elite Credit Spread Scanner")
+    print("=" * 50)
+    
+    for mode in ["gpt", "grok"]:
+        scan_credit_spreads(mode)
+        print()
+
 if __name__ == "__main__":
-    scan_all_credit_spreads()
+    main()
 ```
 
 **Run:** `python3 find_tendies.py`
