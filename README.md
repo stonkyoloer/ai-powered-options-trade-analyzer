@@ -146,49 +146,11 @@ python3 runpipeline.py
 
 ---
 
-# 3️⃣ Prompt for News, Earnings, Macro.
 
-## Prompt [GPT 5 /GROK 4] 
-
-```bash
-You are my Portfolio News & Risk Sentinel.
-Timezone: America/New_York. 
-Use absolute dates in YYYY-MM-DD.
-Be concise, structured. 
-When you fetch news or events, include links and source names. 
-
-INPUT (paste below EXACTLY as produced):
-=== step4_liquidity.json ===
-{PASTE_JSON_HERE}
-=== end ===
-
-TASKS
-1) Parse the portfolio. For each sector, identify the chosen ticker (or “no pick”). Pull these fields per ticker if present: ivr, atm_iv, tier, spread_med_Δ30, oi_min_Δ30, dte, target_expiry.
-2) News & Catalysts (last 72h + next 14d): 
-   - Fetch top 2 materially relevant headlines per ticker (earnings, guidance, M&A, litigation, product, regulation, macro-sensitive items). 
-   - Fetch the next earnings date and any known ex-dividend date if within the next 21 days.
-   - Note sector-level macro events (e.g., FOMC/CPI for Financials; OPEC/EIA for Energy; FDA/AdCom for Health Care; durable goods/PMI for Industrials).
-3) Heat & Flags:
-   - Compute a simple NewsHeat 0-5 (0=quiet, 5=major/crowded headlines).
-   - Flag “Earnings inside DTE window” if earnings date is ≤ target_expiry DTE. 
-   - Flag liquidity concerns if spread_med_Δ30 > 0.10 or oi_min_Δ30 < 1,000.
-4) Output as a compact table with these columns:
-   Sector | Ticker | NewsHeat(0-5) | Next Event(s) | Risk Flags
-5) Add a brief 3-bullet portfolio summary:
-   - Diversification status (sectors filled/empty)
-   - Top 2 risk clusters (e.g., multiple rate-sensitive names)
-   - 1–2 hedge ideas (e.g., XLF/XLK/XLV ETF overlay or pair-trade)
-
-CONSTRAINTS
-- No financial advice; provide information and risk context only.
-- Cite each headline/event with a link in-line.
-- If info is unavailable, write “n/a” rather than guessing.
-```
-
-# ✒️ Build a Daily Options Screener
+# 3️⃣ Query 72 tickers (36 gpt / 36 grok); rank and return top 15 credit spreads
 
 
-## 📁 Get Stock Prices
+## `stock_prices.py` Step_1
 
 ### Data: Bid, ask, mid-price, and timestamp for nine stocks.  
 ### Why useful: Gives a fresh “true price” for each underlying.
