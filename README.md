@@ -150,18 +150,21 @@ Collects real-time bid/ask prices for options contracts.
 
 ## `risk_analysis.py`
 
+Analyzes options risk using Greeks data.
 
 ## `iv_liquidity.py`
 
+Combines IV, liquidity data for credit spread selection.
 
 ## `find_tendies.py`
 
+Scans for optimal credit spreads using Black-Scholes.
+
+---
 
 ## `master.py`
 
-```bash
-python3 master.py`
-```
+Orchestrates complete credit spread analysis pipeline, generates all reports.
 
 ---
 
