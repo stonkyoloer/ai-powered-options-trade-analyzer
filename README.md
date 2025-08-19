@@ -8,7 +8,7 @@
 Steps located in `Configure TastyTrade`
 
 
-# 1️⃣ Select nine sectors; find four tickers per sector
+# 1️⃣ Select a 72 ticker trading universe
 
 ## Download the Trading Universe CSV
 
@@ -31,7 +31,7 @@ Steps located in `Configure TastyTrade`
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 
-## Prompt [gpt 5 / grok 4]
+## Prompt [gpt5|grok4]
 ```
 Use the attached ticker basket files as the universe.
 Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
@@ -105,7 +105,7 @@ Rules:
 ```
 ---
 
-# 2️⃣ Select 36 tickers; find 1 ticker per sector:
+# 2️⃣ Daily Portfolio Screener
 
 ## `sectors.py`
 
@@ -147,7 +147,7 @@ python3 runpipeline.py
 ---
 
 
-# 3️⃣ Query 72 tickers (36 gpt / 36 grok); rank and return top 15 credit spreads
+# 3️⃣ Daily Credit Spread Screener
 
 
 ## `stock_prices.py` Step_1
