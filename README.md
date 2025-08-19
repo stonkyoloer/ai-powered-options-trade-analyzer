@@ -109,9 +109,6 @@ Rules:
 
 ## `sectors.py`
 
-```python
-open sectors.py
-```
 
 ## `build_universe.py`
 
