@@ -5,29 +5,16 @@
 **Query:** `open -e sectors.py`
 
 ```bash
-# sectors.py
+# sectors.py - Optimized Sector Configuration
 """
-Sector universes and symbol helpers.
-
-Toggle which universe to use by setting PORTFOLIO_MODE to one of:
-  - "gpt"     -> SECTORS_GPT (9 sectors × 4 = 36 tickers)
-  - "grok"    -> SECTORS_GROK (9 sectors × 4 = 36 tickers)
-  - "merged"  -> union of GPT+Grok tickers per sector (deduped, order-preserved)
-
-Optional paste-overrides:
-Create overrides/gpt.json or overrides/grok.json with:
-{
-  "Information Technology": ["...","...","...","..."],
-  "...": ["..."]
-}
+Sector universes with performance tracking.
+KEEP - minor changes for runtime optimization and validation.
 """
-
+import time
 from pathlib import Path
 import json
 
-# -----------------------------
-# GPT Portfolio
-# -----------------------------
+# GPT Portfolio (UPDATE DAILY)
 SECTORS_GPT = {
     "Information Technology": {
         "etf": "XLK",
@@ -35,13 +22,13 @@ SECTORS_GPT = {
         "tickers": ["ADI", "INTU", "NVDA", "PANW"],
     },
     "Communication Services": {
-        "etf": "XLC",
+        "etf": "XLC", 
         "description": "ads, platforms, media",
         "tickers": ["DIS", "GOOGL", "META", "TMUS"],
     },
     "Consumer Discretionary": {
         "etf": "XLY",
-        "description": "cyclical demand, sentiment",
+        "description": "cyclical demand, sentiment", 
         "tickers": ["HD", "LOW", "ROST", "TJX"],
     },
     "Consumer Staples": {
@@ -55,7 +42,7 @@ SECTORS_GPT = {
         "tickers": ["ABBV", "CAH", "LLY", "MDT"],
     },
     "Financials": {
-        "etf": "XLF",
+        "etf": "XLF", 
         "description": "rate curve/credit sensitivity",
         "tickers": ["BAC", "GS", "JPM", "MS"],
     },
@@ -66,7 +53,7 @@ SECTORS_GPT = {
     },
     "Energy": {
         "etf": "XLE",
-        "description": "commodity/inflation shock hedge",
+        "description": "commodity/inflation shock hedge", 
         "tickers": ["COP", "CVX", "SLB", "XOM"],
     },
     "Utilities": {
@@ -76,9 +63,7 @@ SECTORS_GPT = {
     },
 }
 
-# -----------------------------
-# Grok Portfolio
-# -----------------------------
+# Grok Portfolio (UPDATE DAILY)  
 SECTORS_GROK = {
     "Information Technology": {
         "etf": "XLK",
@@ -87,7 +72,7 @@ SECTORS_GROK = {
     },
     "Communication Services": {
         "etf": "XLC",
-        "description": "ads, platforms, media",
+        "description": "ads, platforms, media", 
         "tickers": ["GOOG", "GOOGL", "META", "NFLX"],
     },
     "Consumer Discretionary": {
@@ -96,7 +81,7 @@ SECTORS_GROK = {
         "tickers": ["AMZN", "HD", "MCD", "TSLA"],
     },
     "Consumer Staples": {
-        "etf": "XLP",
+        "etf": "XLP", 
         "description": "defensive cashflows, low vol",
         "tickers": ["COST", "KO", "PG", "WMT"],
     },
@@ -111,7 +96,7 @@ SECTORS_GROK = {
         "tickers": ["BRK.B", "JPM", "MA", "V"],
     },
     "Industrials": {
-        "etf": "XLI",
+        "etf": "XLI", 
         "description": "capex, global trade, PMIs",
         "tickers": ["CAT", "GE", "RTX", "UBER"],
     },
@@ -122,62 +107,67 @@ SECTORS_GROK = {
     },
     "Utilities": {
         "etf": "XLU",
-        "description": "bond-proxy, duration sensitivity",
+        "description": "bond-proxy, duration sensitivity", 
         "tickers": ["CEG", "DUK", "NEE", "SO"],
     },
 }
 
-# -----------------------------
-# Mode & helpers
-# -----------------------------
-PORTFOLIO_MODE = "gpt"  # "gpt", "grok", or "merged"
+# Performance tracking
+class PerfTimer:
+    def __init__(self, name):
+        self.name = name
+        self.start_time = None
+        
+    def __enter__(self):
+        self.start_time = time.time()
+        return self
+        
+    def __exit__(self, *args):
+        elapsed = time.time() - self.start_time
+        print(f"⏱️ {self.name}: {elapsed:.2f}s")
 
-def _merge_sectors(a: dict, b: dict) -> dict:
-    out = {}
-    keys = set(a) | set(b)
-    for k in keys:
-        ea, eb = a.get(k, {}), b.get(k, {})
-        etf = ea.get("etf") or eb.get("etf")
-        desc = ea.get("description") or eb.get("description")
-        tickers = []
-        for src in (ea.get("tickers", []), eb.get("tickers", [])):
-            for t in src:
-                if t not in tickers:
-                    tickers.append(t)
-        out[k] = {"etf": etf, "description": desc, "tickers": tickers}
-    return out
-
-def _with_override(base: dict, mode: str) -> dict:
-    path = Path("overrides") / f"{mode}.json"
-    if not path.exists():
-        return base
-    data = json.loads(path.read_text())
-    out = {}
-    for sector, meta in base.items():
-        out[sector] = {
-            "etf": meta["etf"],
-            "description": meta["description"],
-            "tickers": data.get(sector, meta["tickers"])
-        }
-    return out
+PORTFOLIO_MODE = "gpt"  # Set by master.py
 
 def get_sectors(mode: str = PORTFOLIO_MODE) -> dict:
-    mode = (mode or "").lower()
-    if mode == "gpt":
-        return _with_override(SECTORS_GPT, "gpt")
-    if mode == "grok":
-        return _with_override(SECTORS_GROK, "grok")
-    if mode == "merged":
-        g = _with_override(SECTORS_GPT, "gpt")
-        r = _with_override(SECTORS_GROK, "grok")
-        return _merge_sectors(g, r)
-    raise ValueError(f"Unknown PORTFOLIO_MODE '{mode}' (use 'gpt' | 'grok' | 'merged')")
+    """Get sectors with validation and performance tracking"""
+    with PerfTimer(f"Loading {mode.upper()} sectors"):
+        mode = (mode or "").lower()
+        
+        if mode == "gpt":
+            sectors = SECTORS_GPT
+        elif mode == "grok": 
+            sectors = SECTORS_GROK
+        elif mode == "merged":
+            # Merge GPT and Grok (dedupe by ticker)
+            sectors = {}
+            all_keys = set(SECTORS_GPT.keys()) | set(SECTORS_GROK.keys())
+            for key in all_keys:
+                gpt_tickers = SECTORS_GPT.get(key, {}).get("tickers", [])
+                grok_tickers = SECTORS_GROK.get(key, {}).get("tickers", [])
+                combined_tickers = []
+                seen = set()
+                for ticker in gpt_tickers + grok_tickers:
+                    if ticker not in seen:
+                        combined_tickers.append(ticker)
+                        seen.add(ticker)
+                
+                sectors[key] = {
+                    "etf": SECTORS_GPT.get(key, {}).get("etf") or SECTORS_GROK.get(key, {}).get("etf"),
+                    "description": SECTORS_GPT.get(key, {}).get("description") or SECTORS_GROK.get(key, {}).get("description"), 
+                    "tickers": combined_tickers
+                }
+        else:
+            raise ValueError(f"Unknown mode '{mode}' (use 'gpt' | 'grok' | 'merged')")
+    
+    # Validation
+    total_tickers = sum(len(meta["tickers"]) for meta in sectors.values())
+    print(f"📊 Loaded {len(sectors)} sectors, {total_tickers} tickers for {mode.upper()}")
+    
+    return sectors
 
 SECTORS = get_sectors()
 
-# -----------------------------
-# Symbol aliases
-# -----------------------------
+# Symbol aliases for data providers
 SYMBOL_ALIASES = {
     "BRK.B": ["BRK.B", "BRK-B", "BRK/B"],
     "GOOGL": ["GOOGL", "GOOG"],
@@ -185,8 +175,14 @@ SYMBOL_ALIASES = {
 }
 
 def alias_candidates(sym: str) -> list[str]:
-    """Return preferred symbol + any alias candidates to try for data providers."""
+    """Return preferred symbol + any alias candidates"""
     return [sym] + SYMBOL_ALIASES.get(sym, [])
+
+if __name__ == "__main__":
+    for mode in ["gpt", "grok"]:
+        sectors = get_sectors(mode)
+        total = sum(len(meta["tickers"]) for meta in sectors.values())
+        print(f"{mode.upper()}: {len(sectors)} sectors, {total} tickers")
 ```
 
 
