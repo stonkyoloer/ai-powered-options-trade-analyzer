@@ -148,13 +148,8 @@ Run this script to pick the daily trading tickers.  9 sectors, 4 tickers per sec
 ## `iv_data.py`
 
 
+## `market_prices.py`
 
----
-
-## 📁 Get Buy/Sell Prices (Bid/Ask)
-
-### Data: bid, ask, midpoint, size, and spread for every option contract.  
-### Why useful: reveals real trading price and liquidity.
 
 **Create:** `touch market_prices.py`
 
