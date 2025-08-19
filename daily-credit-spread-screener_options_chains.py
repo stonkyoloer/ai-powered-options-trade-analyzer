@@ -3,69 +3,103 @@
 **Query:** `open -e options_chains.py`
 
 ```bash
+# options_chains.py - Options Contract Discovery
+"""
+Discovers all available options contracts for credit spread analysis.
+Focuses on contracts with 7-45 DTE for optimal credit spread opportunities.
+"""
 import json
-from datetime import datetime
+from datetime import datetime, timezone
 from tastytrade import Session
 from tastytrade.instruments import get_option_chain
 from config import USERNAME, PASSWORD
 
-def get_options_contracts():
-    print("🎰 STEP 2: Finding Options Contracts")
-    print("=" * 50)
-    print("🔍 Looking for all the different bets we can make...")
+def discover_options_contracts(mode, verbose=True):
+    """Discover options contracts for all tickers in a mode"""
+    if verbose:
+        print(f"🎰 Discovering Options Contracts - {mode.upper()}")
+        print("=" * 60)
     
-    # Load our stock prices from Step 1
-    with open('step1_stock_prices.json', 'r') as f:
-        step1_data = json.load(f)
+    # Load stock prices from previous step
+    try:
+        with open(f"stock_prices_{mode}.json", "r") as f:
+            price_data = json.load(f)
+    except FileNotFoundError:
+        print(f"❌ stock_prices_{mode}.json not found. Run stock_prices.py first.")
+        return None
     
-    companies = list(step1_data['stock_prices'].keys())
-    session = Session(USERNAME, PASSWORD)
+    stock_prices = price_data["stock_prices"]
+    tickers = list(stock_prices.keys())
     
-    all_options = {}
+    if verbose:
+        print(f"📋 Processing {len(tickers)} tickers with valid prices")
+    
+    sess = Session(USERNAME, PASSWORD)
+    all_contracts = {}
     total_contracts = 0
     
-    for company in companies:
-        print(f"\n🏢 Looking at {company} options...")
+    for i, ticker in enumerate(tickers, 1):
+        if verbose:
+            print(f"\n[{i}/{len(tickers)}] Processing {ticker}...")
         
         try:
-            # Get all the different expiration dates for this company
-            option_chain = get_option_chain(session, company)
+            current_price = stock_prices[ticker]["current_price"]
             
-            if not option_chain:
-                print(f"   ❌ No options found for {company}")
+            # Get options chain
+            chain = get_option_chain(sess, ticker)
+            if not chain:
+                if verbose:
+                    print(f"  ❌ No options chain found")
                 continue
             
-            print(f"   📅 Found {len(option_chain)} different expiration dates!")
+            if verbose:
+                print(f"  📅 Found {len(chain)} expiration dates")
             
-            company_options = {
-                'company': company,
-                'current_stock_price': step1_data['stock_prices'][company]['current_price'],
+            ticker_contracts = {
+                'ticker': ticker,
+                'current_price': current_price,
                 'expiration_dates': {},
-                'total_contracts': 0
+                'summary': {
+                    'total_contracts': 0,
+                    'total_calls': 0,
+                    'total_puts': 0,
+                    'expiration_count': 0
+                }
             }
             
-            # Look at the first 4 expiration dates (nearest ones)
-            exp_dates = sorted(option_chain.keys())[:4]
+            # Process each expiration (limit to reasonable timeframe)
+            today = datetime.now(timezone.utc).date()
+            valid_expirations = []
             
-            for exp_date in exp_dates:
-                options_list = option_chain[exp_date]
-                exp_date_str = str(exp_date)
-                
-                print(f"   📋 {exp_date_str}: Found {len(options_list)} contracts")
+            for exp_date in sorted(chain.keys()):
+                dte = (exp_date - today).days
+                if 7 <= dte <= 45:  # Focus on near-term expirations for credit spreads
+                    valid_expirations.append((exp_date, dte))
+            
+            # Limit to first 6 expirations to avoid overload
+            valid_expirations = valid_expirations[:6]
+            
+            for exp_date, dte in valid_expirations:
+                options = chain[exp_date]
+                exp_str = exp_date.isoformat()
                 
                 contracts = []
-                calls = 0
-                puts = 0
+                calls = puts = 0
                 
-                for option in options_list:
-                    if option.days_to_expiration <= 45:  # Only contracts expiring soon
+                # Process each option contract
+                for option in options:
+                    strike = float(option.strike_price)
+                    
+                    # Focus on strikes within reasonable range of current price
+                    if 0.7 * current_price <= strike <= 1.3 * current_price:
                         contract_info = {
-                            'contract_name': option.symbol,
-                            'strike_price': float(option.strike_price),
-                            'days_until_expires': option.days_to_expiration,
-                            'contract_type': 'CALL' if option.option_type.value == 'C' else 'PUT',
-                            'streamer_symbol': option.streamer_symbol
+                            'symbol': option.symbol,
+                            'streamer_symbol': option.streamer_symbol,
+                            'strike': strike,
+                            'option_type': option.option_type.value,  # 'C' or 'P'
+                            'dte': dte
                         }
+                        
                         contracts.append(contract_info)
                         
                         if option.option_type.value == 'C':
@@ -73,46 +107,87 @@ def get_options_contracts():
                         else:
                             puts += 1
                 
-                company_options['expiration_dates'][exp_date_str] = {
-                    'date': exp_date_str,
-                    'total_contracts': len(contracts),
-                    'calls': calls,
-                    'puts': puts,
-                    'contracts': contracts
-                }
-                
-                company_options['total_contracts'] += len(contracts)
-                total_contracts += len(contracts)
-                
-                print(f"      ✅ {calls} CALLS (bet stock goes UP)")
-                print(f"      ✅ {puts} PUTS (bet stock goes DOWN)")
+                if contracts:  # Only save if we have contracts
+                    ticker_contracts['expiration_dates'][exp_str] = {
+                        'expiration_date': exp_str,
+                        'dte': dte,
+                        'contracts': contracts,
+                        'calls': calls,
+                        'puts': puts,
+                        'total': len(contracts)
+                    }
+                    
+                    ticker_contracts['summary']['total_contracts'] += len(contracts)
+                    ticker_contracts['summary']['total_calls'] += calls
+                    ticker_contracts['summary']['total_puts'] += puts
+                    
+                    if verbose:
+                        print(f"    📋 {exp_str} ({dte}DTE): {calls}C + {puts}P = {len(contracts)} contracts")
             
-            all_options[company] = company_options
-            print(f"   🎯 Total for {company}: {company_options['total_contracts']} contracts")
+            ticker_contracts['summary']['expiration_count'] = len(ticker_contracts['expiration_dates'])
+            total_contracts += ticker_contracts['summary']['total_contracts']
             
+            if ticker_contracts['summary']['total_contracts'] > 0:
+                all_contracts[ticker] = ticker_contracts
+                
+                if verbose:
+                    print(f"  🎯 Total for {ticker}: {ticker_contracts['summary']['total_contracts']} contracts")
+            else:
+                if verbose:
+                    print(f"  ⚠️ No suitable contracts found for {ticker}")
+        
         except Exception as e:
-            print(f"   ❌ Error with {company}: {e}")
+            if verbose:
+                print(f"  ❌ Error processing {ticker}: {str(e)[:100]}")
+            continue
     
-    # Save our results
+    # Create output
     result = {
-        'step': 2,
-        'what_we_did': 'Found all options contracts for each company',
-        'timestamp': datetime.now().isoformat(),
-        'companies_analyzed': len(all_options),
-        'total_contracts_found': total_contracts,
-        'options_by_company': all_options
+        'mode': mode,
+        'discovery_stats': {
+            'tickers_processed': len(tickers),
+            'tickers_with_contracts': len(all_contracts),
+            'total_contracts_found': total_contracts,
+            'success_rate': len(all_contracts) / len(tickers) * 100 if tickers else 0
+        },
+        'contracts_by_ticker': all_contracts,
+        'timestamp': datetime.now(timezone.utc).isoformat()
     }
     
-    filename = 'step2_options_contracts.json'
-    with open(filename, 'w') as f:
+    # Save results
+    filename = f"options_contracts_{mode}.json"
+    with open(filename, "w") as f:
         json.dump(result, f, indent=2)
     
-    print(f"\n✅ Saved options data to: {filename}")
-    print(f"🎰 Found {total_contracts} total contracts to analyze!")
+    if verbose:
+        print(f"\n📊 {mode.upper()} Options Discovery Results:")
+        print(f"  ✅ Tickers with contracts: {len(all_contracts)}/{len(tickers)}")
+        print(f"  🎰 Total contracts: {total_contracts:,}")
+        print(f"  📁 Saved: {filename}")
+        
+        if all_contracts:
+            # Show top tickers by contract count
+            top_tickers = sorted(all_contracts.items(), 
+                               key=lambda x: x[1]['summary']['total_contracts'], 
+                               reverse=True)[:3]
+            print(f"  🏆 Most contracts:")
+            for ticker, data in top_tickers:
+                count = data['summary']['total_contracts']
+                print(f"    {ticker}: {count:,} contracts")
+    
     return result
 
+def main():
+    """Main function for standalone execution"""
+    print("🚀 Options Contract Discovery")
+    print("=" * 50)
+    
+    for mode in ["gpt", "grok"]:
+        discover_options_contracts(mode)
+        print()
+
 if __name__ == "__main__":
-    get_options_contracts()
+    main()
 ```
 
 **Run:** `python3 options_chains.py`
