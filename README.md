@@ -109,36 +109,27 @@ Rules:
 
 ## `sectors.py`
 
+**Remember to copy and paste the output from prompt output directly above into `sectors.py` and save it before executing the workflow below.**
+
 ```python
-python3 sectors.py
+open sectors.py
 ```
 
 ## `build_universe.py`
 
-```python
-python3 build_universe.py
-```
 
 ## `spot.py`
 
-```python
-python3 spot.py
-```
 
 ## `atm_iv.py`
 
-```python
-python3 atm_iv.py
-```
 
 ## `liquidity.py`
 
-```python
-python3 liquidity.py
-```
-
 
 ## `run_pipeline.py`
+
+**Run this script to pick the daily trading tickers.  9 sectors, 4 tickers per sectors.  ChatGPT and Grok have each selected their own tickers from the ETF's listed above.**
 
 ```python
 python3 runpipeline.py
