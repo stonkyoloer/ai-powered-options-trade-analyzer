@@ -10,7 +10,7 @@ Steps located in `Configure TastyTrade`
 
 # 1️⃣ Select a 72 ticker trading universe
 
-## Download the Trading Universe CSV
+## Download the Trading Universe
 
 `XLK` https://www.sectorspdrs.com/mainfund/XLK
 
