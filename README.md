@@ -111,7 +111,7 @@ Rules:
 
 Paste the prompt above’s Python output before running, open saved script, replace the GPT and Grok universes with today’s lists to maintain a real-time, daily news-driven ticker selection before running trades.
 
---
+---
 
 ## `build_universe.py` Builds GPT/Grok/merged universes. 
 
