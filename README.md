@@ -109,6 +109,8 @@ Rules:
 
 ## `sectors.py`
 
+Defines sector portfolios, merges them, manages symbols.
+
 
 ## `build_universe.py`
 
