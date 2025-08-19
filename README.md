@@ -146,6 +146,7 @@ Collects implied volatility data for options contracts.
 
 ## `market_prices.py`
 
+Collects real-time bid/ask prices for options contracts.
 
 ## `risk_analysis.py`
 
