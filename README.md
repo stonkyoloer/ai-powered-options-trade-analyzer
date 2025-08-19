@@ -8,7 +8,7 @@
 Steps located in `Configure TastyTrade`
 
 
-# 💡 Build Sector Baskets
+# 💡 Select nine sectors; four tickers each; Python ready filters
 
 ## Download the Trading Universe CSV
 
@@ -107,18 +107,27 @@ Rules:
 
 # 🪛 Build Daily Screener
 
-## `sectors.py` can be found in this projects files.  copy and past the python output from prompt directly above, open the saved script file and replace the grok and gpt trading universes with the fresh outputs  
+## `sectors.py` Defines the tradable universe.
+
+Paste the prompt above’s Python output before running, open saved script, replace the GPT and Grok universes with today’s lists to maintain a real-time, daily news-driven ticker selection before running trades.
+
+--
+
+## `build_universe.py` Builds GPT/Grok/merged universes. 
+
+Verify options-chain availability, deduping, writing JSONs, summarizing coverage, and setting `universe_active.json` from `PORTFOLIO_MODE`.
+
 ---
 
-## `build_universe.py` 
+## `spot.py` Streams live quotes for the active universe  
+
+Writes `step2_spot.json` with `bid/ask/mid snapshots`.
 
 ---
 
-## `spot.py`
+## `atm_iv.py` Computes 30–45 DTE ATM IV
 
----
-
-## `atm_iv.py`
+Per ticker via `dxFeed Greeks`, derives a heuristic `IV rank`, and writes results to `step3_atm_iv.json`.
 
 ---
 
