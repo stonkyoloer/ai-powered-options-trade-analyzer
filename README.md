@@ -5,7 +5,7 @@
 ---
 # 🛠 Configure TastyTrade
 
-## `Configure TastyTrade`
+File name `Configure TastyTrade`
 
 
 # 1️⃣ Select Trading Universe
@@ -30,82 +30,9 @@
 
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
-
-## Prompt
-```
-Use the attached ticker basket files as the universe.
-Select the top 4 tickers per sector/theme for trading 0–45 DTE credit spreads today.
-Apply this strict filter framework (real-time only):
-  1. Earnings & Macro Events (Scheduled) – Must verify in today’s/week’s earnings calendars or official macro event schedules (Fed, CPI, jobs, OPEC, regulatory). Exclude if unverified.
-  2. Headline & News Drivers – Must be sourced from live headlines (upgrades/downgrades, strikes, lawsuits, product launches, sector disruptions). Rank by strength of catalyst.
-  3. Implied Volatility Context (Event-Driven) – Only flag if real-time news or analyst notes explicitly cite elevated IV or “fear premium.” Ignore historical averages.
-  4. Directional Tilt – Classify bias as bullish, bearish, or neutral only if justified by current event/news flow. If unclear, mark as “Neutral.”
-  5. Shock Disconnection / Factor Buckets  – Ensure coverage across growth (Tech/Discretionary), rates (Financials/Utilities), commodities (Energy/Industrials), and defensives (Staples/Healthcare). Avoid clustering.
-
-Output_1 format (table):
-  Sector | Ticker | Event/News Driver (1 short sentence, real-time) | Tilt (Bullish/Bearish/Neutral)
-
-Output_2 format (portfolio):
-
-A) PYTHON_PATCH
-```python
-SECTORS_GPT = {
-    "Information Technology": {
-        "etf": "XLK",
-        "description": "growth/innovation beta",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Communication Services": {
-        "etf": "XLC",
-        "description": "ads, platforms, media",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Consumer Discretionary": {
-        "etf": "XLY",
-        "description": "cyclical demand, sentiment",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Consumer Staples": {
-        "etf": "XLP",
-        "description": "defensive cashflows, low vol",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Health Care": {
-        "etf": "XLV",
-        "description": "defensive + policy/innovation mix",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Financials": {
-        "etf": "XLF",
-        "description": "rate curve/credit sensitivity",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Industrials": {
-        "etf": "XLI",
-        "description": "capex, global trade, PMIs",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Energy": {
-        "etf": "XLE",
-        "description": "commodity/inflation shock hedge",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-    "Utilities": {
-        "etf": "XLU",
-        "description": "bond-proxy, duration sensitivity",
-        "tickers": ["T1","T2","T3","T4"],
-    },
-}
-
-
-Rules:
-  1. Use only real-time, verifiable data.
-  2. Exclude any ticker where data cannot be confirmed.
-  3. Look ahead for scheduled events today/this week.
-```
 ---
 
-# 2️⃣ Daily Portfolio Screener
+# 2️⃣ Daily Options Screener
 
 ## `sectors.py`
 
@@ -113,36 +40,54 @@ Defines sector portfolios, merges them, manages symbols.
 
 ## `build_universe.py`
 
-Validates tickers' options chains, saves results, logs status.
+Connect to API, validate tickers' options chains, saves results, logs status.
 
 ## `spot.py`
 
 Streams live stock quotes, saves bid/ask/mid prices.
 
-## `atm_iv.py`
+## `ticker_ranker.py`
 
-Calculates ATM implied volatility, IV rank for tickers.
+1. Analyze every ticker's ATM options (real API data)
 
-## `liquidity.py`
+2. Score each ticker 0-100 based on spreads, open interest, volume, IV
 
-Analyzes options liquidity, creates sector-based trading baskets.
+3. Rank them highest to lowest
 
----
-
-# 3️⃣ Daily Credit Spread Screener
+4. Show the preview of which ticker is winning each sector
 
 
-## `stock_prices.py`
+## `sector_selection.py`
 
-Collects live stock prices for universe tickers.
+1. Load all ranked tickers from Step 4
 
-## `options_chains.py`
+2. Pick the WINNER for each sector (highest liquidity score)
 
-Discovers options contracts for credit spread analysis.
+3. Show you exactly who won each sector and why
 
-## `iv_data.py`
+4. cCreate the final 18-ticker universe (9 GPT + 9 GROK)
 
-Collects implied volatility data for options contracts.
+5. Show competition analysis (close races vs blowouts)
+
+
+## `stock_prices_focused.py`
+
+Gets current prices for your 18 champions
+
+## `options_chains_focused.py`
+
+Discovers all the credit spread opportunities (0-33 DTE)
+
+## `smart_greeks_collector.py`
+
+1. Smart-estimate where ~30 delta strikes should be
+
+2. Target only the best 3-4 contracts per expiration
+
+3. Collect real Greeks for just the cream of the crop
+
+4. Massive efficiency gain - analyze ~90% fewer contracts!
+
 
 ## `market_prices.py`
 
