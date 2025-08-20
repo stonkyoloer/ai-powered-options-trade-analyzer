@@ -1,114 +1,107 @@
-## Create Sectors
-
-**Create:** `sectors.py`
-
-**Query:** `open -e sectors.py`
-
-```bash
 # sectors.py - Optimized Sector Configuration
 """
 Sector universes with performance tracking.
-KEEP - minor changes for runtime optimization and validation.
+UPDATED with new GPT/Grok ticker assignments from Aug 20, 2025
 """
 import time
 from pathlib import Path
 import json
 
-# GPT Portfolio (UPDATE DAILY)
+# GPT Portfolio (UPDATED Aug 20, 2025)
 SECTORS_GPT = {
-    "Information Technology": {
-        "etf": "XLK",
-        "description": "growth/innovation beta",
-        "tickers": ["ADI", "INTU", "NVDA", "PANW"],
-    },
     "Communication Services": {
         "etf": "XLC", 
         "description": "ads, platforms, media",
-        "tickers": ["DIS", "GOOGL", "META", "TMUS"],
+        "tickers": ["NFLX", "META", "GOOGL"],
     },
     "Consumer Discretionary": {
         "etf": "XLY",
         "description": "cyclical demand, sentiment", 
-        "tickers": ["HD", "LOW", "ROST", "TJX"],
+        "tickers": ["AMZN", "TSLA", "MCD"],
     },
     "Consumer Staples": {
         "etf": "XLP",
         "description": "defensive cashflows, low vol",
-        "tickers": ["EL", "MDLZ", "TGT", "WMT"],
-    },
-    "Health Care": {
-        "etf": "XLV",
-        "description": "defensive + policy/innovation mix",
-        "tickers": ["ABBV", "CAH", "LLY", "MDT"],
-    },
-    "Financials": {
-        "etf": "XLF", 
-        "description": "rate curve/credit sensitivity",
-        "tickers": ["BAC", "GS", "JPM", "MS"],
-    },
-    "Industrials": {
-        "etf": "XLI",
-        "description": "capex, global trade, PMIs",
-        "tickers": ["CAT", "DE", "LMT", "UNP"],
+        "tickers": ["WMT", "COST", "PG"],
     },
     "Energy": {
         "etf": "XLE",
         "description": "commodity/inflation shock hedge", 
-        "tickers": ["COP", "CVX", "SLB", "XOM"],
+        "tickers": ["XOM", "CVX", "COP"],
     },
-    "Utilities": {
-        "etf": "XLU",
-        "description": "bond-proxy, duration sensitivity",
-        "tickers": ["DUK", "NEE", "PCG", "SO"],
-    },
-}
-
-# Grok Portfolio (UPDATE DAILY)  
-SECTORS_GROK = {
-    "Information Technology": {
-        "etf": "XLK",
-        "description": "growth/innovation beta",
-        "tickers": ["AAPL", "AVGO", "MSFT", "NVDA"],
-    },
-    "Communication Services": {
-        "etf": "XLC",
-        "description": "ads, platforms, media", 
-        "tickers": ["GOOG", "GOOGL", "META", "NFLX"],
-    },
-    "Consumer Discretionary": {
-        "etf": "XLY",
-        "description": "cyclical demand, sentiment",
-        "tickers": ["AMZN", "HD", "MCD", "TSLA"],
-    },
-    "Consumer Staples": {
-        "etf": "XLP", 
-        "description": "defensive cashflows, low vol",
-        "tickers": ["COST", "KO", "PG", "WMT"],
+    "Financials": {
+        "etf": "XLF", 
+        "description": "rate curve/credit sensitivity",
+        "tickers": ["JPM", "V", "MA"],
     },
     "Health Care": {
         "etf": "XLV",
         "description": "defensive + policy/innovation mix",
-        "tickers": ["ABBV", "JNJ", "LLY", "UNH"],
-    },
-    "Financials": {
-        "etf": "XLF",
-        "description": "rate curve/credit sensitivity",
-        "tickers": ["BRK.B", "JPM", "MA", "V"],
+        "tickers": ["ABBV", "ABT", "LLY"],
     },
     "Industrials": {
-        "etf": "XLI", 
+        "etf": "XLI",
         "description": "capex, global trade, PMIs",
-        "tickers": ["CAT", "GE", "RTX", "UBER"],
+        "tickers": ["GE", "CAT", "BA"],
+    },
+    "Information Technology": {
+        "etf": "XLK",
+        "description": "growth/innovation beta",
+        "tickers": ["MSFT", "AAPL", "CSCO"],
+    },
+    "Utilities": {
+        "etf": "XLU",
+        "description": "bond-proxy, duration sensitivity",
+        "tickers": ["NEE", "SO", "DUK"],
+    },
+}
+
+# Grok Portfolio (UPDATED Aug 20, 2025)  
+SECTORS_GROK = {
+    "Communication Services": {
+        "etf": "XLC",
+        "description": "ads, platforms, media", 
+        "tickers": ["GOOGL", "META", "NFLX"],
+    },
+    "Consumer Discretionary": {
+        "etf": "XLY",
+        "description": "cyclical demand, sentiment",
+        "tickers": ["AMZN", "TSLA", "HD"],
+    },
+    "Consumer Staples": {
+        "etf": "XLP", 
+        "description": "defensive cashflows, low vol",
+        "tickers": ["WMT", "COST", "PG"],
     },
     "Energy": {
         "etf": "XLE",
         "description": "commodity/inflation shock hedge",
-        "tickers": ["COP", "CVX", "EOG", "XOM"],
+        "tickers": ["XOM", "CVX", "COP"],
+    },
+    "Financials": {
+        "etf": "XLF",
+        "description": "rate curve/credit sensitivity",
+        "tickers": ["BRK.B", "JPM", "V"],
+    },
+    "Health Care": {
+        "etf": "XLV",
+        "description": "defensive + policy/innovation mix",
+        "tickers": ["LLY", "JNJ", "ABBV"],
+    },
+    "Industrials": {
+        "etf": "XLI", 
+        "description": "capex, global trade, PMIs",
+        "tickers": ["GE", "RTX", "UBER"],
+    },
+    "Information Technology": {
+        "etf": "XLK",
+        "description": "growth/innovation beta",
+        "tickers": ["NVDA", "MSFT", "AAPL"],
     },
     "Utilities": {
         "etf": "XLU",
         "description": "bond-proxy, duration sensitivity", 
-        "tickers": ["CEG", "DUK", "NEE", "SO"],
+        "tickers": ["NEE", "SO", "CEG"],
     },
 }
 
@@ -183,7 +176,4 @@ if __name__ == "__main__":
         sectors = get_sectors(mode)
         total = sum(len(meta["tickers"]) for meta in sectors.values())
         print(f"{mode.upper()}: {len(sectors)} sectors, {total} tickers")
-```
 
-
-**Run:** `python3 sectors.py`
