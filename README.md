@@ -36,6 +36,8 @@ File name `Configure TastyTrade`
 
 ## How to use 
 
+Run `individual steps` or use the `master pipeline`
+
 ```bash
 # Individual steps:
 python sectors.py
