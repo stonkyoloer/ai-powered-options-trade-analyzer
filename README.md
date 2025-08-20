@@ -1,4 +1,34 @@
-# 🚀 Prompt: News Heat Ticker Picker
+# 🚀 
+
+
+---
+# 🛠 Configure TastyTrade
+
+# 1️⃣ Prompt: News Heat Ticker Picker
+
+## Download the Trading Universe
+
+`XLK` https://www.sectorspdrs.com/mainfund/XLK
+
+`XLC` https://www.sectorspdrs.com/mainfund/XLC
+
+`XLY` https://www.sectorspdrs.com/mainfund/XLY
+
+`XLP` https://www.sectorspdrs.com/mainfund/XLP
+
+`XLV` https://www.sectorspdrs.com/mainfund/XLV
+
+`XLF` https://www.sectorspdrs.com/mainfund/XLF
+
+`XLI` https://www.sectorspdrs.com/mainfund/XLI
+
+`XLE` https://www.sectorspdrs.com/mainfund/XLE
+
+`XLU` https://www.sectorspdrs.com/mainfund/XLU
+
+---
+
+## Prompt for News Heat Ticker Picker
 
 ```text
 
@@ -18,7 +48,7 @@ Rules (real-time only, no guesses)
 
 Step 1 — Score News (≤24h preferred; fallback ≤72h)
 Assign each ticker one News Heat Score Unit (NHSU) from its single strongest, verified ≤72h catalyst:
- 4000 — M&A (Definitive) Definitive/signed deal or acknowledged offer posted on IR/SEC or confirmed by 2+ major wires (≤24h preferred).
+4000 — M&A (Definitive) Definitive/signed deal or acknowledged offer posted on IR/SEC or confirmed by 2+ major wires (≤24h preferred).
 3500 — Product / Regulatory (Final) Dated product launch/major event or final regulatory/litigation decision (SEC/FDA/court) with a clear effective date.
 1500 — Analyst (Tier-1) Upgrade/downgrade or target change from a tier-1 broker.
 1500 — Guidance / Pre-announcement Formal guidance change (press release/8-K) or quantified pre-earnings company commentary.
@@ -72,32 +102,8 @@ Catalyst: Short-Seller Report (1200 [+500 if IV])
 Fallback: Low heat (<1000)
 Fallback: No news (0)
 ```  
----
-# 🛠 Configure TastyTrade
 
-# 1️⃣ Select Trading Universe
 
-## Download the Trading Universe
-
-`XLK` https://www.sectorspdrs.com/mainfund/XLK
-
-`XLC` https://www.sectorspdrs.com/mainfund/XLC
-
-`XLY` https://www.sectorspdrs.com/mainfund/XLY
-
-`XLP` https://www.sectorspdrs.com/mainfund/XLP
-
-`XLV` https://www.sectorspdrs.com/mainfund/XLV
-
-`XLF` https://www.sectorspdrs.com/mainfund/XLF
-
-`XLI` https://www.sectorspdrs.com/mainfund/XLI
-
-`XLE` https://www.sectorspdrs.com/mainfund/XLE
-
-`XLU` https://www.sectorspdrs.com/mainfund/XLU
-
----
 
 # 2️⃣ Daily Options Screener
 
