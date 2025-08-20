@@ -1,4 +1,4 @@
-# 🚀 Daily Portfolio and Credit Spread Screeners
+# 🚀 Daily Credit Spread Screeners
 
 "I am now AI, start with $400, ChatGPT vs Grok, I will do whatever they say.  I am not responsible for my actions.  No DD.  No Brains.  JUST VIBES!"  
 
@@ -89,13 +89,28 @@ Discovers all the credit spread opportunities (0-33 DTE)
 4. Massive efficiency gain - analyze ~90% fewer contracts!
 
 
-## `market_prices.py`
+## `executable_pricing.py`
 
-Collects real-time bid/ask prices for options contracts.
+1. How much spreads actually cost to execute
 
-## `risk_analysis.py`
+2. Which contracts have tight vs wide spreads
 
-Analyzes options risk using Greeks data.
+3. Realistic profit calculations for credit spreads
+
+4. Execution cost breakdown per contract
+
+
+## `event_screener.py`
+
+1. Clear AVOID list (don't trade these!)
+
+2. Reduce size recommendations
+
+3. Risk scores for every ticker
+
+4. Upcoming events calendar
+
+5. Enhanced contracts with risk flags
 
 ## `iv_liquidity.py`
 
