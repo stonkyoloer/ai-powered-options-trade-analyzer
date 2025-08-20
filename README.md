@@ -98,9 +98,9 @@ Fallback: Low heat (<1000)
 Fallback: No news (0)
 ```  
 
-## ▪️ Prompt for Instructions  
-```text
+## ▪️ Instructions and Rules  
 
+```text
 Run & order:
 1. Print the exact PDT date/time at the top.
 2. pend up to ~60 seconds per sector; if time’s up, fill with ETF-weight fallbacks.
@@ -154,20 +154,21 @@ Fallback discipline
 Run `individual steps` or use the `master pipeline`
 
 ```bash
+
 # Individual steps:
-python sectors.py
-python build_universe.py  
-python spot.py
-python ticker_ranker.py
-python sector_selection.py
-python stock_prices_focused.py
-python options_chains_focused.py
-python greeks_collector.py
-python executable_pricing.py
-python spread_analyzer.py
+
+python3 sectors.py
+python3 build_universe.py  
+python3 spot.py
+python3 ticker_ranker.py
+python3 sector_selection.py
+python3 options_chains.py
+python3 greeks.py
+python3 spread_analyzer.py
 
 # OR run everything at once:
-python master_pipeline.py
+
+python3 master.py
 ```
 
 # 4️⃣ AI Driven News Screener 
