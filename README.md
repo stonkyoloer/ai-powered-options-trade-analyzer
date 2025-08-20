@@ -98,6 +98,53 @@ Fallback: Low heat (<1000)
 Fallback: No news (0)
 ```  
 
+## ▪️ Instructions for Prompt 
+```text
+
+Run & order:
+1. Print the exact PDT date/time at the top.
+2. pend up to ~60 seconds per sector; if time’s up, fill with ETF-weight fallbacks.
+3. Sort output: Sector (A→Z) → NHSU (high→low) → ETF weight → alphabetical.
+
+Universe controls
+1. You can pass pin=[...] (must include unless hard-stopped) and ban=[...] (never include).
+2. Use primary U.S. listings; skip thin ADRs.
+
+Sources (quality filter)
+1. Prefer company IR/SEC/regulators/courts/index providers → then major wires (Reuters/AP/Bloomberg/WSJ/FT) → then big finance sites.
+2. Auto-exclude rumor words (“reportedly/may/could/considering”) unless later confirmed.
+3. If two reputable sources conflict, treat as no news.
+4. Count multiple links about the same event as one catalyst.
+
+Heat scoring tweaks
+1. Freshness decay: news >24h to ≤72h = –200 NHSU (still needs ≥1000 to qualify).
+2. IV boost (+500) only if a credible source quantifies IV and the event is ≤5 trading days away; remove after it passes.
+3. Per sector, max 2 picks with the same catalyst type (don’t pick three upgrades).
+
+Events & macro (gates)
+1. Earnings inside 0–33 DTE = exclude.
+2. Confirmed dated macro inside ~5 trading days (Fed/CPI/Jobs, OPEC/EIA, notable FDA) that directly hits the name = exclude or deprioritize.
+3. Ex-div within 5 trading days = exclude.
+
+Price-action sanity
+1. If today’s move is > ±8%, skip unless Heat is 3500/4000.
+2. Avoid unconfirmed premarket gaps >3% (when premarket data is visible).
+
+Safety checks
+1. Re-check for trading halts, bankruptcies, delistings in the last 24h before finalizing.
+2. If there’s an active agency probe with unknown timing inside DTE, deprioritize unless a date is set.
+
+Diversity
+1. Mix sub-themes within each sector (e.g., Energy = 1 major, 1 services, 1 pipeline/renewable) when choices exist.
+2. Don’t stack highly correlated mega-caps across sectors if viable alternatives exist.
+
+Fallback discipline
+1. When using fallback, don’t add catalyst text; pick by ETF weight (then market cap, then alpha).
+2. If a pinned name hits a hard stop, skip it (don’t force it).
+3. Light audit (for your logs, not the table)
+4. Keep a tiny note per pick: headline, timestamp, source, NHSU, IV boost yes/no.
+5. Note why top-weight names were skipped (e.g., earnings in window, rumor-only, >72h).
+```
 
 
 # 2️⃣ Daily Options Screener
