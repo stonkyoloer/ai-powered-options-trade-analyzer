@@ -1,5 +1,6 @@
 # 🚀 
 
+Work in Progress... The script is pulling live market data from tastytrade server. Need a robust tool or automation for your project? Hit me up, and I’ll build it from scratch!  
 
 ---
 # 🛠 Configure TastyTrade
@@ -223,7 +224,7 @@ python3 master.py
 
 
 
-# 4️⃣ AI Driven News Screener 
+# 3️⃣ AI Driven News Screener 
 
 ## ▪️ Prompt for Credit Spread Results vs Market Reality
 
