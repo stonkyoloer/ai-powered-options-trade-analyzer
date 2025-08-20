@@ -231,42 +231,44 @@ python3 master.py
 ```text
 Date: [enter date & time]
 
-
 Universe (must use): Only credit spreads from final_credit_spread_comparison.json (has AI = GPT/Grok).
+Include all spreads with 0–45 DTE; exclude any over 45 DTE, missing strikes/premiums/probabilities, or invalid data like negative values or mismatched types.
 Goal (must do): Validate each 0–45 DTE spread against current market reality.
-Output: Table only — Ticker | AI | Spread Type | Current Risk | Final Status — one row per spread.
+Check for risks that could blow up the trade; base on real-time facts only, no guesses or assumptions.
+Output: Table only — AI Bot Name | Ticker | Spread Type | Current Risk | Final Status — one row per spread.
+Sort by ticker alphabetically; use bold for Critical/High risks.
 
 
-What to will fetch now (real-time, verifiable):
-1. Earnings collision: Company IR & earnings calendars (next 45 days).
-2. Major news catalysts: Press releases / 8-K (≤ 72h).
-3. Regulatory/court: SEC/DOJ/FDA/ITC/FTC/CPSC actions (≤ 72h).
-4. Macro conflicts: Fed/Jackson Hole/FOMC, BLS CPI/Jobs (next 10 trading days).
-5. Trading anomalies: Exchange halts/suspensions; unusual volume today.
-6. Technical red flags: >8% move today without a confirmed catalyst.
-
+What to fetch now (real-time, verifiable):
+1. Earnings collision: Company IR pages, earnings calendars from Nasdaq/Yahoo Finance/Seeking Alpha/Zacks, analyst calls/transcripts, quiet period ends (next 45 days; include guidance updates, pre-announcements, post-earnings drifts).
+2. Major news catalysts: Press releases, 8-K/6-K filings, conference presentations/speeches, product launches/recalls, mergers/acquisitions/deals, executive changes/hirings/firings, dividend announcements/changes, stock splits/buybacks (≤ 72h).
+3. Regulatory/court: SEC filings/enforcements/investigations, DOJ antitrust suits/probes, FDA approvals/denials/recalls/warnings, ITC patent rulings/injunctions, FTC merger blocks/probes, CPSC safety alerts/recalls, EPA violations/fines, IRS tax disputes (≤ 72h).
+4. Macro conflicts: Fed speeches/Jackson Hole/FOMC minutes/decisions/rate cuts, BLS CPI/PPI/Jobs reports/unemployment claims/retail sales, Treasury auctions/yields, GDP revisions/estimates, ECB/BOE/BOJ policy shifts/announcements, OPEC meetings/oil quotas (next 10 trading days).
+5. Trading anomalies: Exchange halts/suspensions/delists, circuit breakers triggered, unusual volume (top 1% today or >300% avg), short squeezes/float data, options expiration effects/pin risks (today or next session), dark pool activity spikes.
+6. Technical red flags: >8% price move today without confirmed catalyst, gap opens/closes >5%, 52-week high/low breaks, volatility spikes (VIX >30 or stock IV >50% or >2x avg), analyst downgrades/upgrades/ratings changes (today), RSI overbought/oversold extremes.
+7. Sector impacts: Industry-specific events like oil inventory reports (EIA/API), semiconductor tariffs/chip shortages, crypto regulations/bans/halvings, airline safety probes/incidents (FAA), banking stress tests (Fed), real estate data (housing starts/mortgages) (≤ 72h).
+8. Global risks: Geopolitical tensions (wars/conflicts, sanctions/trade wars, elections/results), natural disasters affecting ops (hurricanes/floods, earthquakes/volcanoes), supply chain disruptions (strikes/labor issues, port closures/congestion, chip/fuel shortages).
+9. Corporate finance: Debt offerings/refinancings, credit rating changes (Moody's/S&P), insider trading filings (Form 4), activist investor letters/positions (13D/G), proxy fights/board battles (≤ 72h).
 
 Hard rules (binary, pass/fail):
-1. Live, named, timestamped source that names the ticker.
-2. ≤72h max age; older = no conflict.
-3. Earnings inside DTE = automatic fail (skip).
-4. No speculation; confirmed/documented events only.
-5. Primary > secondary: Company IR/SEC → Fed/BLS/regulators → Reuters/Bloomberg/WSJ → exchange sites.
 
+1. Live, named, timestamped source that names the ticker explicitly; no generic, aggregated, or unnamed data.
+2. ≤72h max age for news/catalysts; older = no conflict, treat as clean; ignore archived or historical items.
+3. Earnings inside DTE = automatic fail (skip entire spread); include any related events like calls or guidance.
+4. No speculation; confirmed/documented events only; ignore rumors, unverified tweets/social media, forward-looking opinions, or analyst predictions without facts.
+5. Primary > secondary: Company IR/SEC filings → Fed/BLS/regulator sites → Reuters/Bloomberg/WSJ/AP/CNBC → exchange sites (NYSE/Nasdaq) → Yahoo Finance/Investing.com/MarketWatch.
+6. Verify with multiple sources if conflicting; default to primary if tie; if no data after thorough check, assume low risk but note "clean scan."
 
-Action steps (risk → status → build):
-Step 1 — Current Risk (pick highest applicable):
-1. Critical (auto-skip): Earnings in DTE; trading halt; bankruptcy filing
-2. High: Major catalyst ≤24h; Fed ≤5 days; Price Spike >8% (today)
-3. Medium: Minor catalyst ≤72h; Macro 5–10 days; Price Move 3–8% (today)
-4. Low: Clean news; no scheduled events; normal tape
-
+Action steps (risk → status → build): Step 1 — Current Risk (pick highest applicable; list all factors briefly in cell):
+1. Critical (auto-skip): Earnings in DTE; trading halt/suspension/delisting; bankruptcy filing; fraud probe/SEC halt; CEO arrest/resignation under duress; major lawsuit loss.
+2. High: Major catalyst ≤24h (e.g., merger vote/close, verdict/settlement); Fed event ≤5 days; Price spike >8% today; volume surge >500% avg without cause; IV explosion >100% baseline; short squeeze in play.
+3. Medium: Minor catalyst ≤72h (e.g., analyst note, small deal, exec change); Macro event 5–10 days (e.g., jobs/CPI report); Price move 3–8% today; moderate volume bump 200–500%; sector news spillover; mild IV rise.
+4. Low: Clean news flow; no scheduled events in horizon; normal tape activity; price stable <3% today; standard volume/IV; no flags.
 
 Step 2 — Final Status:
-1. PROCEED: Low only
-2. MONITOR: Medium (consider smaller size)
-3. SKIP: High or any Critical
 
-
+1. PROCEED: Low only (safe to enter full size; no issues).
+2. MONITOR: Medium (consider smaller size, tighter stops, or hedge; watch closely).
+3. SKIP: High or any Critical (avoid entirely; too risky now).
 ``` 
 
