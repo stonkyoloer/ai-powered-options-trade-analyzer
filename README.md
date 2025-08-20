@@ -3,7 +3,14 @@
 Work in Progress... The script is pulling live market data from tastytrade server. Need a tool or automation for your project or idea? Hit me up, and I’ll build it from scratch!  
 
 ---
-# 🛠 Configure TastyTrade
+
+**Step:** `config.py`
+
+**What:** Centralizes Tastytrade creds + API base URL (or reads from env vars) so other scripts just import config.
+
+**Why:** Single source of truth for auth/settings—no copy-paste, easy rotation, safer via env vars + .gitignore.
+
+---
 
 # 1️⃣ Prompt: News Heat Ticker Picker
 
