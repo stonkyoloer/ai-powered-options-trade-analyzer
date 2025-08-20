@@ -173,7 +173,7 @@ python3 master.py
 
 ---
 
-**Step 1:** build_universe.py  
+**Step 1:** `build_universe.py`  
 
 **What:** Tests if stocks have options chains  
 
@@ -181,7 +181,7 @@ python3 master.py
 
 ---
 
-**Step 2:** spot.py  
+**Step 2:** `spot.py`  
 
 **What:** Gets current stock prices  
 
@@ -190,7 +190,7 @@ python3 master.py
 ---
 
 
-**Step 3:** ticker_ranker.py  
+**Step 3:** `ticker_ranker.py`  
 
 **What:** Ranks stocks by options liquidity  
 
@@ -198,7 +198,7 @@ python3 master.py
 
 ---
 
-**Step** options_chains.py  
+**Step** `options_chains.py`  
 
 **What:** Downloads all option contracts  
 
@@ -206,7 +206,7 @@ python3 master.py
 
 ---
 
-**Step 5:** greeks.py  
+**Step 5:** `greeks.py`  
 
 **What:** Gets option prices + Greeks  
 
@@ -214,7 +214,7 @@ python3 master.py
 
 ---
 
-**Step 6:** spread_analyzer.py  
+**Step 6:** `spread_analyzer.py`  
 
 **What:** Builds spreads, calculates PoP/ROI, picks best  
 
