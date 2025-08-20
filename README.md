@@ -34,104 +34,24 @@ File name `Configure TastyTrade`
 
 # 2️⃣ Daily Options Screener
 
-**`sectors.py`**: Defines sector portfolios, merges them, manages symbols.
+## How to use 
 
-**`build_universe.py`**: Connect to API, validate tickers' options chains, saves results, logs status.
+```bash
+# Individual steps:
+python sectors.py
+python build_universe.py  
+python spot.py
+python ticker_ranker.py
+python sector_selection.py
+python stock_prices_focused.py
+python options_chains_focused.py
+python greeks_collector.py
+python executable_pricing.py
+python spread_analyzer.py
 
-**`spot.py`**: Streams live stock quotes, saves bid/ask/mid prices.
-
-**`ticker_ranker.py`**:
-
-1. Analyze every ticker's ATM options (real API data)
-
-2. Score each ticker 0-100 based on spreads, open interest, volume, IV
-
-3. Rank them highest to lowest
-
-4. Show the preview of which ticker is winning each sector
-
-
-**`sector_selection.py`**:
-
-1. Load all ranked tickers from Step 4
-
-2. Pick the WINNER for each sector (highest liquidity score)
-
-3. Show you exactly who won each sector and why
-
-4. cCreate the final 18-ticker universe (9 GPT + 9 GROK)
-
-5. Show competition analysis (close races vs blowouts)
-
-
-**`stock_prices_focused.py`**:
-
-Gets current prices for your 18 champions
-
-**`options_chains_focused.py`** Discovers all the credit spread opportunities (0-33 DTE)
-
-**`smart_greeks_collector.py`**
-
-1. Smart-estimate where ~30 delta strikes should be
-
-2. Target only the best 3-4 contracts per expiration
-
-3. Collect real Greeks for just the cream of the crop
-
-4. Massive efficiency gain - analyze ~90% fewer contracts!
-
-
-**`executable_pricing.py`**
-
-1. How much spreads actually cost to execute
-
-2. Which contracts have tight vs wide spreads
-
-3. Realistic profit calculations for credit spreads
-
-4. Execution cost breakdown per contract
-
-
-**`event_screener.py`**
-
-1. Clear AVOID list (don't trade these!)
-
-2. Reduce size recommendations
-
-3. Risk scores for every ticker
-
-4. Upcoming events calendar
-
-5. Enhanced contracts with risk flags
-
-**`spread_analyzer.py`**
-
-1. Creates actual credit spreads (bear calls + bull puts)
-   
-2. Black-Scholes for probability calculations
-  
-3. Applies executable pricing (not fantasy mid prices)
-  
-4. Includes event screening (avoids earnings bombs)
-  
-5. Master scoring algorithm (0-100 comprehensive score)
-
-6. Ranks everything by viability and profitability
-   
-**`final_selector.py`** Scans for optimal credit spreads.
-
----
-
-## `master.py`
-
-Orchestrates trading pipeline, runs analyses, generates reports.
-
-```python
-python3 master.py
+# OR run everything at once:
+python master_pipeline.py
 ```
-
----
-
 
 # 4️⃣ AI Driven News Screener 
 
