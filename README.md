@@ -4,7 +4,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-**Step:** `config.py`
+**Script_1:** `config.py`
 
 **What:** Centralizes Tastytrade creds + API base URL (or reads from env vars) so other scripts just import config.
 
@@ -180,7 +180,7 @@ python3 master.py
 
 ---
 
-**Step 1:** `build_universe.py`  
+**Script_2:** `build_universe.py`  
 
 **What:** Tests if stocks have options chains  
 
@@ -197,7 +197,7 @@ python3 master.py
 ---
 
 
-**Step 3:** `ticker_ranker.py`  
+**Script_3:** `ticker_ranker.py`  
 
 **What:** Ranks stocks by options liquidity  
 
@@ -205,7 +205,7 @@ python3 master.py
 
 ---
 
-**Step** `options_chains.py`  
+**Script_4** `options_chains.py`  
 
 **What:** Downloads all option contracts  
 
@@ -213,7 +213,7 @@ python3 master.py
 
 ---
 
-**Step 5:** `greeks.py`  
+**Script_5:** `greeks.py`  
 
 **What:** Gets option prices + Greeks  
 
@@ -221,7 +221,7 @@ python3 master.py
 
 ---
 
-**Step 6:** `spread_analyzer.py`  
+**Script_6:** `spread_analyzer.py`  
 
 **What:** Builds spreads, calculates PoP/ROI, picks best  
 
