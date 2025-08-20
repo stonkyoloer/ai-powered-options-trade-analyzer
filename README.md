@@ -171,6 +171,34 @@ python3 spread_analyzer.py
 python3 master.py
 ```
 
+---
+
+## Step 1: build_universe.py
+**What:** Tests if stocks have options chains
+**Why:** No options = no credit spreads possible
+
+## Step 2: spot.py
+**What:** Gets current stock prices
+**Why:** Need prices for strike selection
+
+## Step 3: ticker_ranker.py
+**What:** Ranks stocks by options liquidity
+**Why:** Liquid options = better fills
+
+## Step 4: options_chains.py
+**What:** Downloads all option contracts
+**Why:** Need contracts to build spreads
+
+## Step 5: greeks.py
+**What:** Gets option prices + Greeks
+**Why:** Need real data for PoP/ROI
+
+## Step 6: spread_analyzer.py
+**What:** Builds spreads, calculates PoP/ROI, picks best
+**Why:** This creates your final table
+
+
+
 # 4️⃣ AI Driven News Screener 
 
 ## ▪️ Prompt
