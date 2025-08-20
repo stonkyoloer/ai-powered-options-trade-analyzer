@@ -1,86 +1,77 @@
 # 🚀 Prompt: News Heat Ticker Picker
 
 ```text
+
 Date: [enter date & time]
+
+
 Universe (must use): Only tickers in the attached CSVs: XLK, XLC, XLY, XLP, XLV, XLF, XLI, XLE, XLU.
-Goal (must do): Pick exactly 3 tickers per sector (9 sectors = 27 total) for 0–33 DTE credit spreads today. Tickers only, no option legs.
+Goal (must do): Pick exactly 3 tickers per sector (9 sectors = 27 total) for 0–33 DTE credit spreads today.
+
 
 Rules (real-time only, no guesses)
+1. Live, timestamped, named-publisher sources that explicitly mention the ticker.
+2. If not confirmed now by a primary or two majors (≤72h), treat as no news.
+3. No IV inference—no estimates, no history, no options-flow anecdotes.
+4. Use IV only when a credible source quantifies it and ties it to a dated event.
 
-Use your browsing tools to pull live, verifiable info.
-
-If you can’t verify now, leave it out (treat as no news).
-
-Don’t estimate IV or use historical IV. Only use IV if a source explicitly says it’s elevated because of an event.
 
 Step 1 — Score News (≤24h preferred; fallback ≤72h)
+Assign each ticker one News Heat Score Unit (NHSU) from its single strongest, verified ≤72h catalyst:
+ 4000 — M&A (Definitive) Definitive/signed deal or acknowledged offer posted on IR/SEC or confirmed by 2+ major wires (≤24h preferred).
+3500 — Product / Regulatory (Final) Dated product launch/major event or final regulatory/litigation decision (SEC/FDA/court) with a clear effective date.
+1500 — Analyst (Tier-1) Upgrade/downgrade or target change from a tier-1 broker.
+1500 — Guidance / Pre-announcement Formal guidance change (press release/8-K) or quantified pre-earnings company commentary.
+1500 — CEO/CFO Change Leadership change with effective date (IR/filing).
+1500 — Buyback / Dividend New/expanded repurchase authorization, dividend initiation/raise, or special dividend.
+1500 — Major Contract / Partnership Material customer win, government award, or exclusive strategic partnership with numbers/terms.
+1500 — Index Change S&P/MSCI/FTSE inclusion/exclusion naming the company.
+1500 — Recall / Safety Product recall or safety advisory with scope and remediation (company/regulator).
+1500 — Data Breach / Cyber Company-confirmed breach/ransomware with operational or financial impact.
+1500 — IP Update (Non-final) Patent grant/expiry, injunction filing, or notable docket move (not a final ruling).
+1200 — Lawsuit / Strike Filed lawsuit, class certification, union strike/settlement confirmed by company/union/regulator.
+1200 — Investigation / Subpoena Agency investigation opened or subpoena disclosed (regulator/company).
+1200 — Short-Seller Report (Tier-1) Credible activist report with evidence and major-wire pickup.
+500 — Minor Update (fallback-only) Awards, small pilots, non-material PR/blog chatter. Exclude unless used strictly as fallback.
+0 — No News Nothing verifiable (≤72h). Use only for ETF-weight fallback.
+Boost: If a reputable source explicitly states elevated/implied volatility due to a dated event, add +500 to that ticker’s NHSU.
+Threshold: News picks require NHSU ≥ 1000.
 
-Assign each ticker one News Heat Score Unit (NHSU) based on the strongest current, verifiable item:
-
-4000 — Confirmed M&A (announced/definitive).
-
-3500 — Product launch/major dated event OR major regulatory/litigation decision (SEC/FDA/court/government).
-
-1500 — Analyst upgrade/downgrade (reputable firm) OR formal guidance change/credible pre-earnings company commentary.
-
-1200 — Lawsuit/strike news with credible sourcing (non-rumor).
-
-500 — Minor update. (Exclude from selection unless used as fallback.)
-
-0 — No verifiable fresh news.
-
-Boost: If a reputable source explicitly states elevated/implied volatility due to an event, add +500 to that ticker’s NHSU.
-Threshold: To qualify as a news pick, NHSU ≥ 1000.
 
 Step 2 — Event Gate (avoid event landmines)
+1. Exclude any ticker with a confirmed company earnings date inside 0–33 DTE.
+2. Exclude tickers directly impacted by a dated macro/regulatory event within ~5 trading days relevant to their sector (e.g., Fed/Jackson Hole/CPI/Jobs for rates-sensitive; OPEC/EIA for Energy; notable FDA dates for Health Care) if the timing is confirmed.
 
-Exclude any ticker with a confirmed company earnings date inside 0–33 DTE.
-
-Exclude tickers directly impacted by a dated macro/regulatory event within ~5 trading days relevant to their sector (e.g., Fed/Jackson Hole/CPI/Jobs for rates-sensitive; OPEC/EIA for Energy; notable FDA dates for Health Care) if the event timing is confirmed.
-
-If uncertain, exclude (don’t guess).
 
 Step 3 — Build the basket (must return 3 per sector)
+1. For each sector, rank tickers by NHSU (highest first).
+2. Use only NHSU ≥ 1000 for news picks.
+3. If a sector has fewer than 3 qualified news picks, fill the remainder with fallback tickers from that sector’s CSV using ETF weight as a proxy (highest weights first).
+4. Tie-breakers: higher ETF weight → larger market cap → alphabetical.
 
-For each sector, rank tickers by NHSU (highest first). Use only NHSU ≥ 1000 for news picks.
 
-If a sector has fewer than 3 qualified news picks, fill the remainder with fallback tickers from that sector’s CSV using ETF weight as a proxy (highest weights first).
-
-Tie-breakers: higher ETF weight → larger market cap → alphabetical.
-
-Safety filter: Exclude any ticker with a confirmed trading halt, delisting, or bankruptcy in the last 24h; keep filling with the next eligible name to maintain 3.
-
-Output (table only — no links, no extra columns)
+Results
+Output (table only — no links, no extra columns):
 Sector | Ticker | News Heat (NHSU)
-
-
-Exactly three rows per sector (27 total).
-
+Exactly three rows per sector (27 total)
 In the News Heat cell, write one of:
-
-Catalyst: M&A (4000[+500 if IV])
-
-Catalyst: Product/Regulatory (3500[+500 if IV])
-
-Catalyst: Upgrade/Downgrade (1500[+500 if IV])
-
-Catalyst: Guidance (1500[+500 if IV])
-
-Catalyst: Lawsuit/Strike (1200[+500 if IV])
-
-Fallback: No news (0)
-
+Catalyst: M&A (4000 [+500 if IV])
+Catalyst: Product/Regulatory (3500 [+500 if IV])
+Catalyst: Upgrade/Downgrade (1500 [+500 if IV])
+Catalyst: Guidance (1500 [+500 if IV])
+Catalyst: CEO/CFO Change (1500 [+500 if IV])
+Catalyst: Buyback/Dividend (1500 [+500 if IV])
+Catalyst: Contract/Partnership (1500 [+500 if IV])
+Catalyst: Index Change (1500 [+500 if IV])
+Catalyst: Recall/Safety (1500 [+500 if IV])
+Catalyst: Data Breach (1500 [+500 if IV])
+Catalyst: IP Update (1500 [+500 if IV])
+Catalyst: Lawsuit/Strike (1200 [+500 if IV])
+Catalyst: Investigation/Subpoena (1200 [+500 if IV])
+Catalyst: Short-Seller Report (1200 [+500 if IV])
 Fallback: Low heat (<1000)
-
-Constraints (hard)
-
-No PoP, ROI, IV rank, liquidity, quotes, or option legs.
-
-No rumors or “likely” language. Only what you can pull now.
-
-Always return 3 per sector using the fallback rule if needed.
+Fallback: No news (0)
 ```  
-
 ---
 # 🛠 Configure TastyTrade
 
