@@ -50,8 +50,7 @@ What I will fetch now (real-time, verifiable):
 8. Corporate actions: Buybacks/dividends (auths/raises), ex-div dates.
 9. Market hygiene: Trading halts/delistings/bankruptcies; avoid unconfirmed big premarket gaps.
 
-Hard rules (binary, pass/fail)
-
+Hard rules (binary, pass/fail):
 1. Live, timestamped, named-publisher source that names the ticker.
 2. If not confirmed now by a primary or two majors (≤72h), treat as no news.
 3. ≤24h preferred; allow ≤72h only if still active/relevant; drop >72h.
@@ -59,8 +58,7 @@ Hard rules (binary, pass/fail)
 5. Use IV only when a credible source quantifies it and ties it to a dated event.
 6. De-dup events: many links about the same event count as one catalyst.
 
-Action steps (score, gate, build)
-
+Action steps (score, gate, build):
 Step 1 — Score News (≤24h preferred; fallback ≤72h).
 Assign one NHSU per ticker from its strongest verified catalyst:
 4000 — M&A (definitive/signed/acknowledged).
