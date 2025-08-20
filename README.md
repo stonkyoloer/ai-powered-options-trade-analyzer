@@ -161,7 +161,6 @@ python3 sectors.py
 python3 build_universe.py  
 python3 spot.py
 python3 ticker_ranker.py
-python3 sector_selection.py
 python3 options_chains.py
 python3 greeks.py
 python3 spread_analyzer.py
