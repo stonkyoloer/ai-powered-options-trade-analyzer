@@ -6,7 +6,7 @@
 
 # 1️⃣ Prompt: News Heat Ticker Picker
 
-## Download the Trading Universe
+## ▪️ Download the Trading Universe
 
 `XLK` https://www.sectorspdrs.com/mainfund/XLK
 
@@ -28,7 +28,7 @@
 
 ---
 
-## Prompt for News Heat Ticker Picker
+## ▪️ Prompt for News Heat Ticker Picker
 
 ```text
 
@@ -107,7 +107,7 @@ Fallback: No news (0)
 
 # 2️⃣ Daily Options Screener
 
-## How to use 
+## ▪️ How to use 
 
 Run `individual steps` or use the `master pipeline`
 
@@ -130,7 +130,7 @@ python master_pipeline.py
 
 # 4️⃣ AI Driven News Screener 
 
-## Prompt
+## ▪️ Prompt
 
 ```text
 You are my Credit-Spread Catalyst & Sanity Checker. Timezone: America/Los_Angeles.
