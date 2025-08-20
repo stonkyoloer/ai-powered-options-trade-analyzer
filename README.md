@@ -272,3 +272,52 @@ Step 2 — Final Status:
 3. SKIP: High or any Critical (avoid entirely; too risky now).
 ``` 
 
+## ▪️ Instructions and Rules
+
+```text
+Run & order:
+1. Print PDT date/time at top; fetch live from NIST.
+2. Spend ~60s/sector; timeout → ETF-weight fallbacks, note "timeout".
+3. Sort: Sector (A→Z) → NHSU (high→low) → ETF weight → alpha.
+
+Universe controls:
+1. Allow pin=[...], ban=[...]; default none if empty.
+2. Use U.S. listings; skip thin ADRs, <500K volume.
+3. Target mid/large caps (> $2B); exclude micro unless pinned.
+
+Sources (quality filter):
+1. Prefer IR/SEC/regulators → Reuters/Bloomberg/WSJ → Yahoo/Seeking.
+2. Exclude rumors (“may/could”); need primary confirmation.
+3. Conflicting sources = no news; require two-source consensus.
+4. Dedupe same-event links; discard >72h.
+
+Heat scoring tweaks:
+1. Decay: >24h–≤72h = –200 NHSU; ≥1000 to qualify.
+2. IV boost (+500) if source confirms, event ≤5 days; cap +1000.
+3. Max 2 same-catalyst/sector; vary (e.g., M&A, upgrade).
+
+Events & macro (gates):
+1. Earnings in 0–33 DTE = exclude; check guidance/calls.
+2. Macro (Fed/CPI/OPEC) ≤5 days hitting name = exclude.
+3. Ex-div ≤5 days = skip; include special dividend cuts.
+
+Price-action sanity:
+1. ±8% move today = skip unless NHSU ≥3500.
+2. Unconfirmed premarket gap >3% = skip.
+3. Postmarket spike >5% sans news = exclude.
+
+Safety checks:
+1. Re-check halts/bankruptcies/delistings last 24h; use exchanges.
+2. Agency probe sans DTE date = deprioritize; –800 NHSU.
+3. Verify no fraud/SEC halts via EDGAR.
+
+Diversity:
+1. Mix sub-themes/sector (e.g., Energy: major, services, renewable).
+2. Avoid correlated mega-caps if alternatives exist.
+3. Balance: 1 large, 1 mid, 1 small cap/sector.
+
+Fallback discipline:
+1. Fallback: no catalyst text; pick ETF weight, then cap, alpha.
+2. Pinned name stopped = skip; audit "pinned skipped: [reason]".
+3. Audit: log top 3 skips/sector, reasons; note per pick: headline, time, source, NHSU, IV boost.
+```
