@@ -235,7 +235,7 @@ Universe (must use): Only credit spreads from final_credit_spread_comparison.jso
 Include all spreads with 0–45 DTE; exclude any over 45 DTE, missing strikes/premiums/probabilities, or invalid data like negative values or mismatched types.
 Goal (must do): Validate each 0–45 DTE spread against current market reality.
 Check for risks that could blow up the trade; base on real-time facts only, no guesses or assumptions.
-Output: Table only — AI Bot Name | Ticker | Spread Type | Current Risk | Final Status — one row per spread.
+Output: Table only — AI Bot Name | Ticker | Type | Legs| DTE | PoP | ROI | Current Risk | Final Status — one row per spread | heat score 
 Sort by ticker alphabetically; use bold for Critical/High risks.
 
 
