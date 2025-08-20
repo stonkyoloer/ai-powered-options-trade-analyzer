@@ -231,5 +231,42 @@ python3 master.py
 ```text
 Date: [enter date & time]
 
+
+Universe (must use): Only credit spreads from final_credit_spread_comparison.json (has AI = GPT/Grok).
+Goal (must do): Validate each 0–45 DTE spread against current market reality.
+Output: Table only — Ticker | AI | Spread Type | Current Risk | Final Status — one row per spread.
+
+
+What to will fetch now (real-time, verifiable):
+1. Earnings collision: Company IR & earnings calendars (next 45 days).
+2. Major news catalysts: Press releases / 8-K (≤ 72h).
+3. Regulatory/court: SEC/DOJ/FDA/ITC/FTC/CPSC actions (≤ 72h).
+4. Macro conflicts: Fed/Jackson Hole/FOMC, BLS CPI/Jobs (next 10 trading days).
+5. Trading anomalies: Exchange halts/suspensions; unusual volume today.
+6. Technical red flags: >8% move today without a confirmed catalyst.
+
+
+Hard rules (binary, pass/fail):
+1. Live, named, timestamped source that names the ticker.
+2. ≤72h max age; older = no conflict.
+3. Earnings inside DTE = automatic fail (skip).
+4. No speculation; confirmed/documented events only.
+5. Primary > secondary: Company IR/SEC → Fed/BLS/regulators → Reuters/Bloomberg/WSJ → exchange sites.
+
+
+Action steps (risk → status → build):
+Step 1 — Current Risk (pick highest applicable):
+1. Critical (auto-skip): Earnings in DTE; trading halt; bankruptcy filing
+2. High: Major catalyst ≤24h; Fed ≤5 days; Price Spike >8% (today)
+3. Medium: Minor catalyst ≤72h; Macro 5–10 days; Price Move 3–8% (today)
+4. Low: Clean news; no scheduled events; normal tape
+
+
+Step 2 — Final Status:
+1. PROCEED: Low only
+2. MONITOR: Medium (consider smaller size)
+3. SKIP: High or any Critical
+
+
 ``` 
 
