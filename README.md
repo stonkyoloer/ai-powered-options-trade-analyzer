@@ -5,9 +5,6 @@
 ---
 # 🛠 Configure TastyTrade
 
-File name `Configure TastyTrade`
-
-
 # 1️⃣ Select Trading Universe
 
 ## Download the Trading Universe
