@@ -173,71 +173,63 @@ python3 master.py
 
 ---
 
-**Step 1:** build_universe.py  **What:** Tests if stocks have options chains  **Why:** No options = no credit spreads possible
+**Step 1:** build_universe.py  
+
+**What:** Tests if stocks have options chains  
+
+**Why:** No options = no credit spreads possible
+
+---
+
+**Step 2:** spot.py  
+
+**What:** Gets current stock prices  
+
+**Why:** Need prices for strike selection
+
+---
 
 
-**Step 2:** spot.py  **What:** Gets current stock prices  **Why:** Need prices for strike selection
+**Step 3:** ticker_ranker.py  
 
+**What:** Ranks stocks by options liquidity  
 
-**Step 3:** ticker_ranker.py  **What:** Ranks stocks by options liquidity  **Why:** Liquid options = better fills
+**Why:** Liquid options = better fills
 
+---
 
-**Step** options_chains.py  **What:** Downloads all option contracts  **Why:** Need contracts to build spreads
+**Step** options_chains.py  
 
+**What:** Downloads all option contracts  
 
-**Step 5:** greeks.py  **What:** Gets option prices + Greeks  **Why:** Need real data for PoP/ROI
+**Why:** Need contracts to build spreads
 
+---
 
-**Step 6:** spread_analyzer.py  **What:** Builds spreads, calculates PoP/ROI, picks best  **Why:** This creates your final table
+**Step 5:** greeks.py  
+
+**What:** Gets option prices + Greeks  
+
+**Why:** Need real data for PoP/ROI
+
+---
+
+**Step 6:** spread_analyzer.py  
+
+**What:** Builds spreads, calculates PoP/ROI, picks best  
+
+**Why:** This creates your final table
+
+---
 
 
 
 # 4️⃣ AI Driven News Screener 
 
-## ▪️ Prompt
+## ▪️ Prompt for Credit Spread Results vs Market Reality
 
 ```text
-You are my Credit-Spread Catalyst & Sanity Checker. Timezone: America/Los_Angeles.
-Use absolute dates. When you fetch news/events, include links and sources.
+Date: [enter date & time]
 
-INPUTS (paste below):
-=== step7_complete_credit_spreads.json ===
-{PASTE_JSON_HERE}
-=== optional: step4_liquidity.json ===
-{PASTE_JSON_HERE_OR_SKIP}
-=== end ===
-
-GOALS
-For the top 20 spreads by combined_score:
-  • Validate “sane to trade today?” across catalysts, liquidity, and calendar risk.
-  • Surface reasons to Delay/Avoid (not advice—just risk signals).
-
-CHECKLIST (per spread)
-1) Calendar gates:
-   - Earnings date between today and the spread’s expiration? Mark “Earnings-Inside-Trade”.
-   - Ex-div date inside the trade window? Note potential assignment/price gap risk.
-   - Sector macro events within 5 trading days (e.g., CPI/FOMC for Financials/Tech beta; OPEC/EIA for Energy; FDA calendar for biotech tickers). 
-2) Fresh news (last 72h):
-   - Pull 1–2 headlines that could move the underlying. Link them.
-3) Liquidity sanity:
-   - Confirm both legs have adequate OI (≥500 minimum; ≥1,000 preferred) and spreads not wider than 10¢ (tier-2) or 5¢ (tier-1 names). If step4_liquidity.json present, use Δ30 proxies; else infer from available fields.
-4) Price sanity:
-   - Credit ≤ width, ROI = credit/(width-credit). Recompute if needed; flag if odd (e.g., credit > width).
-5) Risk note:
-   - Summarize exposure (bear call = short upside; bull put = short downside) and distance-from-money (%). 
-   - Note if IV regime seems low (<0.25) for premium selling or unusually high (>0.60) for gap risk.
-
-OUTPUT FORMAT
-- A ranked table with: 
-  Ticker | Type (BearCall/BullPut) | Strikes | DTE | Credit | ROI% | Dist-OTM% | OI(min) | Spread sanity | Key Event(s) | Fresh News | Decision (Do / Delay / Avoid) + 1-line reason
-- Then a short summary:
-  • #Passing vs #Flagged 
-  • Top 3 “Do” candidates with the clearest catalyst path (quiet calendar, sufficient OI, tight spreads)
-  • Top 3 risk reasons observed (e.g., earnings inside window, macro landmines, thin OI)
-
-RULES
-- Information only; no trading advice. 
-- Always include links for news/events you cite.
-- If any required field is missing, mark “n/a” and continue; do not fabricate.
 ``` 
 
