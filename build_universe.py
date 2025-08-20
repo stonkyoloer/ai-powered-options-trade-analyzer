@@ -1,8 +1,3 @@
-**Create:** `touch universe.py`
-
-**Query:** `open -e universe.py`
-
-```bash
 # build_universe.py - Optimized Universe Builder
 """
 KEEP - optimize for 20min runtime target.
@@ -124,6 +119,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
-
-**Run:** `python3 universe.py`
