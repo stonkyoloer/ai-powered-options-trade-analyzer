@@ -34,19 +34,13 @@ File name `Configure TastyTrade`
 
 # 2️⃣ Daily Options Screener
 
-## `sectors.py`
+**`sectors.py`**: Defines sector portfolios, merges them, manages symbols.
 
-Defines sector portfolios, merges them, manages symbols.
+**`build_universe.py`**: Connect to API, validate tickers' options chains, saves results, logs status.
 
-## `build_universe.py`
+**`spot.py`**: Streams live stock quotes, saves bid/ask/mid prices.
 
-Connect to API, validate tickers' options chains, saves results, logs status.
-
-## `spot.py`
-
-Streams live stock quotes, saves bid/ask/mid prices.
-
-## `ticker_ranker.py`
+**`ticker_ranker.py`**:
 
 1. Analyze every ticker's ATM options (real API data)
 
@@ -57,7 +51,7 @@ Streams live stock quotes, saves bid/ask/mid prices.
 4. Show the preview of which ticker is winning each sector
 
 
-## `sector_selection.py`
+**`sector_selection.py`**:
 
 1. Load all ranked tickers from Step 4
 
@@ -70,15 +64,13 @@ Streams live stock quotes, saves bid/ask/mid prices.
 5. Show competition analysis (close races vs blowouts)
 
 
-## `stock_prices_focused.py`
+**`stock_prices_focused.py`**:
 
 Gets current prices for your 18 champions
 
-## `options_chains_focused.py`
+**`options_chains_focused.py`** Discovers all the credit spread opportunities (0-33 DTE)
 
-Discovers all the credit spread opportunities (0-33 DTE)
-
-## `smart_greeks_collector.py`
+**`smart_greeks_collector.py`**
 
 1. Smart-estimate where ~30 delta strikes should be
 
@@ -89,7 +81,7 @@ Discovers all the credit spread opportunities (0-33 DTE)
 4. Massive efficiency gain - analyze ~90% fewer contracts!
 
 
-## `executable_pricing.py`
+**`executable_pricing.py`**
 
 1. How much spreads actually cost to execute
 
@@ -100,7 +92,7 @@ Discovers all the credit spread opportunities (0-33 DTE)
 4. Execution cost breakdown per contract
 
 
-## `event_screener.py`
+**`event_screener.py`**
 
 1. Clear AVOID list (don't trade these!)
 
@@ -112,13 +104,21 @@ Discovers all the credit spread opportunities (0-33 DTE)
 
 5. Enhanced contracts with risk flags
 
-## `iv_liquidity.py`
+**`spread_analyzer.py`**
 
-Combines IV, liquidity data for credit spread selection.
+1. Creates actual credit spreads (bear calls + bull puts)
+   
+2. Black-Scholes for probability calculations
+  
+3. Applies executable pricing (not fantasy mid prices)
+  
+4. Includes event screening (avoids earnings bombs)
+  
+5. Master scoring algorithm (0-100 comprehensive score)
 
-## `find_tendies.py`
-
-Scans for optimal credit spreads using Black-Scholes.
+6. Ranks everything by viability and profitability
+   
+**`final_selector.py`** Scans for optimal credit spreads.
 
 ---
 
