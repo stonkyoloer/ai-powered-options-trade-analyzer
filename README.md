@@ -98,7 +98,7 @@ Fallback: Low heat (<1000)
 Fallback: No news (0)
 ```  
 
-## ▪️ Instructions for Prompt 
+## ▪️ Prompt for Instructions  
 ```text
 
 Run & order:
