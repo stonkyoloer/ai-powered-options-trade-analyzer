@@ -1,6 +1,6 @@
 # 🚀 
 
-Work in Progress... The script is pulling live market data from tastytrade server. Need a robust tool or automation for your project? Hit me up, and I’ll build it from scratch!  
+Work in Progress... The script is pulling live market data from tastytrade server. Need a tool or automation for your project or idea? Hit me up, and I’ll build it from scratch!  
 
 ---
 # 🛠 Configure TastyTrade
