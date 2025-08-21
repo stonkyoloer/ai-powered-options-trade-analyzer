@@ -195,7 +195,7 @@ python3 master.py
 
 ## ▪️ Prompt for Credit Spread Results vs Market Reality
 
-```text
+```python
 ## 1. Universe & Selection
 1. **Select Spreads**: Pick one spread/ticker from JSON.
 2. **Show Table**: Build table: AI | Ticker | Type | Legs | DTE | PoP | ROI | Risk | Status.
