@@ -39,31 +39,58 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 ## ▪️ News Heat Ticker Selection
 
 ```python
-# Prompt 1: News Heat Ticker Picker
+# Sector Top-3 Selector (0–33 DTE Credit Spreads)
+**Assistant-executable only.** Uses your sector CSVs **for tickers** and public web news **for catalysts**.  
+No live quotes, no IV/Greeks, no broker data or options metrics.
 
-## 1. Universe & Selection
-1. **CSV Extract**: Pull ticker symbols by sector from provided files
-2. **Yahoo Basic**: Get current price, market cap, basic volume (delayed)
-3. **News Search**: Google News search for ticker + catalyst keywords
-4. **Price Stability**: Skip if major gap or unusual price action visible
-5. **Market Cap**: Note large vs small cap from Yahoo data
-6. **Sector Balance**: Target 3 tickers per sector from CSV list
-7. **Basic Volume**: Use Yahoo's reported daily volume (delayed data)
-8. **Earnings Check**: Search Yahoo for upcoming earnings dates
-9. **Company Size**: Prefer established companies with steady trading
+---
 
-## 2. News & Scoring
-1. **News Search**: Google News for "ticker + merger/upgrade/FDA" last 72h
-2. **Source Check**: Company press releases > major news outlets
-3. **Time Filter**: Recent news (1-3 days) gets higher priority
-4. **Event Type**: M&A news > analyst upgrades > product news
-5. **Verification**: Look for multiple sources reporting same event
-6. **Simple Score**: High/Medium/Low based on news quality and recency
+## Universe & Pre-Filters
+1. **Load & lock universe** — Read all sector CSVs; analyze *only* those tickers.
+2. **Normalize** — Uppercase + dedupe tickers; drop obvious non-equities if a quick company/profile page confirms.
+3. **News presence gate** — Keep tickers with ≥1 reputable article/press release in the last **7 days**; deprioritize others.
+4. **Freshness gate** — Prioritize headlines from **today** or **yesterday after close** (≤ **72h** best window).
+5. **Heat filter (text-based)** — From article language:  
+   - **Tradable Heat (target):** “rallied/rose/slid,” “steady gains,” “heavy trading,” “follow-through.”  
+   - **Too Hot (avoid):** “halted,” “gapped,” “limit up/down,” “whipsaw,” “plunged/soared.”
+6. **Earnings guard** — If credible news/IR explicitly states an earnings date **≤ 33 days**, **skip/flag** (no binary holds).
+7. **Binary-event guard** — If an FDA/regulatory decision, merger vote, or court ruling has a set date **≤ 33 days**, **skip/flag**.
+8. **After-hours landmine** — If articles mention a scheduled event **after 4pm ET** or **pre-market next day**, avoid same-day/overnight holds → **skip/flag**.
+9. **Sector balance** — Target **up to 3** qualified tickers **per sector** after scoring; do not force picks if a sector is cold.
 
-## 3. Execution & Output
-1. **Time Limit**: Reasonable research time per sector (no real-time pressure)
-2. **Output Format**: Sector | Ticker | News_Summary | Score
-3. **Ranking**: Sort by news quality and source credibility
+---
+
+## News & Edge Scoring
+1. **Catalyst search (≤72h)** — For each candidate, pull items on: M&A/buyout, multi-analyst upgrades/downgrades, guidance updates, FDA/regulatory actions, large contracts, activist/exec changes.
+2. **Source weighting** — Official **PR/8-K/IR** and top outlets (**Reuters/Bloomberg/Yahoo/CNBC**) > secondary sites; multi-source confirmation = boost.
+3. **Recency weighting** — < **48h** = strongest; **3–7d** = medium; older = low unless clearly major **and** multi-source.
+4. **Direction map** — Label **bullish / bearish / unclear** catalyst; propose **put-credit** (bullish drift) or **call-credit** (bearish fade); unclear = pass/Low.
+5. **Reaction context (textual)** — Use article wording (“shares rose X%,” “heavy trading,” “orderly,” “profit-taking”) to tag **Tradable** vs **Too Hot**; prefer **Tradable**.
+6. **Edge score** — Assign **High / Medium / Low** with a one-line reason **and at least one reputable citation** per ticker.
+
+---
+
+## 3 — Output & Selection (doable)
+1. **Pick** — Within each sector, choose **up to 3** highest-edge tickers (avoid **Too Hot**/**flagged** unless clearly justified by durable news and multiple sources).
+2. **Format (table)** —  
+   **Sector | Ticker | Bias (Put-Cred / Call-Cred) | DTE | PoP | ROI| Catalyst (1-liner) | Flip Plan (Same-Day / Next-Day; why) | Edge (H/M/L) | Citation(s)**
+3. **Teach-back** — Add **one sentence per sector** explaining why these beat peers (fresh credible catalyst, *tradable* heat, no near-term binaries).
+
+---
+
+## Runbook (end-to-end steps to execute)
+1. Parse CSVs → build sector ticker lists.  
+2. For each ticker: quick profile sanity; news scan (≤7d; focus ≤72h).  
+3. Apply guards (earnings/binaries/after-hours) and heat filter.  
+4. Score per **6-point rubric**; compile sector rankings.  
+5. Output table (top-3 per sector) + sector teach-back, with citations.
+
+---
+
+### Scope & Limits (explicit)
+- I **do not** fetch live quotes, IV, Greeks, OI, bid/ask, or broker-only data.  
+- Liquidity is **inferred from news text only** (e.g., “heavy trading”)—no numerical option liquidity checks.  
+- Picks are **research shortlists**; you place/verify trades and set your **+10%** TP and risk on your platform.
 ```
 
 ## ▪️ Instructions for Edge 
