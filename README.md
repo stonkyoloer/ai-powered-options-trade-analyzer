@@ -36,7 +36,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-## ▪️ News Heat Ticker Selection
+## ▪️ Prompt for News & Events Heat
 
 ```python
 # Optimized Prompt — Ultra-Condensed
