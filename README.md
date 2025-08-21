@@ -126,11 +126,17 @@ python3 master.py
 ---
 
 **`sectors.py`** Sets tickers for querying.
+
 **`build_universe.py`** Tests stocks for options chains.
+
 **`spot.py`** Fetches current stock prices for strikes.
+
 **`ticker_ranker.py`** Ranks stocks by options liquidity.
+
 **`options_chains.py`** Downloads option contracts for spreads.
+
 **`greeks.py`** Gets option prices and Greeks for PoP/ROI.
+
 **`spread_analyzer.py`** Builds spreads, calculates PoP/ROI, picks best.
 
 ---
