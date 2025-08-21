@@ -36,77 +36,44 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
+## ▪️ Attach the Trading Universe
+
+```python
+open 
+
 ## ▪️ Prompt for News Heat Ticker Picker
 
 ```text
-Edge Prompt (Real-Time, No Guessing)
+# Ticker Selection Prompt
 
-Date: [enter date & time]
+**Date**: 2025-08-20 18:17 PDT
 
-Universe (must use): Only tickers in the attached CSVs: XLK, XLC, XLY, XLP, XLV, XLF, XLI, XLE, XLU.
-Goal (must do): Pick exactly 3 tickers per sector (9 sectors = 27 total) for 0–33 DTE credit spreads today.
-Output: Table only — Sector | Ticker | News Heat (NHSU) — exactly 3 rows per sector.
+## 1. Universe & Selection (9 points)
+1. **Pick Stocks**: Select 3 stocks/sector (27 total) from CSVs (xlc, xle, xlf, xli, xlp, xlk, xlv, xlu) for 0–33 DTE credit spreads.
+2. **Show Table**: Build table: Sector | Ticker | News Heat | IV % | Open Interest. Sort by sector (A–Z), News Heat (high-low).
+3. **Set Rules**: Include pin=[...] if safe, exclude ban=[...]. Pick U.S. stocks, skip ADRs <500K volume.
+4. **Grab Data**: Use IR, SEC, DOJ/FTC/FDA, Reuters, Bloomberg, WSJ, Nasdaq, Yahoo, Tastytrade (IV, OI). Skip unverified rumors.
+5. **Vary Picks**: Mix sector themes (e.g., XLE: major, service, renewable) and sizes (large, mid, small cap).
+6. **Plan B**: If <3 stocks with News Heat ≥1000, use CSV weights, then market cap, alphabetical.
+7. **Dodge Volatility**: Skip >8% daily moves unless News Heat ≥3500.
+8. **Aim Big**: Favor >$2B market cap stocks unless pinned.
+9. **Track Picks**: Log skips (e.g., “AAPL: earnings soon”), headline, timestamp, source, News Heat.
 
-What I will fetch now (real-time, verifiable):
-1. Company primary: IR/press releases/8-K (≤72h).
-2. Regulators/courts: SEC/DOJ/FTC/ITC/FDA/CPSC/court dockets (≤72h).
-3. Index providers: S&P/MSCI/FTSE inclusion/exclusion notices.
-4. Macro calendars (official): Fed/Jackson Hole/FOMC; BLS CPI/Jobs; OPEC/EIA; notable FDA dates.
-5. Tier-1 analysts: Upgrades/downgrades/target changes (firm named).
-6. Credit agencies: S&P/Moody’s/Fitch rating/outlook changes.
-7. Legal/labor/security: Lawsuits, class certs, investigations/subpoenas, strikes/ratifications, company-confirmed breaches.
-8. Corporate actions: Buybacks/dividends (auths/raises), ex-div dates.
-9. Market hygiene: Trading halts/delistings/bankruptcies; avoid unconfirmed big premarket gaps.
+## 2. News & Scoring (6 points)
+1. **Hunt News**: Fetch data (≤72h, best ≤24h): filings, launches, mergers, CEO shifts, buybacks, regulators, Fed/CPI, analyst notes, lawsuits.
+2. **Score Heat**: Set top score: 4000 (merger), 3500 (product, regulatory), 1500 (analyst, buyback, contract), 1200 (lawsuit, strike), 500 (minor), 0 (none). Cut 200 for >24h. Need ≥1000 for news.
+3. **Block Risks**: Skip earnings in 0–33 DTE, macro ≤5 days (Fed/CPI/OPEC/FDA), dividends ≤5 days.
+4. **Tastytrade Check**: Filter IV % 50–80, OI >500/strike (Tastytrade, 0–33 DTE options).
+5. **Stay Tight**: Use live, timestamped sources. Merge same-event links. Clash = no news. Max 2 same-news/sector.
+6. **Max Edge**: Favor high IV, News Heat for premium, catalyst-driven trades.
 
-Hard rules (binary, pass/fail):
-1. Live, timestamped, named-publisher source that names the ticker.
-2. If not confirmed now by a primary or two majors (≤72h), treat as no news.
-3. ≤24h preferred; allow ≤72h only if still active/relevant; drop >72h.
-4. No IV inference — no estimates/history/options-flow anecdotes.
-5. Use IV only when a credible source quantifies it and ties it to a dated event.
-6. De-dup events: many links about the same event count as one catalyst.
-
-Action steps (score, gate, build):
-Step 1 — Score News (≤24h preferred; fallback ≤72h).
-Assign one NHSU per ticker from its strongest verified catalyst:
-4000 — M&A (definitive/signed/acknowledged).
-3500 — Product launch/major dated event or final regulatory/litigation decision.
-1500 — Analyst (tier-1) or guidance/pre-announcement (PR/8-K) or CEO/CFO change or buyback/dividend or major contract/partnership or index change or recall/safety or data breach or IP update (non-final).
-1200 — Lawsuit/strike or investigation/subpoena or tier-1 short-seller report (picked up by majors).
-500 — Minor update (fallback-only).
-0 — No verifiable ≤72h news.
-Boost: If a reputable source explicitly quantifies event-linked IV, add +500.
-Threshold: NHSU ≥ 1000 required for a news pick.
-
-Step 2 — Event Gate (avoid landmines).
-1. Exclude tickers with earnings inside 0–33 DTE.
-2. Exclude tickers directly hit by dated macro/regulatory within ~5 trading days (Fed/CPI/Jobs for rates; OPEC/EIA for Energy; notable FDA for Health Care) if timing is confirmed.
-
-Step 3 — Build the basket (must return 3 per sector).
-1. Rank by NHSU (3s first, then 2s). Use only NHSU ≥ 1000 for news picks.
-2. If <3, fallback to top ETF weights from that sector’s CSV (no catalyst text).
-3. Tie-breakers: higher ETF weight → larger market cap → alphabetical.
-
-Allowed “News Heat” cell values:
-Catalyst: M&A (4000 [+500 if IV])
-Catalyst: Product/Regulatory (3500 [+500 if IV])
-Catalyst: Upgrade/Downgrade (1500 [+500 if IV])
-Catalyst: Guidance (1500 [+500 if IV])
-Catalyst: CEO/CFO Change (1500 [+500 if IV])
-Catalyst: Buyback/Dividend (1500 [+500 if IV])
-Catalyst: Contract/Partnership (1500 [+500 if IV])
-Catalyst: Index Change (1500 [+500 if IV])
-Catalyst: Recall/Safety (1500 [+500 if IV])
-Catalyst: Data Breach (1500 [+500 if IV])
-Catalyst: IP Update (1500 [+500 if IV])
-Catalyst: Lawsuit/Strike (1200 [+500 if IV])
-Catalyst: Investigation/Subpoena (1200 [+500 if IV])
-Catalyst: Short-Seller Report (1200 [+500 if IV])
-Fallback: Low heat (<1000)
-Fallback: No news (0)
+## 3. Execution & Output (3 points)
+1. **Move Quick**: Spend ~60s/sector. Timeout → backups (“timeout”). Check halts, bankruptcies (24h).
+2. **Make Table**: Show table: Sector | Ticker | News Heat | IV % | Open Interest. Sort sector (A–Z), News Heat (high-low).
+3. **Log It**: Save skips, headlines, timestamps, sources, News Heat.
 ```  
 
-## ▪️ Instructions and Rules  
+## ▪️ Instructions  
 
 ```text
 Run & order:
