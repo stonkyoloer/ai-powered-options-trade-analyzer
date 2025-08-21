@@ -131,62 +131,13 @@ python3 master.py
 ```
 ---
 
-# 🤖 `sectors.py`  
-
-**What:** Set & Update Tickers  
-
-**Why:** No tickers = Nothing to query 
-
-
-
----
-
-# 🤖 `build_universe.py`  
-
-**What:** Tests if stocks have options chains  
-
-**Why:** No options = no credit spreads possible
-
----
-
-# 🤖 `spot.py`  
-
-**What:** Gets current stock prices  
-
-**Why:** Need prices for strike selection
-
----
-
-
-# 🤖 `ticker_ranker.py`  
-
-**What:** Ranks stocks by options liquidity  
-
-**Why:** Liquid options = better fills
-
----
-
-# 🤖 `options_chains.py`  
-
-**What:** Downloads all option contracts  
-
-**Why:** Need contracts to build spreads
-
----
-
-# 🤖 `greeks.py`  
-
-**What:** Gets option prices + Greeks  
-
-**Why:** Need real data for PoP/ROI
-
----
-
-# 🤖 `spread_analyzer.py`  
-
-**What:** Builds spreads, calculates PoP/ROI, picks best  
-
-**Why:** This creates your final table
+**`sectors.py`** Sets tickers for querying.
+**`build_universe.py`** Tests stocks for options chains.
+**`spot.py`** Fetches current stock prices for strikes.
+**`ticker_ranker.py`** Ranks stocks by options liquidity.
+**`options_chains.py`** Downloads option contracts for spreads.
+**`greeks.py`** Gets option prices and Greeks for PoP/ROI.
+**`spread_analyzer.py`** Builds spreads, calculates PoP/ROI, picks best.
 
 ---
 
