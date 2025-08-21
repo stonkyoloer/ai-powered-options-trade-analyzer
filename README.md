@@ -10,7 +10,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-# 1️⃣ Ticker Screener
+# 🪐 Download Trading Universe
 
 ## ▪️ Attach Trading Universe
 
@@ -33,6 +33,8 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 `XLU` https://www.sectorspdrs.com/mainfund/XLU
 
 ---
+
+# 🏆 Prompt to Find Top 3 Tickers Per Sector
 
 ## ▪️ Prompt for News & Events Heat
 
@@ -68,7 +70,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 3. **Output table:** **AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s)**.
 ```
 
-## ▪️ Instructions for Edge 
+## ▪️ Instructions for Prompt 
 
 ```python
 # Optimized Edge Instructions — Ultra-Condensed
@@ -101,7 +103,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 
 
-# 2️⃣ Credit Spread Screener
+# 🤖 Credit Spread Screener to Find Credit Spreads and thier the PoP, ROI.
 
 ## ▪️ How to use 
 
@@ -125,9 +127,12 @@ python3 master.py
 ```
 ---
 
+## ▪️ What scripts do
+
+
 **`sectors.py`** Sets tickers for querying.
 
-**`build_universe.py`** Tests stocks for options chains.
+**`build_universe.py`** Tests tickers for options chains.
 
 **`spot.py`** Fetches current stock prices for strikes.
 
@@ -143,9 +148,9 @@ python3 master.py
 
 
 
-# 3️⃣ Strategy & News Heat Scanner
+# 💯 Prompt for News Heat Strategy & Scanner
 
-## ▪️ Credit Spread Ne
+## ▪️ Prompt for Credit Spread News and Strategy Report
 
 ```python
 # Credit-Spread Optimizer — Ultra-Condensed Prompt (JSON End Step)
@@ -184,7 +189,7 @@ python3 master.py
 **Flip Plan template:** “Open credit spread; **+10% TP**, **headline stop**, **time stop (EOD/next session)**.”
 ```
 
-## ▪️ Spread Optimization Edge
+## ▪️ Instructions for Prompt 
 
 ```python
 # Optimized Edge Instructions — Ultra-Condensed (JSON End Step)
