@@ -12,9 +12,9 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-# 1️⃣ Prompt: News Heat Ticker Picker
+# 1️⃣ Ticker Selection Project 
 
-## ▪️ Download the Trading Universe
+## ▪️ Attach Trading Universe
 
 `XLK` https://www.sectorspdrs.com/mainfund/XLK
 
@@ -36,86 +36,72 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-## ▪️ Attach the Trading Universe
-
-
-
-## ▪️ Prompt for News Heat Ticker Picker
+## ▪️ News Heat Ticker Selection (AI)
 
 ```python
-# Ticker Selection Prompt
+# News Heat Ticker Picker - Prompt 1
 
-**Date**: 2025-08-20 18:17 PDT
+**Input**: 9 Sector CSV files (tickers only)  
+**Output**: 27 tickers (3 per sector) with verified catalysts
 
 ## 1. Universe & Selection
-1. **Pick Stocks**: Grab 3 stocks/sector from CSVs.
-2. **Show Table**: Build table: Sector | Ticker | News Heat | Volume.
-3. **Set Rules**: Pin/ban via CSV/string, skip ADRs <1M volume.
-4. **Grab Data**: Use IR, SEC, Reuters, Nasdaq, Yahoo.
-5. **Vary Picks**: Mix high-volume themes, sizes.
-6. **Plan B**: Use weights, volume >5M, market cap.
-7. **Dodge Volatility**: Skip >10% moves or News Heat <500.
-8. **Aim Liquid**: Favor volume >5M unless pinned.
-9. **Track Risks**: Log critical skips with reason.
+* **CSV Extract**: Pull ticker symbols by sector, verify via Yahoo Finance
+* **Volume Gate**: Min 10M daily, 50K options (Yahoo real-time)
+* **IV Rank**: 30-70% for optimal premium collection
+* **Market Cap**: $2B+ for institutional liquidity  
+* **Float Check**: >100M shares via Yahoo statistics
+* **Earnings Block**: No earnings <33 DTE (Yahoo calendar)
+* **Options Chain**: Weekly expirations + 1000+ OI both strikes
+* **Technical**: Note 20/50MA proximity for strike placement
+* **Halt Check**: No trading halts last 30 days
 
 ## 2. News & Scoring
-1. **Hunt News**: Fetch ≤72h news: filings, launches, mergers.
-2. **Score Heat**: Set top score: 4000 (merger), 3500 (product), 1500 (analyst), 1200 (lawsuit), 500 (minor). Cut 200 for >24h.
-3. **Block Risks**: Skip earnings, macro, dividends ≤33 DTE.
-4. **Check Liquidity**: Filter volume >5M for tradability.
-5. **Stay Tight**: Use timestamped sources, limit 1 news/sector.
-6. **Max Edge**: Favor News Heat ≥500, volume >5M.
+* **M&A Confirmed**: SEC 8-K filing = 4000 points
+* **FDA Events**: Phase results/approvals = 3500 points  
+* **Analyst Actions**: Upgrades with price targets = 2000 points
+* **Contract Wins**: $100M+ deals = 1500 points
+* **Guidance Beats**: Raised estimates = 1200 points
+* **Time Decay**: -300 per day >24h, floor 500 points
 
 ## 3. Execution & Output
-1. **Move Quick**: Run ~60s/sector, check halts, news freshness.
-2. **Make Table**: Show table: Sector | Ticker | News Heat | Volume.
-3. **Log It**: Log critical skips, reasons, timestamps only.
-```  
+* **Speed Run**: 45 seconds per sector max
+* **Verification**: Cross-check Yahoo + Google News + SEC
+* **Output**: Sector | Ticker | Heat | Volume | IV_Rank
+```
 
-## ▪️ Instructions  
+## ▪️ Instructions for Edge 
 
-```text
-Run & order:
-1. Print the exact PDT date/time at the top.
-2. pend up to ~60 seconds per sector; if time’s up, fill with ETF-weight fallbacks.
-3. Sort output: Sector (A→Z) → NHSU (high→low) → ETF weight → alphabetical.
+```python
+# Instructions 1: Ticker Selection Edge
 
-Universe controls
-1. You can pass pin=[...] (must include unless hard-stopped) and ban=[...] (never include).
-2. Use primary U.S. listings; skip thin ADRs.
-3. Prefer company IR/SEC/regulators/courts/index providers → then major wires (Reuters/AP/Bloomberg/WSJ/FT) → then big finance sites.
-4. Auto-exclude rumor words (“reportedly/may/could/considering”) unless later confirmed.
-5. If two reputable sources conflict, treat as no news.
-6. Count multiple links about the same event as one catalyst.
+## 1. Real-Time Verification
+* **Yahoo Finance**: Live volume, IV rank, market cap, float
+* **SEC EDGAR**: 8-K filings for M&A, material events <72h
+* **Google News**: Verified sources only, no rumors/speculation
+* **Options Data**: Real OI/volume at money strikes via Yahoo
+* **Earnings Calendar**: Precise dates, not estimates
+* **Company IR**: Press releases for contract/guidance updates
+* **Analyst Sites**: Verified upgrades with reasoning/targets
+* **FDA Tracker**: Clinical trial databases for biotech events
+* **Trading Halts**: Exchange official halt/resume notifications
 
-Heat scoring tweaks
-1. Freshness decay: news >24h to ≤72h = –200 NHSU (still needs ≥1000 to qualify).
-2. IV boost (+500) only if a credible source quantifies IV and the event is ≤5 trading days away; remove after it passes.
-3. Per sector, max 2 picks with the same catalyst type (don’t pick three upgrades).
+## 2. Edge Factors
+* **Volume Surge**: 3x+ average = institution knowledge
+* **IV Expansion**: 30-70% rank = premium without event risk
+* **OI Concentration**: Heavy call/put activity = directional bias
+* **Sector Rotation**: Compare vs sector ETF momentum
+* **Catalyst Timing**: Events 5-15 days out = IV decay edge
+* **Float Analysis**: Low float + news = explosive moves
 
-Events & macro (gates)
-1. Earnings inside 0–33 DTE = exclude.
-2. Confirmed dated macro inside ~5 trading days (Fed/CPI/Jobs, OPEC/EIA, notable FDA) that directly hits the name = exclude or deprioritize.
-3. Ex-div within 5 trading days = exclude.
-
-Price-action sanity
-1. If today’s move is > ±8%, skip unless Heat is 3500/4000.
-2. Avoid unconfirmed premarket gaps >3% (when premarket data is visible).
-3. Re-check for trading halts, bankruptcies, delistings in the last 24h before finalizing.
-4. If there’s an active agency probe with unknown timing inside DTE, deprioritize unless a date is set.
-5. Mix sub-themes within each sector (e.g., Energy = 1 major, 1 services, 1 pipeline/renewable) when choices exist.
-6. Don’t stack highly correlated mega-caps across sectors if viable alternatives exist.
-
-Fallback discipline
-1. When using fallback, don’t add catalyst text; pick by ETF weight (then market cap, then alpha).
-2. If a pinned name hits a hard stop, skip it (don’t force it).
-3. Light audit (for your logs, not the table)
-4. Keep a tiny note per pick: headline, timestamp, source, NHSU, IV boost yes/no.
-5. Note why top-weight names were skipped (e.g., earnings in window, rumor-only, >72h).
+## 3. Quality Control
+* **Liquidity Test**: Spread <$0.10 on ATM options
+* **Institution Check**: 40%+ ownership via 13F filings
+* **Volatility Stability**: No binary events in DTE window
 ```
 
 
-# 2️⃣ Daily Options Screener
+
+# 2️⃣ Daily Options Screener (algo)
 
 ## ▪️ How to use 
 
@@ -191,82 +177,66 @@ python3 master.py
 
 
 
-# 3️⃣ AI Driven News Screener 
+# 3️⃣ Credit Spread Optimizer (AI)
 
-## ▪️ Prompt for Credit Spread Results vs Market Reality
+## ▪️ Credit Spread Optimizer
 
 ```python
-## 1. Universe & Selection
-1. **Select Spreads**: Pick one spread/ticker from JSON.
-2. **Show Table**: Build table: AI | Ticker | Type | Legs | DTE | PoP | ROI | Risk | Status.
-3. **Set Rules**: Pin/ban via JSON/string, skip ADRs <1M.
-4. **Fetch Data**: Use IR, SEC, Reuters, Nasdaq, Yahoo.
-5. **Diversify Spreads**: Mix high-volume themes, avoid correlation.
-6. **Fallback Plan**: Use highest PoP, volume >5M, ROI.
-7. **Avoid Volatility**: Skip >10% moves or News Heat <500.
-8. **Stay Liquid**: Favor volume >5M unless pinned.
-9. **Track Skips**: Log skips with reason, timestamp.
+# Credit Spread Optimizer - Prompt 2
+**Input**: Tastytrade JSON + 27 ticker portfolio  
+**Goal**: Optimal credit spreads for execution
 
-## 2. News & Scoring
-1. **Seek News**: Fetch ≤72h news: filings, launches, mergers.
-2. **Score Catalysts**: Set top score: 4000 (merger), 3500 (product).
-3. **Block Risks**: Skip earnings, macro, dividends ≤45 DTE.
-4. **Ensure Liquidity**: Filter volume >5M for tradability.
-5. **Keep Strict**: Use timestamped sources, limit 1 news/ticker.
-6. **Assign Risk**: Set Critical, High, Medium, Low levels.
+## 1. JSON Analysis
+* **Spread Extraction**: Parse PoP, ROI, DTE, distance, legs
+* **Ticker Match**: Cross-reference with Stage 1 portfolio
+* **PoP Filter**: Minimum 52% probability required
+* **ROI Target**: 80%+ returns for risk undertaken
+* **DTE Sweet**: 15-25 days for theta decay peak
+* **Distance Buffer**: >1.5% from current for safety
+* **Credit Collect**: 18-25% of spread width optimal
+* **Volume Check**: Both strikes >500 OI minimum
+* **IV Rank**: Confirm high IV environment from spreads
 
-## 3. Execution & Output
-1. **Run Fast**: Run ~60s/ticker, check halts, news freshness.
-2. **Build Table**: Show table: AI | Ticker | Type | Legs | DTE | PoP | ROI | Risk | Status.
-3. **Log Skips**: Log critical skips, reasons, timestamps only.
-``` 
+## 2. Risk Scoring
+* **Base Formula**: (PoP-50) × 2 + ROI × 0.5 + Distance × 20
+* **DTE Bonus**: +10 if 15-25 DTE, -15 outside range
+* **Width Penalty**: -20 if spread >$5 wide (liquidity risk)
+* **Sector Limit**: -25 if >25% portfolio in sector
+* **Correlation**: -15 if similar delta/underlying movement
+* **IV Bonus**: +15 if IV rank >60% (premium expansion)
 
-## ▪️ Instructions and Rules
+## 3. Portfolio Construction
+* **Top Selection**: Rank all spreads by risk-adjusted score
+* **Diversification**: Max 20% any sector, 8% any ticker
+* **Execution Order**: Highest score first for best fills
+```
 
-```text
-Run & order:
-1. Print PDT date/time at top; fetch live from NIST.
-2. Spend ~60s/sector; timeout → ETF-weight fallbacks, note "timeout".
-3. Sort: Sector (A→Z) → NHSU (high→low) → ETF weight → alpha.
+## ▪️ Spread Optimization Edge
 
-Universe controls:
-1. Allow pin=[...], ban=[...]; default none if empty.
-2. Use U.S. listings; skip thin ADRs, <500K volume.
-3. Target mid/large caps (> $2B); exclude micro unless pinned.
+```python
+# Instructions 2: Spread Optimization Edge
 
-Sources (quality filter):
-1. Prefer IR/SEC/regulators → Reuters/Bloomberg/WSJ → Yahoo/Seeking.
-2. Exclude rumors (“may/could”); need primary confirmation.
-3. Conflicting sources = no news; require two-source consensus.
-4. Dedupe same-event links; discard >72h.
+## 1. JSON Processing Power
+* **Data Validation**: Verify PoP/ROI calculations vs. Black-Scholes
+* **Strike Analysis**: Confirm delta positioning (16-20 short delta)
+* **IV Environment**: Calculate IV rank from option prices
+* **Time Decay**: Verify theta acceleration in DTE window
+* **Liquidity Deep**: Check bid-ask spreads <$0.05 difference
+* **Greeks Balance**: Ensure positive theta, manageable gamma
+* **Assignment Risk**: Flag ITM probability >10% at expiration
+* **Early Exercise**: Check dividend dates for assignment risk
+* **Volatility Skew**: Identify advantageous put/call pricing
 
-Heat scoring tweaks:
-1. Decay: >24h–≤72h = –200 NHSU; ≥1000 to qualify.
-2. IV boost (+500) if source confirms, event ≤5 days; cap +1000.
-3. Max 2 same-catalyst/sector; vary (e.g., M&A, upgrade).
+## 2. Statistical Edge
+* **Win Rate Focus**: Target 75%+ portfolio win rate
+* **Kelly Sizing**: Position size = (PoP × 2 - 1) × account %
+* **Correlation Math**: Measure underlying price correlations
+* **Sector Beta**: Weight by sector volatility vs SPY
+* **VIX Context**: Adjust for macro volatility environment
+* **Term Structure**: Exploit front-month vs back-month pricing
 
-Events & macro (gates):
-1. Earnings in 0–33 DTE = exclude; check guidance/calls.
-2. Macro (Fed/CPI/OPEC) ≤5 days hitting name = exclude.
-3. Ex-div ≤5 days = skip; include special dividend cuts.
-
-Price-action sanity:
-1. ±8% move today = skip unless NHSU ≥3500.
-2. Unconfirmed premarket gap >3% = skip.
-3. Postmarket spike >5% sans news = exclude.
-
-Safety checks:
-1. Re-check halts/bankruptcies/delistings last 24h; use exchanges.
-2. Agency probe sans DTE date = deprioritize; –800 NHSU.
-3. Verify no fraud/SEC halts via EDGAR.
-
-Diversity:
-1. Mix sub-themes/sector (e.g., Energy: major, services, renewable).
-2. Avoid correlated mega-caps if alternatives exist.
-3. Balance: 1 large, 1 mid, 1 small cap/sector.
-
-Fallback discipline:
-1. Fallback: no catalyst text; pick ETF weight, then cap, alpha.
-2. Pinned name stopped = skip; audit "pinned skipped: [reason]".
-3. Audit: log top 3 skips/sector, reasons; note per pick: headline, time, source, NHSU, IV boost.
+## 3. Execution Intelligence
+* **Market Timing**: Best fills in first/last 30 minutes
+* **Order Flow**: Use limit orders at mid-point of spread
+* **Assignment Management**: Close at 50% profit or 21 DTE
 ```
