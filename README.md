@@ -4,13 +4,13 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-# 🛠 Configure TastyTrade Server
+# 🛠 Set Tastytrade Credentials
 
-**`config.py`** Centralizes Tastytrade credentials and API base URL, imported by other scripts.
+**`config.py`** Stores API URL and login credentials, imported and used by other scripts.
 
 ---
 
-# 🪐 Download Trading Universe
+# 🪐 Define ETF Universe
 
 ## ▪️ Attach Trading Universe
 
@@ -34,9 +34,9 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-# 🏆 Prompt to Find Top 3 Tickers Per Sector
+# 🏆 Screen Tickers for Catalysts
 
-## ▪️ Prompt for News & Events Heat
+## ▪️ Prompt for 3 tickers per sector using news/events.
 
 ```python
 # Optimized Prompt — Ultra-Condensed
@@ -103,9 +103,9 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 
 
-# 🤖 Credit Spread Screener to Find Credit Spreads and thier the PoP, ROI.
+# 🤖 Analyze Credit Spreads via Pipeline
 
-## ▪️ How to use 
+## ▪️ How to Execute 
 
 Run `individual steps` or use the `master pipeline`
 
@@ -127,7 +127,7 @@ python3 master.py
 ```
 ---
 
-## ▪️ What scripts do
+## ▪️ Definitions:
 
 
 **`sectors.py`** Sets tickers for querying.
@@ -148,9 +148,9 @@ python3 master.py
 
 
 
-# 💯 Prompt for News Heat Strategy & Scanner
+# 💯 Generate Strategy and Game Plan
 
-## ▪️ Prompt for Credit Spread News and Strategy Report
+## ▪️ Prompt for Report with Catalyst Heat, Bias, and Trade Plan.
 
 ```python
 # Credit-Spread Optimizer — Ultra-Condensed Prompt (JSON End Step)
