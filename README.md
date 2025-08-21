@@ -36,7 +36,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-## ▪️ News Heat Ticker Selection (AI)
+## ▪️ News Heat Ticker Selection
 
 ```python
 # News Heat Ticker Picker - Prompt 1
@@ -101,7 +101,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 
 
-# 2️⃣ Daily Options Screener (algo)
+# 2️⃣ Daily Options Screener
 
 ## ▪️ How to use 
 
