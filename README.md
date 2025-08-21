@@ -50,7 +50,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 2. Only consider names with **≤7d** reputable news/press; stale tickers rarely flip cleanly.  
 3. Prefer headlines from **today** or **yesterday after close** for reliable follow-through.  
 4. Favor **tradable heat** (“steady gains/heavy trading/follow-through”); avoid chaos (“halted/gapped/limit/whipsaw” or >8–10% gap noted).  
-5. **Credibility gate:** Source order = PR/8-K/IR + official sites (SEC EDGAR, FederalReserve.gov, BLS, BEA, Treasury/WhiteHouse) > Tier-1 media (Reuters, Bloomberg, WSJ, AP, CNBC, Yahoo Finance, MarketWatch, CNN Business, Benzinga, Seeking Alpha Breaking News, The Fly, StreetInsider, Investing.com, Finviz, StockTitan) > X heads-ups (Walter Bloomberg/Deltaone, LiveSquawk, First Squawk, Breaking Market News/FinancialJuice, FXHedge, PiQ, Newsquawk, Unusual Whales, Nick Timiraos); X is **alert-only** and must be **confirmed** by PR/SEC or Tier-1 before assigning **High**.  
+5. **Credibility gate:** Source order = PR/8-K/IR + official sites (SEC EDGAR, FederalReserve.gov, BLS, BEA, Treasury/WhiteHouse) > Tier-1 media (Reuters, Bloomberg, NYT, WSJ, AP, CNBC, Yahoo Finance, MarketWatch, CNN Business, Benzinga, Seeking Alpha Breaking News, The Fly, StreetInsider, Investing.com, Finviz, StockTitan) > X heads-ups (Walter Bloomberg/Deltaone, LiveSquawk, First Squawk, Breaking Market News/FinancialJuice, FXHedge, PiQ, Newsquawk, Unusual Whales, Nick Timiraos, ZeroHedge); X is **alert-only** and must be **confirmed** by PR/SEC or Tier-1 before assigning **High**.  
 6. Skip if news/IR names **earnings ≤33d**; never hold short premium into scheduled binaries.  
 7. Skip dated **binaries ≤33d** (FDA decision, merger vote, court ruling).  
 8. Skip if a **scheduled after-hours or pre-market** event is mentioned in the next 24h.  
@@ -58,7 +58,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-## Edge Engine — Medium Sentences
+## Edge Engine
 1. Search catalysts **≤72h** (M&A, guidance change, FDA/reg, big contracts, multi-analyst actions).  
 2. Rank by **durability > recency > source quality**; multi-source confirmation = boost.  
 3. Map direction: **bullish → put-credit**, **bearish → call-credit**; unclear → pass/Low.  
@@ -68,7 +68,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-## Execution — Small Lines
+## Execution
 1. **Pick top 3 per sector** that clear all guards and score best.  
 2. **Output a table + flip plan;** you place orders and set **+10% TP**, headline stop, and time stop.  
 3. **Final Output Columns:** **AI Bot | Sector | Ticker | Bias | Catalyst (1-liner) | Flip Plan | Edge | Citation(s)**
@@ -189,29 +189,40 @@ python3 master.py
 ```python
 # Prompt 2: Basic Spread Analysis
 
-## 1. JSON Analysis
-1. **Data Parsing**: Extract spread details from provided Tastytrade JSON
-2. **Ticker Matching**: Match JSON tickers with Stage 1 selections
-3. **PoP Review**: Use provided probability of profit numbers
-4. **ROI Analysis**: Evaluate return on investment from JSON data
-5. **DTE Assessment**: Consider days to expiration provided
-6. **Distance Check**: Review distance from current price in JSON
-7. **Spread Types**: Categorize Bear Call vs Bull Put spreads
-8. **Risk Review**: Calculate potential loss vs gain from JSON
-9. **Simple Ranking**: Order spreads by basic risk/reward metrics
+> **Mission fit:** Rank only the 0–33 DTE **credit** spreads already produced by your algo (the JSON). Use **only fields present or derivable** from that JSON.
 
-## 2. Basic Scoring
-1. **PoP Priority**: Higher probability of profit gets better score
-2. **ROI Consideration**: Balance returns with probability
-3. **Time Factor**: Prefer reasonable DTE (not too short/long)
-4. **Safety Distance**: Favor spreads with price buffer
-5. **Spread Width**: Consider risk amount vs potential profit
-6. **Simple Formula**: Combine PoP and ROI with distance factor
+---
 
-## 3. Selection Process
-1. **JSON Ranking**: Order all available spreads by score
-2. **Basic Limits**: Don't concentrate too heavily in one sector
-3. **Output Table**: AI Bot | Sector| Ticker | Spread_Type | Legs | DTE | PoP | ROI | Score
+## JSON Analysis (edge-focused)
+- **Robust parse (guaranteed fields):** Read each spread’s `AI_bot_name`, `Sector`, `Ticker`, `Spread_Type`, `Legs` (e.g., `$200/$202`), `DTE` (int), `PoP` (e.g., `52.5%`), `ROI` (e.g., `108.3%`), `Net_Credit` (e.g., `$1.30`), `Distance_From_Current` (e.g., `0.6%`).
+- **Derive risk math (from Legs + credit):** Compute **width** = |long − short|, **credit** (float), **max_loss** = width − credit, **R:R** = credit / max_loss. (No external prices needed.)
+- **Normalize metrics (for scoring):** Convert PoP/ROI/Distance strings → floats; cap ROI for stability (e.g., at 200%) and guard negatives/NaNs.
+- **Bias & type sanity:** Map `Spread_Type` → bias label (**Bear Call → Call-Credit**, **Bull Put → Put-Credit**) and ensure Legs are ordered correctly (short vs long leg direction).
+- **DTE banding for flips:** Tag **optimal** (7–21 DTE), **acceptable** (22–33), **out-of-scope** (>33 should not appear, but if it does → drop).
+- **Distance buffer use:** Read `Distance_From_Current` (%) as the **price buffer** to the short strike; treat <0.5% as **thin buffer** (riskier), ≥0.5% as **acceptable** for flips.
+- **Optional Stage-1 filter:** If a Stage-1 ticker list is supplied, **keep intersection**; if not, **use all** JSON tickers (fully doable both ways).
+- **De-duplication & variants:** Collapse **duplicate structures** (same ticker/type/legs/DTE) across bots; keep the best (higher score) to avoid double counting.
+- **Audit trail:** Persist the parsed/derived fields per spread so the score and rank are **explainable** (no black boxes).
+
+---
+
+## Basic Scoring (transparent, calculable)
+- **PoP weight (win-rate core):** Base = **PoP** (0–100). Higher PoP = higher base score. (Rationale: consistent flips prefer high probability.)
+- **ROI weight (payout per risk):** Add **w_ROI × ROI%**, with ROI% **capped** (e.g., 200) and **diminishing** beyond 120%. Suggested **w_ROI = 0.35**.
+- **Distance boost (safety):** Add **w_DIST × Distance%** with a **floor** at 0.5% (thin buffers get less). Suggested **w_DIST = 8** (so +0.6% ≈ +4.8 pts).
+- **DTE shape (flip-friendly):** Add **+6 pts** if 7–21 DTE, **+3 pts** if 22–33, **−5 pts** if <7 (too gamma-hot). (JSON is pre-filtered ≤33; we still reward the sweet spot.)
+- **Width sanity (risk realism):** Penalize extremes: **−4 pts** if width < $1.00 (often too tight/slow), **−4 pts** if width > $10 (capital heavy). Mild +2 for $3–$5 widths (practical sweet spot).
+- **Final score (linear, explainable):**  
+  `Score = PoP + 0.35·ROI_capped + 8·Distance% + DTE_bonus + Width_adj`  
+  (All inputs come from JSON or are derivable; weights are editable constants in your code.)
+
+---
+
+## Selection & Output (simple, repeatable)
+- **Rank & diversify:** Sort by **Score (desc)**. Enforce **sector balance** if desired (e.g., max 1–2 per ticker / evenly across sectors).
+- **Keep what you can trade:** If two rows are near-identical, keep the **higher Score** and drop the twin; prefer the **optimal DTE band** when tied.
+- **Final output (columns you already use):**  
+  **AI Bot | Sector | Ticker | Spread_Type | Legs | DTE | PoP | ROI | Score**
 ```
 
 ## ▪️ Spread Optimization Edge
