@@ -12,7 +12,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ---
 
-# 1️⃣ Ticker Screener (Daily)
+# 1️⃣ Ticker Screener
 
 ## ▪️ Attach Trading Universe
 
@@ -103,7 +103,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 
 
-# 2️⃣ Credit Spread Screener (Daily)
+# 2️⃣ Credit Spread Screener
 
 ## ▪️ How to use 
 
