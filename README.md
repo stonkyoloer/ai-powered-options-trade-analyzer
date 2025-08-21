@@ -6,13 +6,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 # 🛠 Configure TastyTrade Server
 
-```python
-python3 config.py
-```
-
-**What:** Centralizes Tastytrade creds + API base URL (or reads from env vars) so other scripts just import config.
-
-**Why:** Single source of truth for auth/settings—no copy-paste, easy rotation, safer via env vars + .gitignore.
+**`config.py`** Centralizes Tastytrade credentials and API base URL, imported by other scripts.
 
 ---
 
