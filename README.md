@@ -39,69 +39,66 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 ## ▪️ News Heat Ticker Selection
 
 ```python
-# Credit-Spread Flip Strategy
+# Optimized Prompt — Ultra-Condensed
 
-**Goal:** Fast +10% flips (0–33 DTE). **Inputs:** CSV tickers + web news/PR. **No** live quotes/IV/Greeks.
-
----
+**Goal:** +10% flips, **0–33 DTE** credit spreads.  
+**Universe:** Only **your sector CSV** tickers.  
+**Method:** **News/events = edge** (no quotes/IV/Greeks).
 
 ## Foundation
-1. Lock to your CSV tickers; normalize (uppercase/dedupe) and drop non-equities after a quick profile check.  
-2. Only consider names with **≤7d** reputable news/press; stale tickers rarely flip cleanly.  
-3. Prefer headlines from **today** or **yesterday after close** for reliable follow-through.  
-4. Favor **tradable heat** (“steady gains/heavy trading/follow-through”); avoid chaos (“halted/gapped/limit/whipsaw” or >8–10% gap noted).  
-5. **Credibility gate:** Source order = PR/8-K/IR + official sites (SEC EDGAR, FederalReserve.gov, BLS, BEA, Treasury/WhiteHouse) > Tier-1 media (Reuters, Bloomberg, NYT, WSJ, AP, CNBC, Yahoo Finance, MarketWatch, CNN Business, Benzinga, Seeking Alpha Breaking News, The Fly, StreetInsider, Investing.com, Finviz, StockTitan) > X heads-ups (Walter Bloomberg/Deltaone, LiveSquawk, First Squawk, Breaking Market News/FinancialJuice, FXHedge, PiQ, Newsquawk, Unusual Whales, Nick Timiraos, ZeroHedge); X is **alert-only** and must be **confirmed** by PR/SEC or Tier-1 before assigning **High**.  
-6. Skip if news/IR names **earnings ≤33d**; never hold short premium into scheduled binaries.  
-7. Skip dated **binaries ≤33d** (FDA decision, merger vote, court ruling).  
-8. Skip if a **scheduled after-hours or pre-market** event is mentioned in the next 24h.  
-9. Keep sector balance: **up to 3** qualified tickers per sector; don’t force picks if a sector is cold.
-
----
+1. **Lock universe:** CSV tickers only; uppercase, dedupe; **common stock**.  
+2. **Fresh news:** **≤7d** credible coverage required; else **skip**.  
+3. **Prime window:** **Today** or **yesterday after close** preferred.  
+4. **Tradable heat:** Steady follow-through > halts/gaps/whipsaws.  
+5. **Source tiers:** **PR/EDGAR/IR/Govt** > Tier-1 media > **X** (verify).  
+6. **Earnings guard:** If **earnings ≤33d**, **exclude**.  
+7. **Other binaries:** FDA/votes/courts/product dates **≤33d** → **exclude**.  
+8. **Imminent events:** If **≤24h** scheduled event, **skip**.  
+9. **Sector balance:** **≤3** tickers per sector; don’t force.
 
 ## Edge Engine
-1. Search catalysts **≤72h** (M&A, guidance change, FDA/reg, big contracts, multi-analyst actions).  
-2. Rank by **durability > recency > source quality**; multi-source confirmation = boost.  
-3. Map direction: **bullish → put-credit**, **bearish → call-credit**; unclear → pass/Low.  
-4. Use article wording to tag heat: **tradable** vs **too hot**; prefer tradable.  
-5. Score **High/Med/Low** with a one-line “why” and at least one reputable citation.  
-6. Break ties by durability and the support/resistance implied in the article.
-
----
+1. **Catalyst hunt:** Last **≤72h**; M&A, guidance, FDA, big deals, multi-analyst.  
+2. **Rank order:** **Durability > Recency > Source quality**; multi-confirm = boost.  
+3. **Bias map:** Bullish → **bull put**; Bearish → **bear call**; unclear → **pass**.  
+4. **Tone check:** “Orderly follow-through” **in**; “too hot” **out**.  
+5. **Score:** **High/Med/Low** + 1-liner **why** + **citation**.  
+6. **Tiebreak:** More durable catalyst; article-hinted S/R/breakout wins.
 
 ## Execution
-1. **Pick top 3 per sector** that clear all guards and score best.  
-2. **Output a table + flip plan;** you place orders and set **+10% TP**, headline stop, and time stop.  
-3. **Final Output Columns:** **AI Bot | Sector | Ticker | Bias | Catalyst (1-liner) | Flip Plan | Edge | Citation(s)**
+1. **Pick list:** Top **≤3** per sector that clear all guards.  
+2. **Flip plan:** Open spread; **+10% TP**; **headline stop**; **time stop**.  
+3. **Output table:** **AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s)**.
 ```
 
 ## ▪️ Instructions for Edge 
 
 ```python
-# Instructions 1: Ticker Selection
+# Optimized Edge Instructions — Ultra-Condensed
 
-## 1. Available Data Sources
-1. **Yahoo Finance**: Basic stock data (price, volume, market cap)
-2. **Google News**: Recent news articles and press releases
-3. **Company Websites**: Official press releases and announcements
-4. **SEC EDGAR**: Filed documents (8-K, 10-K, 10-Q)
-5. **Financial News Sites**: Reuters, Bloomberg articles via search
-6. **Yahoo Calendar**: Basic earnings date information
-7. **CSV Files**: Sector ticker lists provided by user
-8. **Basic Charts**: Yahoo Finance price charts for visual context
-9. **Company Profiles**: Basic business descriptions and metrics
+## 1) Free Data You Can Trust
+- **CSV lists:** Your sector tickers = **only universe**.  
+- **News search:** Google News / web; **link sources**.  
+- **Company IR/PR:** Official feeds; **primary proof**.  
+- **SEC EDGAR:** **8-K/10-Q/10-K** for material events.  
+- **Tier-1 media:** **Reuters/Bloomberg/WSJ/AP/CNBC/MarketWatch/Yahoo**.  
+- **Earnings check:** Free web/IR mention; exclude **≤33d**.  
+- **Social/X:** **Heads-up only** → must **confirm** elsewhere.
 
-## 2. Realistic Edge Factors
-1. **News Timing**: Recent positive news may drive short-term momentum
-2. **Multiple Sources**: Cross-verification reduces false signals
-3. **Company Size**: Larger companies typically have better liquidity
-4. **Sector Themes**: Group similar news events for trend identification
-5. **Press Release Quality**: Official company news vs rumors
-6. **Market Reaction**: Visible price response to news events
+## 2) Repeatable Edge Signals
+- **Recency drive:** **≤72h** beats old headlines.  
+- **Confirmation:** Multiple credible sources = **conviction**.  
+- **Liquidity proxy:** Large-cap, index constituents, household names.  
+- **Sector themes:** Catalyst + sector tailwind = **durability**.  
+- **PR quality:** Guidance raises, buybacks, contracts > rumors.  
+- **Reaction tells:** Articles noting follow-through > one-off pop.
 
-## 3. Honest Limitations
-1. **No Real-Time Data**: All data has delays (15+ minutes minimum)
-2. **No Options Data**: Cannot verify options liquidity or pricing
-3. **No Advanced Metrics**: No IV rank, Greeks, or complex calculations
+## 3) Hard Limits / Guardrails
+- **No live quotes/IV/Greeks:** **News-only** edge.  
+- **No chain checks:** Your algo picks strikes/premiums.  
+- **No charts:** Use article context (e.g., “52-week high”).  
+- **Public info only:** Paywalled/API data **excluded**.  
+- **Miss risk:** If **uncertain on earnings/events**, **exclude**.  
+- **Advisory:** You manage sizing, fills, and execution.
 ```
 
 
