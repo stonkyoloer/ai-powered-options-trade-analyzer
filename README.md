@@ -125,10 +125,19 @@ python3 spread_analyzer.py
 
 python3 master.py
 ```
+---
+
+# 🤖 `sectors.py`  
+
+**What:** Set & Update Tickers  
+
+**Why:** No tickers = Nothing to query 
+
+
 
 ---
 
-`build_universe.py`  
+# 🤖 `build_universe.py`  
 
 **What:** Tests if stocks have options chains  
 
@@ -136,7 +145,7 @@ python3 master.py
 
 ---
 
-`spot.py`  
+# 🤖 `spot.py`  
 
 **What:** Gets current stock prices  
 
@@ -145,7 +154,7 @@ python3 master.py
 ---
 
 
-**Script_3:** `ticker_ranker.py`  
+# 🤖 `ticker_ranker.py`  
 
 **What:** Ranks stocks by options liquidity  
 
@@ -153,7 +162,7 @@ python3 master.py
 
 ---
 
-`options_chains.py`  
+# 🤖 `options_chains.py`  
 
 **What:** Downloads all option contracts  
 
@@ -161,7 +170,7 @@ python3 master.py
 
 ---
 
-`greeks.py`  
+# 🤖 `greeks.py`  
 
 **What:** Gets option prices + Greeks  
 
@@ -169,7 +178,7 @@ python3 master.py
 
 ---
 
-`spread_analyzer.py`  
+# 🤖 `spread_analyzer.py`  
 
 **What:** Builds spreads, calculates PoP/ROI, picks best  
 
