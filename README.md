@@ -38,12 +38,11 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ## ▪️ Attach the Trading Universe
 
-```python
-open 
+
 
 ## ▪️ Prompt for News Heat Ticker Picker
 
-```text
+```python
 # Ticker Selection Prompt
 
 **Date**: 2025-08-20 18:17 PDT
