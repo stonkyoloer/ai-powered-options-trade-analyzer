@@ -113,7 +113,7 @@ python3 config.py
 
 Run `individual steps` or use the `master pipeline`
 
-```bash
+```python
 
 # Individual steps:
 
