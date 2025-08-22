@@ -69,9 +69,11 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 3. **Table:** AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
 ```
 
-### ChatGPT 5
+### ▪️ ChatGPT 5
 ```
-# Foundation
+# Prompt
+
+## Foundation
 
 1. Universe Lock: Only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.
 2. News Recency: Must have ≤7-day credible news; ≤72h preferred; backtests show recency boosts spread win rates +15–20%.
@@ -83,7 +85,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 8. Technical Check: Favor trades near support/resistance; e.g. bull put at support. Studies show S/R improves credit spread outcomes .
 9. Sector Balance: ≤3 tickers/sector; don’t force fills. High IVR (≥50%) names prioritized for richer premium.
 
-Edge Engine (6)
+## Edge Engine
 
 1. Sentiment Classify: GPT labels catalysts bullish/bearish; align spread type (bull put vs bear call).
 2. Multi-Source Confirmation: Require at least 2 credible confirmations; single-source news skipped.
@@ -92,53 +94,25 @@ Edge Engine (6)
 5. Alt-Signal Boost: GPT cross-checks for supporting cues (Google Trends, analyst revisions, institutional flow). Durable + alt confirm = edge.
 6. Scoring: High/Med/Low rating + 1-liner rationale + citation. Tie-break to more durable/sector-aligned catalyst.
 
-Execution (3)
+##Execution
 
 1. Select: Pick ≤3 per sector clearing all guards.
 2. Flip Plan: Open aligned spread; +10% TP, headline stop, time stop (EOD/next).
 3. Output: Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
+
+
+# Instructions
+......
+
 ```
 
 
 
-## ▪️ Instructions for Prompt 
 
-```python
-# Optimized Edge Instructions — Ultra-Condensed
-
-## 1) Free Data You Can Trust
-- **CSV lists:** Your sector tickers = **only universe**.  
-- **News search:** Google News / web; **link sources**.  
-- **Company IR/PR:** Official feeds; **primary proof**.  
-- **SEC EDGAR:** **8-K/10-Q/10-K** for material events.  
-- **Tier-1 media:** **Reuters/Bloomberg/WSJ/AP/CNBC/MarketWatch/Yahoo**.  
-- **Earnings check:** Free web/IR mention; exclude **≤33d**.  
-- **Social/X:** **Heads-up only** → must **confirm** elsewhere.
-
-## 2) Repeatable Edge Signals
-- **Recency drive:** **≤72h** beats old headlines.  
-- **Confirmation:** Multiple credible sources = **conviction**.  
-- **Liquidity proxy:** Large-cap, index constituents, household names.  
-- **Sector themes:** Catalyst + sector tailwind = **durability**.  
-- **PR quality:** Guidance raises, buybacks, contracts > rumors.  
-- **Reaction tells:** Articles noting follow-through > one-off pop.
-
-## 3) Hard Limits / Guardrails
-- **No live quotes/IV/Greeks:** **News-only** edge.  
-- **No chain checks:** Your algo picks strikes/premiums.  
-- **No charts:** Use article context (e.g., “52-week high”).  
-- **Public info only:** Paywalled/API data **excluded**.  
-- **Miss risk:** If **uncertain on earnings/events**, **exclude**.  
-- **Advisory:** You manage sizing, fills, and execution.
-```
 
 
 ### GPT 5
 ```python
-
-
-
-
 # 🤖 Analyze Credit Spreads via Pipeline
 
 ## ▪️ How to Execute 
