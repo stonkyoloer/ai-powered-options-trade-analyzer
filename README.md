@@ -203,30 +203,30 @@ python3 master.py
 
 ## Foundation
 
-**Parse:** JSON fields; %/$ → floats; guard NaN/negatives.
-**Derive:** Width = |long-short|; credit = Net_Credit; max_loss = width-credit; R:R = credit/max_loss >0.33.
-**Sanity:** Order legs bull put/bear call; de-dupe Ticker+Type+Legs+DTE.
-**Scope:** 0-33 DTE; tag 7-21 optimal (6% ROC, tradestation.com), 22-33 acceptable, <7 gamma-hot.
-**Buffer:** Distance_From_Current; <0.5% thin; +8% edge ≥0.5% (tradestation.com).
-**Catalyst:** ≤72h confirm; PR/8-K > media; multi-source via X semantic (mdpi.com).
-**Direction:** Bullish → bull put; Bearish → bear call; mismatch → skip.
-**Guards:** Earnings/binaries ≤33d → drop; ≤24h event → skip; chaos/gaps → too hot.
-**Score:** ROI_cap=200, w_ROI=0.35, w_DIST=8; bonuses +6 (7-21), +3 (22-33), -5 (<7); POP ≥65%.
+1. **Parse:** JSON fields; %/$ → floats; guard NaN/negatives.
+2. **Derive:** Width = |long-short|; credit = Net_Credit; max_loss = width-credit; R:R = credit/max_loss >0.33.
+3. **Sanity:** Order legs bull put/bear call; de-dupe Ticker+Type+Legs+DTE.
+4. **Scope:** 0-33 DTE; tag 7-21 optimal (6% ROC, tradestation.com), 22-33 acceptable, <7 gamma-hot.
+5. **Buffer:** Distance_From_Current; <0.5% thin; +8% edge ≥0.5% (tradestation.com).
+6. **Catalyst:** ≤72h confirm; PR/8-K > media; multi-source via X semantic (mdpi.com).
+7. **Direction:** Bullish → bull put; Bearish → bear call; mismatch → skip.
+8. **Guards:** Earnings/binaries ≤33d → drop; ≤24h event → skip; chaos/gaps → too hot.
+9. **Score:** ROI_cap=200, w_ROI=0.35, w_DIST=8; bonuses +6 (7-21), +3 (22-33), -5 (<7); POP ≥65%.
 
 ## Edge Engine
 
-**Width:** -4 (<$1), +2 ($3-5), -4 (>$10); $3-5 sweet (tradestation.com).
-**Formula:** Score = POP + 0.35ROI_cap + 8buffer% + DTE_bonus + Width_adj.
-**Enter:** Bias match + high score + buffer ≥0.5% + not hot.
-**Hold:** Aligned but thin/aging → watchlist.
-**Skip:** Mismatch/binaries/chaos/no confirm.
-**Quant:** Delta 5-10 equiv (83-95% wins, alphaarchitect.com); alt-data boost (satellite, haas.berkeley.edu); LLM predictive (arxiv.org).
+1. **Width:** -4 (<$1), +2 ($3-5), -4 (>$10); $3-5 sweet (tradestation.com).
+2. **Formula:** Score = POP + 0.35ROI_cap + 8buffer% + DTE_bonus + Width_adj.
+3. **Enter:** Bias match + high score + buffer ≥0.5% + not hot.
+4. **Hold:** Aligned but thin/aging → watchlist.
+5. **Skip:** Mismatch/binaries/chaos/no confirm.
+6. **Quant:** Delta 5-10 equiv (83-95% wins, alphaarchitect.com); alt-data boost (satellite, haas.berkeley.edu); LLM predictive (arxiv.org).
 
 ## Execution
 
-**Table:** AI Bot | Sector | Ticker | Type | Legs | DTE | PoP | ROI | R:R | Buffer% | Score | Bias | Catalyst | Action | Flip Plan | Citation(s).
-**Sort:** Score ↓; top 1/ticker post de-dupe.
-**Plan:** Open spread; +10% TP; headline stop; time stop (EOD/next).
+1. **Table:** AI Bot | Sector | Ticker | Type | Legs | DTE | PoP | ROI | R:R | Buffer% | Score | Bias | Catalyst | Action | Flip Plan | Citation(s).
+2. **Sort:** Score ↓; top 1/ticker post de-dupe.
+3. **Plan:** Open spread; +10% TP; headline stop; time stop (EOD/next).
 
 ------
 
@@ -234,28 +234,28 @@ python3 master.py
 
 ## Foundation
 
-**JSON:** Math/filters/score from fields; no live IV/Greeks.
-**News:** PR/EDGAR/IR/Tier-1; earnings via IR/web; economic > social (mdpi.com).
-**No chains:** Algo strikes/premiums.
-**Outlook:** Match spread to catalyst; ≤72h recency.
-**Heat:** Follow-through > halts; theta 7-21 DTE (94% wins, tradestation.com).
-**IV:** Proxy high via news; drop <20%.
-**Guards:** Binaries/earnings → drop; mismatch → skip.
-**Width:** $3-5 practical; avoid extremes.
-**Score:** Transparent; ROI cap >120% diminishing; macro/alt context (haas.berkeley.edu).
+1. **JSON:** Math/filters/score from fields; no live IV/Greeks.
+2. **News:** PR/EDGAR/IR/Tier-1; earnings via IR/web; economic > social (mdpi.com).
+3. **No chains:** Algo strikes/premiums.
+4. **Outlook:** Match spread to catalyst; ≤72h recency.
+5. **Heat:** Follow-through > halts; theta 7-21 DTE (94% wins, tradestation.com).
+6. **IV:** Proxy high via news; drop <20%.
+7. **Guards:** Binaries/earnings → drop; mismatch → skip.
+8. **Width:** $3-5 practical; avoid extremes.
+9. **Score:** Transparent; ROI cap >120% diminishing; macro/alt context (haas.berkeley.edu).
 
-Edge Engine
+# Edge Engine
 
-**POP:** Base 70-95% (backtests SPY/QQQ, arxiv.org).
-**ROI:** Payout/risk; +theta short DTE.
-**Buffer:** ≥0.5% safety; gamma <7 DTE.
-**DTE:** 7-21 sweet (94% wins); 22-33 ok.
-**Catalyst:** Multi-source > stale; tailwind durability; X sentiment.
-**Action:** Enter high + aligned; watch thin; what-if risks (alphaarchitect.com).
+1. **POP:** Base 70-95% (backtests SPY/QQQ, arxiv.org).
+2. **ROI:** Payout/risk; +theta short DTE.
+3. **Buffer:** ≥0.5% safety; gamma <7 DTE.
+4. **DTE:** 7-21 sweet (94% wins); 22-33 ok.
+5. **Catalyst:** Multi-source > stale; tailwind durability; X sentiment.
+6. **Action:** Enter high + aligned; watch thin; what-if risks (alphaarchitect.com).
 
 Execution
 
-**Table:** Specified columns; dedupe.
-**Plan:** +10% TP; headline/time stops.
-1. **Output:** Markdown; 1/ticker; AI as assistant (alphaarchitect.com).
+1. **Table:** Specified columns; dedupe.
+2. **Plan:** +10% TP; headline/time stops.
+3. **Output:** Markdown; 1/ticker; AI as assistant (alphaarchitect.com).
 ```
