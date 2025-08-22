@@ -70,7 +70,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 2. **Flip:** Open spread; +10% TP; headline stop; time stop (EOD); verify code sim.
 3. **Table:** AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
 
-------
+---------
 
 #Instructions
 
@@ -133,11 +133,36 @@ Execution
 2. **Flip plan:** “Open aligned credit spread; +10% TP; headline stop; time stop (EOD/next).”
 3. **Output:** Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
 
-
+---------
 
 # Instructions
-......
 
+## Foundation
+
+1. **Free data only:** Use sector CSV tickers + public web sources; prefer PR/EDGAR/IR and Tier-1 media; no paywalled APIs or live quotes.
+2. **Multi-source confirm:** Treat X/social as a lead only—require ≥2 credible confirmations (e.g., PR/EDGAR + Reuters/Bloomberg/WSJ) before “tradeable.”
+3. **Recency discipline:** Prioritize ≤72h catalysts; down-weight older than 7d unless there is fresh follow-through (new analyst note, contract, guidance).
+4. **Event guards:** Exclude names with earnings or other binaries within 33 days; skip names with a scheduled event in the next 24h.
+5. **Liquidity proxy:** Prefer large-cap/index constituents and household names for tighter option markets; de-emphasize thinly covered tickers.
+6. **Vol regime awareness:** Favor calm/normal regimes; avoid fresh market halts, limit-up/limit-down, or index mega-gaps for new entries.
+7. **Technical sanity check:** Prefer catalysts that align with nearby S/R (bull puts near support, bear calls near resistance) to reduce path-risk.
+8. **Theme alignment:** Boost candidates whose catalysts align with sector/macro tailwinds (e.g., yields ↓ → tech tilt; oil ↑ → energy tilt).
+9. **Documentation:** For every kept ticker, save the top 2–3 source links and a ≤30-word thesis tying catalyst → bias.
+
+## Edge Engine
+
+1. **Sentiment classification:** Label each catalyst bullish/bearish with one sentence why; mark “unclear” and exclude from trade list.
+2. **Durability scoring:** Prefer structural catalysts (guidance raises, buybacks, contracts, regulatory approvals) over one-off headlines; add bonus for multi-day confirmation.
+3. **Tone/heat filter:** Favor “orderly follow-through” language; exclude “halted/gapped/whipsaw/limit” narratives or ±10% gap call-outs.
+4. **Alt-signal assist:** Add small boosts only when corroborated (e.g., Trends spikes + analyst revision + PR); never trade on alt-signals alone.
+5. **Contrarian sanity:** If consensus is unanimously euphoric/doom, prompt a quick “what-could-go-wrong/what’s-priced-in” check; down-weight if risks are obvious.
+6. **Scoring output:** Rate High/Med/Low + 1-line rationale + citations; tiebreak to durability > recency > source quality.
+
+## Execution
+
+1. **Selection:** Choose ≤3 per sector that clear guards; maintain bull/bear balance; do not force fills.
+2. **Flip plan:** “Open aligned credit spread; +10% TP; headline stop; time stop (EOD/next).”
+3. **Output:** Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s); sort by Edge (High→Low).
 ```
 
 # 🤖 Analyze Credit Spreads via Pipeline
@@ -221,7 +246,7 @@ python3 master.py
 2. **Sort:** Score ↓; top 1/ticker post de-dupe.
 3. **Plan:** Open spread; +10% TP; headline stop; time stop (EOD/next).
 
-------
+---------
 
 # Instructions 
 
@@ -284,6 +309,7 @@ python3 master.py
 2. **Sort:** Score ↓; 1 entry per ticker after de-dupe.
 3. **Plan:** “Open credit spread; +10% TP; headline stop; time stop (EOD/next).”
 
+---------
 
 # Instructions
 
