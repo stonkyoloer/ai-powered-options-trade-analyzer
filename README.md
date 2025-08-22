@@ -39,7 +39,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 ## ▪️ Prompt for 3 tickers per sector using news/events.
 
 
-### GROK 4
+### ◽️ GROK 4
 ```python
 #Prompt
 
@@ -214,7 +214,7 @@ python3 master.py
 ## ▪️ Prompt for Report with Catalyst Heat, Bias, and Trade Plan.
 
 
-### GROK 4
+### ◽️ GROK 4
 
 ```python
 # Prompt 
@@ -278,7 +278,7 @@ python3 master.py
 3. **Output:** Markdown; 1/ticker; AI as assistant (alphaarchitect.com).
 ```
 
-### ChatGPT 5
+### ◽️ ChatGPT 5
 ```python
 # Prompt
 
