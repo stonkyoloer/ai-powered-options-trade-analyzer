@@ -108,30 +108,31 @@ Execution
 
 ## Foundation
 
-1. **Universe Lock:** Only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.
-2. **News Recency:** Must have ≤7-day credible news; ≤72h preferred; backtests show recency boosts spread win rates +15–20%.
-3. **Prime Window:** Favor catalysts posted today or yesterday after close; aligns with strongest next-session drift.
-4. **Source Tiers:** PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ) > social (verify only). Multi-source confirm = +10% edge.
-5. **Earnings Guard:** Exclude if earnings ≤33 days; backtests show 94% win-rate drop post-earnings volatility.
-6. **Other Binaries:** FDA/votes/courts/product approvals ≤33 days → exclude; 70% fail rate in short DTE trades.
-7. **Imminent Events:** Skip tickers with scheduled material events in ≤24h; gamma spikes ≈2× in 0DTE windows.
-8. **Technical Check:** Favor trades near support/resistance; e.g. bull put at support. Studies show S/R improves credit spread outcomes .
-9. **Sector Balance:** ≤3 tickers/sector; don’t force fills. High IVR (≥50%) names prioritized for richer premium.
+1. **Universe lock:** Use only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.
+2. **News recency:** Require ≤7d credible news; ≤72h preferred for follow-through (arxiv.org).
+3. **Prime window:** “Today” or “yesterday after close” catalysts prioritized for next-session drift.
+4. **Source tiers:** PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ) > social (verify only); multi-source confirm required (mdpi.com).
+5. **Earnings guard:** Exclude names with earnings within 33 days; avoid post-earnings vol distortion (tradestation.com).
+6. **Binary risk:** Exclude FDA/votes/courts/product events ≤33d; skip if confirmed event ≤24h.
+7. **Technical sanity:** Favor spreads around S/R (bull puts near support, bear calls near resistance) for path dependency control.
+8. **Volatility regime:** Prefer calmer regimes; avoid fresh index halts/gap-days; IVR ≥ mid-range helpful for premium.
+9. **Sector balance:** ≤3 per sector; maintain bull/bear mix; do not force weak sectors.
 
 ## Edge Engine
 
-1. **Sentiment Classify:** GPT labels catalysts bullish/bearish; align spread type (bull put vs bear call).
-2. **Multi-Source Confirmation:** Require at least 2 credible confirmations; single-source news skipped.
-3. **Durability > Recency:** Prefer catalysts with structural impact (guidance raise, buybacks, contracts) vs one-off hype.
-4. **Tone Analysis:** Favor “orderly follow-through”; reject “halted/gapped/whipsaw” language.
-5. **Alt-Signal Boost:** GPT cross-checks for supporting cues (Google Trends, analyst revisions, institutional flow). Durable + alt confirm = edge.
-6. **Scoring:** High/Med/Low rating + 1-liner rationale + citation. Tie-break to more durable/sector-aligned catalyst.
+1. **Sentiment classify:** Label catalyst bullish/bearish; map to spread type (bull put/bear call); skip ambiguous.
+2. **Multi-confirm:** Require ≥2 credible sources (PR/EDGAR + Tier-1). Single-source = watch, not trade.
+3. **Durability score:** Guidance raises/buybacks/contracts > one-off hype; add sector tailwind bonus.
+4. **Tone/heat:** Prefer “orderly follow-through” language; exclude “halted/gapped/whipsaw”.
+5. **Alt-signal assist:** Add small boost when Google Trends/analyst revisions/institutional flow corroborate.
+6. **Output score:** High/Med/Low + 1-line thesis + citations; tiebreak to durability and theme alignment.
 
-##Execution
+## Execution
 
-1. **Select:** Pick ≤3 per sector clearing all guards.
-2. **Flip Plan:** Open aligned spread; +10% TP, headline stop, time stop (EOD/next).
+1. **Select:** Choose ≤3 per sector meeting all guards.
+2. **Flip plan:** “Open aligned credit spread; +10% TP; headline stop; time stop (EOD/next).”
 3. **Output:** Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
+
 
 
 # Instructions
@@ -245,9 +246,71 @@ python3 master.py
 5. **Catalyst:** Multi-source > stale; tailwind durability; X sentiment.
 6. **Action:** Enter high + aligned; watch thin; what-if risks (alphaarchitect.com).
 
-Execution
+## Execution
 
 1. **Table:** Specified columns; dedupe.
 2. **Plan:** +10% TP; headline/time stops.
 3. **Output:** Markdown; 1/ticker; AI as assistant (alphaarchitect.com).
+```
+
+### ChatGPT 5
+```python
+# Prompt
+
+## Foundation
+
+1. **Parse:** JSON fields only; convert %/$ → floats; guard NaN/negatives.
+2. **Derive:** Width=|short−long|; Credit=Net_Credit; Max_Loss=Width−Credit; **R:R=Credit/Max_Loss > 0.33**.
+3. **Sanity:** Validate leg order for bull put / bear call; de-dupe Ticker+Type+Legs+DTE.
+4. **Scope:** Keep **0–33 DTE**; tag **7–21 optimal**, **22–33 acceptable**, **<7 gamma-hot** (tradestation.com).
+5. **Buffer:** Use Distance_From_Current as **Buffer%**; **<0.5% thin**; ≥0.5% provides better protection (tradestation.com).
+6. **Catalyst link:** Require **≤72h** confirm; **PR/8-K/IR/Govt > media**; allow X semantic as lead but verify (mdpi.com).
+7. **Direction map:** **Bullish → bull put; Bearish → bear call;** mismatch → **skip**; LLM news labels can set bias (arxiv.org).
+8. **Guards:** **Drop** earnings/binaries within DTE; **skip** if scheduled **≤24h**; exclude “too hot” chaos/gaps.
+9. **Score scaffold:** `ROI_cap=200`, `w_ROI=0.35`, `w_DIST=8`; DTE bonus **(+6:7–21, +3:22–33, −5:<7)**; **PoP ≥ 65%** baseline.
+
+## Edge Engine
+
+1. **Width adj:** **−4** (<$1), **+2** ($3–$5), **−4** (>$10); $3–$5 sweet spot (tradestation.com).
+2. **Score formula:** `Score = PoP + 0.35·min(ROI,200) + 8·Buffer% + DTE_bonus + Width_adj`.
+3. **Enter:** Bias match + high Score + Buffer ≥0.5% + not hot → **Enter**.
+4. **Watch:** Aligned but thin buffer or aging news (>72h) → **Watchlist**.
+5. **Skip:** Mismatch / binaries / chaos / no confirmation → **Skip**.
+6. **Quant adds:** Favor conservative deltas (small-delta bias improves success; alphaarchitect.com); allow alt-data boost (satellite/foot-traffic, haas.berkeley.edu); LLM predictive support (arxiv.org).
+
+## Execution
+
+1. **Table:** AI Bot | Sector | Ticker | Type | Legs | DTE | PoP | ROI | R:R | Buffer% | Score | Bias | Catalyst | Action | Flip Plan | Citation(s).
+2. **Sort:** Score ↓; 1 entry per ticker after de-dupe.
+3. **Plan:** “Open credit spread; +10% TP; headline stop; time stop (EOD/next).”
+
+
+# Instructions
+
+## Foundation
+
+1. **JSON only:** Compute all metrics from JSON; no live IV/Greeks/quotes.
+2. **News rules:** PR/EDGAR/IR/Tier-1 only; earnings/binary checks via IR/calendars; **economic > social** signal (mdpi.com).
+3. **No chains:** Strikes/premiums handled by your engine; this prompt aligns/filters/scores.
+4. **Outlook fit:** Spread direction must match catalyst; prefer ≤72h news; multi-confirm.
+5. **Heat discipline:** Favor follow-through language; prefer 7–21 DTE theta capture (tradestation.com).
+6. **IV proxy:** Use news context to infer regime; deprioritize clearly low-IV unless buffer/PoP strong.
+7. **Guardrails:** Drop binaries/earnings within DTE; skip mismatch or “too hot” tapes.
+8. **Width practicality:** $3–$5 preferred; avoid <$1 or >$10 for fill/ROC quality.
+9. **Transparent scoring:** Cap ROI to avoid outliers; allow macro/alt-context as a nudge (haas.berkeley.edu).
+
+## Edge Engine
+
+1. **PoP sanity:** 65–90% typical for conservative spreads; beware tail risk even at high PoP (arxiv.org).
+2. **ROI vs risk:** Favor stable R:R with sufficient credit; avoid “juicy” but thin-buffer setups.
+3. **Buffer rule:** ≥0.5% required; below this needs exceptional Score.
+4. **DTE sweet spot:** 7–21 preferred; 22–33 okay; <7 only with strong timeboxed catalyst plan.
+5. **Catalyst quality:** Multi-source and sector tailwind; include X only when verified.
+6. **Action map:** Enter (high+aligned), Watch (thin/aging), Skip (any guard). Add 1-line “what-if” risk.
+
+## Execution
+
+1. **Table:** Use specified columns; de-dupe.
+2. **Plan:** +10% TP; headline/time stops.
+3. **Output:** Markdown; 1/ticker; AI acts as assistant (alphaarchitect.com).
 ```
