@@ -109,30 +109,30 @@ Execution
 
 ## Foundation
 
-1. **Universe lock:** Use only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.
-2. **News recency:** Require ≤7d credible news; ≤72h preferred for follow-through (arxiv.org).
-3. **Prime window:** “Today” or “yesterday after close” catalysts prioritized for next-session drift.
-4. **Source tiers:** PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ) > social (verify only); multi-source confirm required (mdpi.com).
-5. **Earnings guard:** Exclude names with earnings within 33 days; avoid post-earnings vol distortion (tradestation.com).
-6. **Binary risk:** Exclude FDA/votes/courts/product events ≤33d; skip if confirmed event ≤24h.
-7. **Technical sanity:** Favor spreads around S/R (bull puts near support, bear calls near resistance) for path dependency control.
-8. **Volatility regime:** Prefer calmer regimes; avoid fresh index halts/gap-days; IVR ≥ mid-range helpful for premium.
-9. **Sector balance:** ≤3 per sector; maintain bull/bear mix; do not force weak sectors.
+1. **Universe lock:** Use only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.  
+2. **News recency:** Require ≤7d credible news; ≤72h preferred for follow-through (arxiv.org).  
+3. **Prime window:** “Today” or “yesterday after close” catalysts prioritized for next-session drift.  
+4. **Source tiers:** PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ) > social (verify only); multi-source confirm required (mdpi.com).  
+5. **Earnings guard:** Exclude names with earnings within 33 days; avoid post-earnings vol distortion (tradestation.com).  
+6. **Binary risk:** Exclude FDA/votes/courts/product events ≤33d; skip if confirmed event ≤24h.  
+7. **Technical sanity:** Favor spreads around S/R (bull puts near support, bear calls near resistance) for path dependency control.  
+8. **Volatility regime:** Prefer calmer regimes; avoid fresh index halts/gap-days; IVR ≥ mid-range helpful for premium.  
+9. **Sector balance:** **Exactly 3 per sector (27 total). If fewer than 3 clear guards, backfill with best-available tickers from the CSV, tagging them as `filler`. Maintain bull/bear mix when possible.**  
 
 ## Edge Engine
 
-1. **Sentiment classify:** Label catalyst bullish/bearish; map to spread type (bull put/bear call); skip ambiguous.
-2. **Multi-confirm:** Require ≥2 credible sources (PR/EDGAR + Tier-1). Single-source = watch, not trade.
-3. **Durability score:** Guidance raises/buybacks/contracts > one-off hype; add sector tailwind bonus.
-4. **Tone/heat:** Prefer “orderly follow-through” language; exclude “halted/gapped/whipsaw”.
-5. **Alt-signal assist:** Add small boost when Google Trends/analyst revisions/institutional flow corroborate.
-6. **Output score:** High/Med/Low + 1-line thesis + citations; tiebreak to durability and theme alignment.
+1. **Sentiment classify:** Label catalyst bullish/bearish; map to spread type (bull put/bear call); filler if unclear.  
+2. **Multi-confirm:** Require ≥2 credible sources (PR/EDGAR + Tier-1). Single-source = weak; filler if none.  
+3. **Durability score:** Guidance raises/buybacks/contracts > one-off hype; add sector tailwind bonus.  
+4. **Tone/heat:** Prefer “orderly follow-through” language; exclude “halted/gapped/whipsaw” unless filler needed.  
+5. **Alt-signal assist:** Add small boost when Google Trends/analyst revisions/institutional flow corroborate; never alone.  
+6. **Output score:** High/Med/Low/Filler + 1-line thesis + citations; tiebreak durability > recency > source quality.  
 
 ## Execution
 
-1. **Select:** Choose ≤3 per sector meeting all guards.
-2. **Flip plan:** “Open aligned credit spread; +10% TP; headline stop; time stop (EOD/next).”
-3. **Output:** Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
+1. **Selection:** Always 3 per sector (27 tickers). Use strongest first, fillers last if needed.  
+2. **Flip plan:** “Open aligned credit spread; +10% TP; headline stop; time stop (EOD/next).”  
+3. **Output:** **JSON only** → Bot | Sector | ETF | Description | Tickers (each with `ticker`, `bias`, `catalyst`, `strength`).  
 
 ---------
 
@@ -140,30 +140,30 @@ Execution
 
 ## Foundation
 
-1. **Free data only:** Use sector CSV tickers + public web sources; prefer PR/EDGAR/IR and Tier-1 media; no paywalled APIs or live quotes.
-2. **Multi-source confirm:** Treat X/social as a lead only—require ≥2 credible confirmations (e.g., PR/EDGAR + Reuters/Bloomberg/WSJ) before “tradeable.”
-3. **Recency discipline:** Prioritize ≤72h catalysts; down-weight older than 7d unless there is fresh follow-through (new analyst note, contract, guidance).
-4. **Event guards:** Exclude names with earnings or other binaries within 33 days; skip names with a scheduled event in the next 24h.
-5. **Liquidity proxy:** Prefer large-cap/index constituents and household names for tighter option markets; de-emphasize thinly covered tickers.
-6. **Vol regime awareness:** Favor calm/normal regimes; avoid fresh market halts, limit-up/limit-down, or index mega-gaps for new entries.
-7. **Technical sanity check:** Prefer catalysts that align with nearby S/R (bull puts near support, bear calls near resistance) to reduce path-risk.
-8. **Theme alignment:** Boost candidates whose catalysts align with sector/macro tailwinds (e.g., yields ↓ → tech tilt; oil ↑ → energy tilt).
-9. **Documentation:** For every kept ticker, save the top 2–3 source links and a ≤30-word thesis tying catalyst → bias.
+1. **Free data only:** Use sector CSV tickers + public web sources; prefer PR/EDGAR/IR and Tier-1 media; no paywalled APIs or live quotes.  
+2. **Multi-source confirm:** Treat X/social as a lead only—require ≥2 credible confirmations (e.g., PR/EDGAR + Reuters/Bloomberg/WSJ) before “tradeable.”  
+3. **Recency discipline:** Prioritize ≤72h catalysts; down-weight older than 7d unless there is fresh follow-through (new analyst note, contract, guidance).  
+4. **Event guards:** Exclude names with earnings or other binaries within 33 days; skip names with a scheduled event in the next 24h (unless filler).  
+5. **Liquidity proxy:** Prefer large-cap/index constituents and household names for tighter option markets; use tradable smaller caps as filler if needed.  
+6. **Vol regime awareness:** Favor calm/normal regimes; avoid fresh market halts, limit-up/limit-down, or index mega-gaps for new entries.  
+7. **Technical sanity check:** Prefer catalysts that align with nearby S/R (bull puts near support, bear calls near resistance) to reduce path-risk.  
+8. **Theme alignment:** Boost candidates whose catalysts align with sector/macro tailwinds (e.g., yields ↓ → tech tilt; oil ↑ → energy tilt).  
+9. **Documentation:** For every kept ticker, save the top 2–3 source links and a ≤30-word thesis tying catalyst → bias.  
 
 ## Edge Engine
 
-1. **Sentiment classification:** Label each catalyst bullish/bearish with one sentence why; mark “unclear” and exclude from trade list.
-2. **Durability scoring:** Prefer structural catalysts (guidance raises, buybacks, contracts, regulatory approvals) over one-off headlines; add bonus for multi-day confirmation.
-3. **Tone/heat filter:** Favor “orderly follow-through” language; exclude “halted/gapped/whipsaw/limit” narratives or ±10% gap call-outs.
-4. **Alt-signal assist:** Add small boosts only when corroborated (e.g., Trends spikes + analyst revision + PR); never trade on alt-signals alone.
-5. **Contrarian sanity:** If consensus is unanimously euphoric/doom, prompt a quick “what-could-go-wrong/what’s-priced-in” check; down-weight if risks are obvious.
-6. **Scoring output:** Rate High/Med/Low + 1-line rationale + citations; tiebreak to durability > recency > source quality.
+1. **Sentiment classification:** Label each catalyst bullish/bearish; unclear → filler.  
+2. **Durability scoring:** Prefer structural catalysts (guidance raises, buybacks, contracts, regulatory approvals) over one-off hype; add bonus for multi-day confirmation.  
+3. **Tone/heat filter:** Favor “orderly follow-through” language; exclude “halted/gapped/whipsaw/limit” narratives or ±10% gap call-outs (unless filler).  
+4. **Alt-signal assist:** Add small boosts only when corroborated (e.g., Trends spikes + analyst revision + PR); never trade on alt-signals alone.  
+5. **Contrarian sanity:** If consensus is unanimously euphoric/doom, prompt a quick “what-could-go-wrong/what’s-priced-in” check; down-weight if risks are obvious.  
+6. **Scoring output:** Rate High/Med/Low/Filler + rationale + citations; tiebreak durability > recency > quality.  
 
 ## Execution
 
-1. **Selection:** Choose ≤3 per sector that clear guards; maintain bull/bear balance; do not force fills.
-2. **Flip plan:** “Open aligned credit spread; +10% TP; headline stop; time stop (EOD/next).”
-3. **Output:** Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s); sort by Edge (High→Low).
+1. **Selection:** Always return 27 tickers (3 per sector), tagging weak ones as `filler`.  
+2. **Flip plan:** “Open aligned credit spread; +10% TP; headline stop; time stop (EOD/next).”  
+3. **Output:** **JSON only** → Sector dicts with ETF, description, and tickers (each ticker has `ticker`, `bias`, `catalyst`, `strength`).  
 ```
 
 # 🤖 Analyze Credit Spreads via Pipeline
