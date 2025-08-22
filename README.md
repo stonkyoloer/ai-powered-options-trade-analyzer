@@ -1,4 +1,4 @@
-# 🚀 News & Event Heat - 🔥 Credit Spread Screener
+# 🚀 News & Event Heat 🔥 Credit Spread Screener
 
 Work in Progress... The script is pulling live market data from tastytrade server. Need a tool or automation for your project or idea? Hit me up, and I’ll build it from scratch!  
 
