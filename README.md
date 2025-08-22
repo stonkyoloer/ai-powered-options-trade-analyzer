@@ -102,7 +102,7 @@ Execution
 3. **Limit:** 3/sector; data exclusions; contrarian filters.
 ```
 
-### ▪️ ChatGPT 5
+### ◽️ ChatGPT 5
 ```python
 # Prompt
 
