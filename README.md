@@ -38,6 +38,8 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ## ▪️ Prompt for 3 tickers per sector using news/events.
 
+
+### GROK 4
 ```python
 # Foundation
 
@@ -53,12 +55,12 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 # Edge Engine
 
-**Catalyst hunt:** ≤72h; M&A/guidance/FDA/deals/multi-analyst; durable > recency (6% ROC, arxiv.org).
-**Rank:** Durability (multi-confirm) > Recency > Quality; boost S/R breakout hints via X semantic.
-**Bias:** Bullish → bull put; Bearish → bear call; unclear → pass; align with 83-95% wins; LLMs predictive (arxiv.org).
-**Tone:** Orderly > hot; theta in 7-21 DTE (85% QQQ 0DTE, tradestation.com).
-**Score:** High/Med/Low + why/citation; tiebreak: IV tailwind (50%+) or alt-data (satellite parking, haas.berkeley.edu).
-**Quant filter:** Large-cap/index; 91% win vs 74% (alphaarchitect.com); contrarian check (priced-in?).
+1. **Catalyst hunt:** ≤72h; M&A/guidance/FDA/deals/multi-analyst; durable > recency (6% ROC, arxiv.org).
+2. **Rank:** Durability (multi-confirm) > Recency > Quality; boost S/R breakout hints via X semantic.
+3. **Bias:** Bullish → bull put; Bearish → bear call; unclear → pass; align with 83-95% wins; LLMs predictive (arxiv.org).
+4. **Tone:** Orderly > hot; theta in 7-21 DTE (85% QQQ 0DTE, tradestation.com).
+5. **Score:** High/Med/Low + why/citation; tiebreak: IV tailwind (50%+) or alt-data (satellite parking, haas.berkeley.edu).
+6. **Quant filter:** Large-cap/index; 91% win vs 74% (alphaarchitect.com); contrarian check (priced-in?).
 
 # Execution
 
@@ -66,6 +68,38 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 2. **Flip: Open** spread; +10% TP; headline stop; time stop (EOD); verify code sim.
 3. **Table:** AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
 ```
+
+### ChatGPT 5
+```
+# Foundation
+
+1. Universe Lock: Only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.
+2. News Recency: Must have ≤7-day credible news; ≤72h preferred; backtests show recency boosts spread win rates +15–20%.
+3. Prime Window: Favor catalysts posted today or yesterday after close; aligns with strongest next-session drift.
+4. Source Tiers: PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ) > social (verify only). Multi-source confirm = +10% edge.
+5. Earnings Guard: Exclude if earnings ≤33 days; backtests show 94% win-rate drop post-earnings volatility.
+6. Other Binaries: FDA/votes/courts/product approvals ≤33 days → exclude; 70% fail rate in short DTE trades.
+7. Imminent Events: Skip tickers with scheduled material events in ≤24h; gamma spikes ≈2× in 0DTE windows.
+8. Technical Check: Favor trades near support/resistance; e.g. bull put at support. Studies show S/R improves credit spread outcomes .
+9. Sector Balance: ≤3 tickers/sector; don’t force fills. High IVR (≥50%) names prioritized for richer premium.
+
+Edge Engine (6)
+
+1. Sentiment Classify: GPT labels catalysts bullish/bearish; align spread type (bull put vs bear call).
+2. Multi-Source Confirmation: Require at least 2 credible confirmations; single-source news skipped.
+3. Durability > Recency: Prefer catalysts with structural impact (guidance raise, buybacks, contracts) vs one-off hype.
+4. Tone Analysis: Favor “orderly follow-through”; reject “halted/gapped/whipsaw” language.
+5. Alt-Signal Boost: GPT cross-checks for supporting cues (Google Trends, analyst revisions, institutional flow). Durable + alt confirm = edge.
+6. Scoring: High/Med/Low rating + 1-liner rationale + citation. Tie-break to more durable/sector-aligned catalyst.
+
+Execution (3)
+
+1. Select: Pick ≤3 per sector clearing all guards.
+2. Flip Plan: Open aligned spread; +10% TP, headline stop, time stop (EOD/next).
+3. Output: Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
+```
+
+
 
 ## ▪️ Instructions for Prompt 
 
@@ -97,6 +131,11 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 - **Miss risk:** If **uncertain on earnings/events**, **exclude**.  
 - **Advisory:** You manage sizing, fills, and execution.
 ```
+
+
+### GPT 5
+```python
+
 
 
 
