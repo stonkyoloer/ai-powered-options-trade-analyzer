@@ -67,7 +67,7 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 ## Execution
 
 1. **Pick:** Top ≤3/sector clearing guards; focus 0-33 DTE low delta; AI as assistant (alphaarchitect.com).
-2. **Flip: Open** spread; +10% TP; headline stop; time stop (EOD); verify code sim.
+2. **Flip:** Open spread; +10% TP; headline stop; time stop (EOD); verify code sim.
 3. **Table:** AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
 
 ------
@@ -76,30 +76,30 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 
 ## Foundation
 
-**Free data:** CSV tickers; Google/EDGAR/IR; no APIs/paywalls; X semantic for verification (mdpi.com).
-**Confirmation:** Multi-source > solo; X as alert, confirm Tier-1; economic > social (mdpi.com).
-**Liquidity:** Large-cap/index; proxy <1% ATM spread (tradestation.com).
-**Themes:** Catalyst + sector tailwind/macro; e.g., XLE deals + oil rally (durability +15% ROC, arxiv.org).
-**PR:** Guidance/buybacks/contracts > rumors; +15% ROC (alphaarchitect.com).
-**Reaction:** Follow-through > pop; S/R wins via article/X context.
-**Guards:** Earnings/binaries → drop; scheduled ≤24h → skip.
-**Miss:** Uncertain → exclude; public only; add alt-data hints (satellite, haas.berkeley.edu).
-**Advisory:** Sizing/fills managed; delta 5-10 edge (83-95% wins, arxiv.org); AI assistant (alphaarchitect.com).
+1. **Free data:** CSV tickers; Google/EDGAR/IR; no APIs/paywalls; X semantic for verification (mdpi.com).
+2. **Confirmation:** Multi-source > solo; X as alert, confirm Tier-1; economic > social (mdpi.com).
+3. **Liquidity:** Large-cap/index; proxy <1% ATM spread (tradestation.com).
+4. **Themes:** Catalyst + sector tailwind/macro; e.g., XLE deals + oil rally (durability +15% ROC, arxiv.org).
+5. **PR:** Guidance/buybacks/contracts > rumors; +15% ROC (alphaarchitect.com).
+6. **Reaction:** Follow-through > pop; S/R wins via article/X context.
+7. **Guards:** Earnings/binaries → drop; scheduled ≤24h → skip.
+8. **Miss:** Uncertain → exclude; public only; add alt-data hints (satellite, haas.berkeley.edu).
+9. **Advisory:** Sizing/fills managed; delta 5-10 edge (83-95% wins, arxiv.org); AI assistant (alphaarchitect.com).
 
 ## Edge Engine
 
-**Recency:** ≤72h > old; +20% conviction (mdpi.com).
-**Themes:** Backtested wins e.g., 94% SPX 0DTE (tradestation.com).
-**IV:** High relative >20%; premium edge.
-**Heat:** Tradable > chaos; gamma <7 DTE.
-**Bias:** Match spread; bull put +ve news; sentiment via X semantic.
-**Score:** Transparent; win rate data; what-if risks (arxiv.org).
+1. **Recency:** ≤72h > old; +20% conviction (mdpi.com).
+2. **Themes:** Backtested wins e.g., 94% SPX 0DTE (tradestation.com).
+3. **IV:** High relative >20%; premium edge.
+4. **Heat:** Tradable > chaos; gamma <7 DTE.
+5. **Bias:** Match spread; bull put +ve news; sentiment via X semantic.
+6. **Score:** Transparent; win rate data; what-if risks (arxiv.org).
 
 Execution
 
-**Output:** Table; sort score.
-**Plan:** +10% TP; headline/time stops.
-**Limit:** 3/sector; data exclusions; contrarian filters.
+1. **Output:** Table; sort score.
+2. **Plan:** +10% TP; headline/time stops.
+3. **Limit:** 3/sector; data exclusions; contrarian filters.
 ```
 
 ### ▪️ ChatGPT 5
