@@ -39,35 +39,32 @@ Work in Progress... The script is pulling live market data from tastytrade serve
 ## ▪️ Prompt for 3 tickers per sector using news/events.
 
 ```python
-# Optimized Prompt — Ultra-Condensed
+# Foundation
 
-**Goal:** +10% flips, **0–33 DTE** credit spreads.  
-**Universe:** Only **your sector CSV** tickers.  
-**Method:** **News/events = edge** (no quotes/IV/Greeks).
+1. **Lock universe:** Sector CSV tickers only; uppercase, dedupe; common stock; prioritize large-cap/index for liquidity/tight spreads (alphaarchitect.com).
+2. **Fresh news:** ≤7d credible coverage required; prioritize PR/EDGAR/IR/Govt; economic news > social (mdpi.com); skip without.
+3. **Prime window:** Today/yesterday after close preferred; backtests show 15-20% win boost (arxiv.org).
+4. **Tradable heat:** Steady follow-through > halts/gaps/whipsaws; avoid ±10% gaps (83% 0DTE loss, tradestation.com).
+5. **Source tiers:** PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ); X semantic verify for real-time sentiment; multi-source +10% edge (mdpi.com).
+6. **Earnings guard:** Exclude ≤33d; 94% win drop post-volatility (tradestation.com).
+7. **Binaries:** FDA/votes/courts/product dates ≤33d → exclude; 70% short DTE failure; satellite alt-data for retail prediction (haas.berkeley.edu).
+8. **Imminent events:** ≤24h scheduled → skip; gamma 2x spike (arxiv.org).
+9. **Sector balance:** ≤3/sector; high IVR (50%+) for premium; don't force; balance bull/bear with macro context (e.g., CPI/yields).
 
-## Foundation
-1. **Lock universe:** CSV tickers only; uppercase, dedupe; **common stock**.  
-2. **Fresh news:** **≤7d** credible coverage required; else **skip**.  
-3. **Prime window:** **Today** or **yesterday after close** preferred.  
-4. **Tradable heat:** Steady follow-through > halts/gaps/whipsaws.  
-5. **Source tiers:** **PR/EDGAR/IR/Govt** > Tier-1 media > **X** (verify).  
-6. **Earnings guard:** If **earnings ≤33d**, **exclude**.  
-7. **Other binaries:** FDA/votes/courts/product dates **≤33d** → **exclude**.  
-8. **Imminent events:** If **≤24h** scheduled event, **skip**.  
-9. **Sector balance:** **≤3** tickers per sector; don’t force.
+# Edge Engine
 
-## Edge Engine
-1. **Catalyst hunt:** Last **≤72h**; M&A, guidance, FDA, big deals, multi-analyst.  
-2. **Rank order:** **Durability > Recency > Source quality**; multi-confirm = boost.  
-3. **Bias map:** Bullish → **bull put**; Bearish → **bear call**; unclear → **pass**.  
-4. **Tone check:** “Orderly follow-through” **in**; “too hot” **out**.  
-5. **Score:** **High/Med/Low** + 1-liner **why** + **citation**.  
-6. **Tiebreak:** More durable catalyst; article-hinted S/R/breakout wins.
+**Catalyst hunt:** ≤72h; M&A/guidance/FDA/deals/multi-analyst; durable > recency (6% ROC, arxiv.org).
+**Rank:** Durability (multi-confirm) > Recency > Quality; boost S/R breakout hints via X semantic.
+**Bias:** Bullish → bull put; Bearish → bear call; unclear → pass; align with 83-95% wins; LLMs predictive (arxiv.org).
+**Tone:** Orderly > hot; theta in 7-21 DTE (85% QQQ 0DTE, tradestation.com).
+**Score:** High/Med/Low + why/citation; tiebreak: IV tailwind (50%+) or alt-data (satellite parking, haas.berkeley.edu).
+**Quant filter:** Large-cap/index; 91% win vs 74% (alphaarchitect.com); contrarian check (priced-in?).
 
-## Execution
-1. **Pick list:** Top **≤3** per sector that clear all guards.  
-2. **Flip plan:** Open spread; **+10% TP**; **headline stop**; **time stop**.  
-3. **Output table:** **AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s)**.
+# Execution
+
+1. **Pick:** Top ≤3/sector clearing guards; focus 0-33 DTE low delta; AI as assistant (alphaarchitect.com).
+2. **Flip: Open** spread; +10% TP; headline stop; time stop (EOD); verify code sim.
+3. **Table:** AI Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
 ```
 
 ## ▪️ Instructions for Prompt 
