@@ -103,35 +103,35 @@ Execution
 ```
 
 ### ▪️ ChatGPT 5
-```
+```python
 # Prompt
 
 ## Foundation
 
-1. Universe Lock: Only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.
-2. News Recency: Must have ≤7-day credible news; ≤72h preferred; backtests show recency boosts spread win rates +15–20%.
-3. Prime Window: Favor catalysts posted today or yesterday after close; aligns with strongest next-session drift.
-4. Source Tiers: PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ) > social (verify only). Multi-source confirm = +10% edge.
-5. Earnings Guard: Exclude if earnings ≤33 days; backtests show 94% win-rate drop post-earnings volatility.
-6. Other Binaries: FDA/votes/courts/product approvals ≤33 days → exclude; 70% fail rate in short DTE trades.
-7. Imminent Events: Skip tickers with scheduled material events in ≤24h; gamma spikes ≈2× in 0DTE windows.
-8. Technical Check: Favor trades near support/resistance; e.g. bull put at support. Studies show S/R improves credit spread outcomes .
-9. Sector Balance: ≤3 tickers/sector; don’t force fills. High IVR (≥50%) names prioritized for richer premium.
+1. **Universe Lock:** Only sector CSV tickers; uppercase, dedupe; exclude ETFs/indices.
+2. **News Recency:** Must have ≤7-day credible news; ≤72h preferred; backtests show recency boosts spread win rates +15–20%.
+3. **Prime Window:** Favor catalysts posted today or yesterday after close; aligns with strongest next-session drift.
+4. **Source Tiers:** PR/EDGAR/IR/Govt > Tier-1 (Reuters/Bloomberg/WSJ) > social (verify only). Multi-source confirm = +10% edge.
+5. **Earnings Guard:** Exclude if earnings ≤33 days; backtests show 94% win-rate drop post-earnings volatility.
+6. **Other Binaries:** FDA/votes/courts/product approvals ≤33 days → exclude; 70% fail rate in short DTE trades.
+7. **Imminent Events:** Skip tickers with scheduled material events in ≤24h; gamma spikes ≈2× in 0DTE windows.
+8. **Technical Check:** Favor trades near support/resistance; e.g. bull put at support. Studies show S/R improves credit spread outcomes .
+9. **Sector Balance:** ≤3 tickers/sector; don’t force fills. High IVR (≥50%) names prioritized for richer premium.
 
 ## Edge Engine
 
-1. Sentiment Classify: GPT labels catalysts bullish/bearish; align spread type (bull put vs bear call).
-2. Multi-Source Confirmation: Require at least 2 credible confirmations; single-source news skipped.
-3. Durability > Recency: Prefer catalysts with structural impact (guidance raise, buybacks, contracts) vs one-off hype.
-4. Tone Analysis: Favor “orderly follow-through”; reject “halted/gapped/whipsaw” language.
-5. Alt-Signal Boost: GPT cross-checks for supporting cues (Google Trends, analyst revisions, institutional flow). Durable + alt confirm = edge.
-6. Scoring: High/Med/Low rating + 1-liner rationale + citation. Tie-break to more durable/sector-aligned catalyst.
+1. **Sentiment Classify:** GPT labels catalysts bullish/bearish; align spread type (bull put vs bear call).
+2. **Multi-Source Confirmation:** Require at least 2 credible confirmations; single-source news skipped.
+3. **Durability > Recency:** Prefer catalysts with structural impact (guidance raise, buybacks, contracts) vs one-off hype.
+4. **Tone Analysis:** Favor “orderly follow-through”; reject “halted/gapped/whipsaw” language.
+5. **Alt-Signal Boost:** GPT cross-checks for supporting cues (Google Trends, analyst revisions, institutional flow). Durable + alt confirm = edge.
+6. **Scoring:** High/Med/Low rating + 1-liner rationale + citation. Tie-break to more durable/sector-aligned catalyst.
 
 ##Execution
 
-1. Select: Pick ≤3 per sector clearing all guards.
-2. Flip Plan: Open aligned spread; +10% TP, headline stop, time stop (EOD/next).
-3. Output: Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
+1. **Select:** Pick ≤3 per sector clearing all guards.
+2. **Flip Plan:** Open aligned spread; +10% TP, headline stop, time stop (EOD/next).
+3. **Output:** Markdown table → Bot | Sector | Ticker | Bias | Catalyst | Flip Plan | Edge | Citation(s).
 
 
 # Instructions
