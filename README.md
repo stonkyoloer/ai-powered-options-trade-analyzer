@@ -139,13 +139,6 @@ Execution
 
 ```
 
-
-
-
-
-
-### GPT 5
-```python
 # 🤖 Analyze Credit Spreads via Pipeline
 
 ## ▪️ How to Execute 
@@ -153,7 +146,6 @@ Execution
 Run `individual steps` or use the `master pipeline`
 
 ```python
-
 # Individual steps:
 
 python3 sectors.py
