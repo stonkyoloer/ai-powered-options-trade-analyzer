@@ -7,12 +7,20 @@ import asyncio
 import json
 from datetime import datetime, timezone
 from collections import defaultdict
-from tastytrade import Session, DXLinkStreamer
+import argparse
+import sys
+import getpass
+import json
+import time
+from datetime import datetime, timezone
+from collections import defaultdict
+from tastytrade import DXLinkStreamer
 from tastytrade.dxfeed import Quote, Greeks
 from config import USERNAME, PASSWORD
 from sectors import PerfTimer
+from get_session import get_or_create_session
 
-async def collect_greeks_for_credit_spreads(mode, verbose=True):
+async def collect_greeks_for_credit_spreads(mode, sess, verbose=True):
     """Collect Greeks and pricing for all option contracts"""
     if verbose:
         print(f"🧮 Collecting Greeks for Credit Spreads - {mode.upper()}")
@@ -30,7 +38,32 @@ async def collect_greeks_for_credit_spreads(mode, verbose=True):
     
     if not contracts_by_ticker:
         print(f"❌ No contracts found in options_contracts_{mode}.json")
-        return None
+        # Write an empty result file so the pipeline can proceed gracefully
+        empty_result = {
+            "mode": mode,
+            "collection_timestamp": datetime.now(timezone.utc).isoformat(),
+            "collection_stats": {
+                "total_symbols_requested": 0,
+                "quotes_collected": 0,
+                "greeks_collected": 0,
+                "complete_data_points": 0,
+                "quote_success_rate": 0,
+                "greeks_success_rate": 0,
+                "overall_success_rate": 0
+            },
+            "market_data": {},
+            "by_ticker": {},
+            "credit_spread_summary": {
+                "tickers_analyzed": 0,
+                "total_sellable_contracts": 0,
+                "avg_iv_across_all": 0
+            }
+        }
+        filename = f"greeks_data_{mode}.json"
+        with open(filename, "w") as f:
+            json.dump(empty_result, f, indent=2)
+        print(f"📁 Saved empty Greeks file: {filename}")
+        return empty_result
     
     # Collect all option symbols for batch processing
     all_symbols = []
@@ -60,7 +93,7 @@ async def collect_greeks_for_credit_spreads(mode, verbose=True):
         print(f"📊 Collecting data for {len(all_symbols):,} option contracts")
         print(f"🏢 Across {len(contracts_by_ticker)} tickers")
     
-    sess = Session(USERNAME, PASSWORD)
+    
     
     # Collect market data in batches
     quotes_data = {}
@@ -297,17 +330,27 @@ async def collect_greeks_for_credit_spreads(mode, verbose=True):
     
     return result
 
-def main():
+def main(two_fa_code):
     """Main function for standalone execution"""
     print("🚀 Greeks Analysis for Credit Spreads")
     print("=" * 50)
     
-    for mode in ["gpt", "grok"]:
-        result = asyncio.run(collect_greeks_for_credit_spreads(mode))
+    # Reuse a cached session when possible; avoids repeated 2FA prompts
+    try:
+        sess = get_or_create_session(two_fa_code)
+    except Exception as e:
+        print(f"❌ Authentication error for Greeks collection: {e}")
+        return
+    
+    for mode in ["gpt", "grok", "claude"]:
+        result = asyncio.run(collect_greeks_for_credit_spreads(mode, sess))
         if result:
             sellable = result["credit_spread_summary"]["total_sellable_contracts"]
             print(f"🎯 {mode.upper()}: {sellable:,} contracts ready for credit spreads")
         print()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("two_fa_code", help="2FA code for tastytrade")
+    args = parser.parse_args()
+    main(args.two_fa_code)

@@ -7,12 +7,17 @@ import asyncio
 import json
 import time
 from datetime import datetime, timezone
-from tastytrade import Session, DXLinkStreamer
+import sys
+from tastytrade import DXLinkStreamer
 from tastytrade.dxfeed import Quote
 from config import USERNAME, PASSWORD
 from sectors import PerfTimer
+import getpass # Ensure getpass is imported
+import asyncio # Ensure asyncio is imported
+from get_session import get_or_create_session
+# Note: Avoid importing TastytradeError to support different tastytrade versions
 
-async def collect_quotes_for_validated_tickers(mode, timeout=10):
+async def collect_quotes_for_validated_tickers(mode, sess, timeout=10):
     """Collect quotes for all validated tickers from universe file"""
     print(f"📊 Collecting quotes for {mode.upper()} validated tickers")
     print("=" * 60)
@@ -39,7 +44,7 @@ async def collect_quotes_for_validated_tickers(mode, timeout=10):
     print(f"📋 Tickers: {', '.join(validated_tickers)}")
     print(f"⏱️ Timeout: {timeout}s")
     
-    sess = Session(USERNAME, PASSWORD)
+    
     quotes = {}
     events_received = 0
     
@@ -158,13 +163,23 @@ async def collect_quotes_for_validated_tickers(mode, timeout=10):
     
     return result
 
-def main():
+def main():  # Modified: supports optional CLI 2FA argument
     """Main quote collection for both modes"""
     print("🚀 Stock Quote Collector - All Validated Tickers")
     print("=" * 50)
     
-    for mode in ["gpt", "grok"]:
-        result = asyncio.run(collect_quotes_for_validated_tickers(mode))
+    # Optional 2FA code passed via CLI (from master.py)
+    two_fa_arg = sys.argv[1] if len(sys.argv) > 1 else None
+
+    # Get or reuse session (cached across steps)
+    try:
+        sess = get_or_create_session(two_fa_arg)
+    except Exception as e:
+        print(f"Authentication error creating session: {e}")
+        return
+    
+    for mode in ["gpt", "grok", "claude"]:
+        result = asyncio.run(collect_quotes_for_validated_tickers(mode, sess))
         if result:
             print(f"\n🎯 {mode.upper()}: Ready for liquidity analysis")
         else:

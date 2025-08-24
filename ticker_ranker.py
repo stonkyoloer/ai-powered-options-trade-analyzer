@@ -9,11 +9,20 @@ import time
 import statistics
 from datetime import datetime, timezone
 from collections import defaultdict
-from tastytrade import Session, DXLinkStreamer
+import argparse
+import sys
+import getpass
+import json
+import time
+import statistics
+from datetime import datetime, timezone
+from collections import defaultdict
+from tastytrade import DXLinkStreamer
 from tastytrade.dxfeed import Quote, Summary, Greeks
 from tastytrade.instruments import get_option_chain
 from config import USERNAME, PASSWORD
 from sectors import get_sectors, PerfTimer
+from get_session import get_or_create_session
 
 # Liquidity scoring parameters for credit spreads
 LIQUID_BENCHMARK_TICKERS = ["SPY", "QQQ", "AAPL", "MSFT", "NVDA", "TSLA", "AMZN", "META", "GOOGL"]
@@ -265,7 +274,7 @@ async def analyze_ticker_for_credit_spreads(ticker, spot_price, sess, timeout=12
         print(f"    ❌ Error: {str(e)[:60]}")
         return {"ticker": ticker, "status": f"error: {str(e)[:60]}"}
 
-async def rank_all_tickers_for_credit_spreads(mode):
+async def rank_all_tickers_for_credit_spreads(mode, sess):
     """Rank all tickers in mode by credit spread liquidity"""
     print(f"📊 Ranking {mode.upper()} Tickers for Credit Spread Liquidity")
     print("=" * 70)
@@ -283,7 +292,7 @@ async def rank_all_tickers_for_credit_spreads(mode):
     
     print(f"📋 Analyzing {len(tickers)} tickers for credit spread opportunities...")
     
-    sess = Session(USERNAME, PASSWORD)
+    
     results = []
     
     with PerfTimer(f"{mode.upper()} credit spread liquidity ranking"):
@@ -365,13 +374,20 @@ async def rank_all_tickers_for_credit_spreads(mode):
     
     return output
 
-def main():
+def main(two_fa_code):
     """Main ticker ranking for credit spreads"""
     print("🚀 Credit Spread Liquidity Analyzer")
     print("=" * 50)
     
-    for mode in ["gpt", "grok"]:
-        result = asyncio.run(rank_all_tickers_for_credit_spreads(mode))
+    # Reuse a cached session when possible; avoids repeated 2FA prompts
+    try:
+        sess = get_or_create_session(two_fa_code)
+    except Exception as e:
+        print(f"❌ Authentication error for ticker ranking: {e}")
+        return
+    
+    for mode in ["gpt", "grok", "claude"]:
+        result = asyncio.run(rank_all_tickers_for_credit_spreads(mode, sess))
         if result:
             excellent = result["analysis_stats"]["excellent_tickers"]
             good = result["analysis_stats"]["good_tickers"]
@@ -379,4 +395,7 @@ def main():
         print()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("two_fa_code", help="2FA code for tastytrade")
+    args = parser.parse_args()
+    main(args.two_fa_code)
