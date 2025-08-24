@@ -3,16 +3,17 @@
 KEEP - optimize for 20min runtime target.
 Validates options chains with early exit at 95% success.
 """
+import argparse
 import json
 import time
 from datetime import datetime
 from pathlib import Path
-from tastytrade import Session
 from tastytrade.instruments import get_option_chain
+from get_session import get_or_create_session
 from config import USERNAME, PASSWORD
 from sectors import get_sectors, alias_candidates, PORTFOLIO_MODE, PerfTimer
 
-BUILD_MODES = ["gpt", "grok"]
+BUILD_MODES = ["gpt", "grok", "claude"]
 
 def validate_chain_fast(sess, sym, timeout=3):
     """Fast chain validation with timeout"""
@@ -86,13 +87,14 @@ def build_universe_optimized(sess, mode):
     
     return all_results
 
-def main():
+def main(two_fa_code):
     """Main universe builder"""
     start_time = time.time()
     print("🚀 Optimized Universe Builder")
     print(f"📅 Target: 20min runtime | Mode: {PORTFOLIO_MODE}")
     
-    sess = Session(USERNAME, PASSWORD)
+    # Reuse a cached session when possible; falls back to 2FA once
+    sess = get_or_create_session(two_fa_code)
     
     for mode in BUILD_MODES:
         results = build_universe_optimized(sess, mode)
@@ -117,5 +119,9 @@ def main():
     print(f"\n⏱️ Total time: {total_time:.1f}s")
     print(f"🎯 Next: python spot.py")
 
+
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("two_fa_code", help="2FA code for tastytrade")
+    args = parser.parse_args()
+    main(args.two_fa_code)

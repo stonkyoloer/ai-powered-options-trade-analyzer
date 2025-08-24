@@ -5,12 +5,22 @@ Focuses on contracts suitable for credit spreads (7-60 DTE, reasonable strikes).
 """
 import json
 from datetime import datetime, timezone
-from tastytrade import Session
+import argparse
+import sys
+import getpass
+import json
+from datetime import datetime, timezone
 from tastytrade.instruments import get_option_chain
 from config import USERNAME, PASSWORD
 from sectors import PerfTimer
+from get_session import get_or_create_session
 
-def discover_credit_spread_contracts(mode, verbose=True):
+# Minimum liquidity score to include a ticker in contract discovery.
+# If none meet this threshold, we fallback to top-N by score to avoid empty outputs.
+MIN_LIQUIDITY_SCORE = 40
+FALLBACK_TICKER_COUNT = 8
+
+def discover_credit_spread_contracts(mode, sess, verbose=True):
     """Discover options contracts suitable for credit spreads"""
     if verbose:
         print(f"🎰 Discovering Credit Spread Contracts - {mode.upper()}")
@@ -24,15 +34,21 @@ def discover_credit_spread_contracts(mode, verbose=True):
         print(f"❌ ticker_rankings_{mode}.json not found. Run ticker_ranker.py first.")
         return None
     
-    # Filter to only good liquidity tickers (score >= 40)
+    # Filter to only good liquidity tickers (score >= MIN_LIQUIDITY_SCORE)
+    ordered = sorted(
+        rankings_data["ticker_rankings"], key=lambda x: x.get("liquidity_score", 0), reverse=True
+    )
     good_tickers = [
-        ticker_data for ticker_data in rankings_data["ticker_rankings"]
-        if ticker_data["liquidity_score"] >= 40
+        ticker_data for ticker_data in ordered if ticker_data.get("liquidity_score", 0) >= MIN_LIQUIDITY_SCORE
     ]
-    
+
     if not good_tickers:
-        print(f"❌ No tickers with sufficient liquidity (score >= 40)")
-        return None
+        if verbose:
+            print(
+                f"⚠️ No tickers with sufficient liquidity (score >= {MIN_LIQUIDITY_SCORE}). "
+                f"Falling back to top {min(FALLBACK_TICKER_COUNT, len(ordered))} by score."
+            )
+        good_tickers = ordered[:FALLBACK_TICKER_COUNT]
     
     if verbose:
         print(f"📋 Processing {len(good_tickers)} liquid tickers")
@@ -41,7 +57,7 @@ def discover_credit_spread_contracts(mode, verbose=True):
         fair = len([t for t in good_tickers if 40 <= t["liquidity_score"] < 60])
         print(f"  ⭐ Excellent: {excellent} | ✅ Good: {good} | ⚠️ Fair: {fair}")
     
-    sess = Session(USERNAME, PASSWORD)
+    
     all_contracts = {}
     total_contracts = 0
     
@@ -216,13 +232,20 @@ def discover_credit_spread_contracts(mode, verbose=True):
     
     return result
 
-def main():
+def main(two_fa_code):
     """Main function for standalone execution"""
     print("🚀 Credit Spread Contract Discovery")
     print("=" * 50)
     
-    for mode in ["gpt", "grok"]:
-        result = discover_credit_spread_contracts(mode)
+    # Reuse a cached session when possible; avoids repeated 2FA prompts
+    try:
+        sess = get_or_create_session(two_fa_code)
+    except Exception as e:
+        print(f"❌ Authentication error for options discovery: {e}")
+        return
+    
+    for mode in ["gpt", "grok", "claude"]:
+        result = discover_credit_spread_contracts(mode, sess)
         if result:
             contracts = result['discovery_stats']['total_contracts_found']
             tickers = result['discovery_stats']['tickers_with_contracts']
@@ -230,4 +253,7 @@ def main():
         print()
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("two_fa_code", help="2FA code for tastytrade")
+    args = parser.parse_args()
+    main(args.two_fa_code)

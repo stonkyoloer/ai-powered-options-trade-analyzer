@@ -295,13 +295,14 @@ def analyze_credit_spreads_for_mode(mode, verbose=True):
     return result
 
 def create_final_comparison_table():
-    """Create the final comparison table between GPT and Grok"""
+    """Create the final comparison table between GPT, Grok, and Claude"""
     print("🏆 Creating Final Comparison Table")
     print("=" * 70)
     
-    # Load results from both modes
+    # Load results from modes
     gpt_data = None
     grok_data = None
+    claude_data = None
     
     try:
         with open("credit_spreads_gpt.json", "r") as f:
@@ -315,11 +316,16 @@ def create_final_comparison_table():
     except FileNotFoundError:
         print("❌ credit_spreads_grok.json not found")
     
+    try:
+        with open("credit_spreads_claude.json", "r") as f:
+            claude_data = json.load(f)
+    except FileNotFoundError:
+        print("❌ credit_spreads_claude.json not found")
+    
     if not gpt_data or not grok_data:
-        print("❌ Missing data files - run analysis for both modes first")
+        print("❌ Missing data files - run analysis for GPT and Grok first")
         return None
     
-    # Combine all final selections
     final_table = []
     
     # Add GPT selections
@@ -352,6 +358,22 @@ def create_final_comparison_table():
             "Distance_From_Current": f"{spread['distance_from_current']:.1f}%"
         })
     
+    # Add Claude selections if available
+    if claude_data:
+        for spread in claude_data["final_selections"]:
+            final_table.append({
+                "AI_bot_name": "Claude",
+                "Sector": spread["sector"],
+                "Ticker": spread["ticker"],
+                "Spread_Type": spread["spread_type"],
+                "Legs": spread["legs"],
+                "DTE": spread["dte"],
+                "PoP": f"{spread['pop']:.1f}%",
+                "ROI": f"{spread['roi']:.1f}%",
+                "Net_Credit": f"${spread['net_credit']:.2f}",
+                "Distance_From_Current": f"{spread['distance_from_current']:.1f}%"
+            })
+    
     # Sort by AI bot name, then by sector
     final_table.sort(key=lambda x: (x["AI_bot_name"], x["Sector"]))
     
@@ -361,12 +383,15 @@ def create_final_comparison_table():
         "total_spreads": len(final_table),
         "gpt_spreads": len([s for s in final_table if s["AI_bot_name"] == "GPT"]),
         "grok_spreads": len([s for s in final_table if s["AI_bot_name"] == "Grok"]),
+        "claude_spreads": len([s for s in final_table if s["AI_bot_name"] == "Claude"]),
         "final_comparison_table": final_table,
         "summary_stats": {
             "gpt_avg_roi": sum(float(s["ROI"].rstrip('%')) for s in final_table if s["AI_bot_name"] == "GPT") / len([s for s in final_table if s["AI_bot_name"] == "GPT"]) if [s for s in final_table if s["AI_bot_name"] == "GPT"] else 0,
             "grok_avg_roi": sum(float(s["ROI"].rstrip('%')) for s in final_table if s["AI_bot_name"] == "Grok") / len([s for s in final_table if s["AI_bot_name"] == "Grok"]) if [s for s in final_table if s["AI_bot_name"] == "Grok"] else 0,
+            "claude_avg_roi": sum(float(s["ROI"].rstrip('%')) for s in final_table if s["AI_bot_name"] == "Claude") / len([s for s in final_table if s["AI_bot_name"] == "Claude"]) if [s for s in final_table if s["AI_bot_name"] == "Claude"] else 0,
             "gpt_avg_pop": sum(float(s["PoP"].rstrip('%')) for s in final_table if s["AI_bot_name"] == "GPT") / len([s for s in final_table if s["AI_bot_name"] == "GPT"]) if [s for s in final_table if s["AI_bot_name"] == "GPT"] else 0,
-            "grok_avg_pop": sum(float(s["PoP"].rstrip('%')) for s in final_table if s["AI_bot_name"] == "Grok") / len([s for s in final_table if s["AI_bot_name"] == "Grok"]) if [s for s in final_table if s["AI_bot_name"] == "Grok"] else 0
+            "grok_avg_pop": sum(float(s["PoP"].rstrip('%')) for s in final_table if s["AI_bot_name"] == "Grok") / len([s for s in final_table if s["AI_bot_name"] == "Grok"]) if [s for s in final_table if s["AI_bot_name"] == "Grok"] else 0,
+            "claude_avg_pop": sum(float(s["PoP"].rstrip('%')) for s in final_table if s["AI_bot_name"] == "Claude") / len([s for s in final_table if s["AI_bot_name"] == "Claude"]) if [s for s in final_table if s["AI_bot_name"] == "Claude"] else 0
         }
     }
     
@@ -385,6 +410,8 @@ def create_final_comparison_table():
     print(f"\n📊 SUMMARY:")
     print(f"  GPT: {final_output['gpt_spreads']} spreads | Avg ROI: {final_output['summary_stats']['gpt_avg_roi']:.1f}% | Avg PoP: {final_output['summary_stats']['gpt_avg_pop']:.1f}%")
     print(f"  Grok: {final_output['grok_spreads']} spreads | Avg ROI: {final_output['summary_stats']['grok_avg_roi']:.1f}% | Avg PoP: {final_output['summary_stats']['grok_avg_pop']:.1f}%")
+    if final_output['claude_spreads']:
+        print(f"  Claude: {final_output['claude_spreads']} spreads | Avg ROI: {final_output['summary_stats']['claude_avg_roi']:.1f}% | Avg PoP: {final_output['summary_stats']['claude_avg_pop']:.1f}%")
     print(f"  📁 Saved: final_credit_spread_comparison.json")
     
     return final_output
@@ -394,8 +421,8 @@ def main():
     print("🚀 Final Credit Spread Analysis")
     print("=" * 50)
     
-    # Analyze both modes
-    for mode in ["gpt", "grok"]:
+    # Analyze modes
+    for mode in ["gpt", "grok", "claude"]:
         result = analyze_credit_spreads_for_mode(mode)
         if result:
             selections = len(result["final_selections"])

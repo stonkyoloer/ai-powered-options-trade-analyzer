@@ -13,7 +13,11 @@ Pipeline Steps:
 
 Output: AI bot name | Sector | Ticker | Bull Put or Bear Call | $/$ leg cost | DTE | PoP | ROI
 """
+from dotenv import load_dotenv
+load_dotenv() # Load environment variables from .env file
+
 import subprocess
+import getpass
 import sys
 import time
 import json
@@ -31,17 +35,20 @@ class PipelineRunner:
         elapsed = time.time() - self.start_time
         print(f"[{timestamp}] [{elapsed:6.1f}s] {level}: {message}")
     
-    def run_script(self, script_name, description):
+    def run_script(self, script_name, description, two_fa_code=None):
         """Run a pipeline script and capture results"""
         self.log(f"Starting {description}")
-        self.log(f"Running: python3 {script_name}")
+        command = [sys.executable, script_name]
+        if two_fa_code and script_name != 'spread_analyzer.py':
+            command.append(two_fa_code)
+        self.log(f"Running: python3 {script_name} ...")
         
         step_start = time.time()
         
         try:
             # Run the script
             result = subprocess.run(
-                [sys.executable, script_name],
+                command,
                 capture_output=True,
                 text=True,
                 timeout=1800  # 30 minute timeout per step
@@ -68,7 +75,7 @@ class PipelineRunner:
                 # Show error output
                 if result.stderr:
                     self.log(f"Error output:", "ERROR")
-                    for line in result.stderr.strip().split('\n')[:5]:
+                    for line in result.stderr.strip().split('\n'):
                         self.log(f"   {line}", "ERROR")
                         
                 if result.stdout:
@@ -124,6 +131,8 @@ class PipelineRunner:
         self.log("Target: GPT vs Grok credit spread comparison with real PoP and ROI")
         self.log("=" * 80)
         
+        two_fa_code = getpass.getpass("Enter your 2FA code: ")
+
         pipeline_steps = [
             {
                 "step": 1,
@@ -131,7 +140,8 @@ class PipelineRunner:
                 "description": "Universe Building & Options Chain Validation",
                 "expected_files": {
                     "universe_gpt.json": "GPT universe",
-                    "universe_grok.json": "Grok universe"
+                    "universe_grok.json": "Grok universe",
+                    "universe_claude.json": "Claude universe"
                 }
             },
             {
@@ -140,7 +150,8 @@ class PipelineRunner:
                 "description": "Stock Price Collection",
                 "expected_files": {
                     "spot_quotes_gpt.json": "GPT stock quotes",
-                    "spot_quotes_grok.json": "Grok stock quotes"
+                    "spot_quotes_grok.json": "Grok stock quotes",
+                    "spot_quotes_claude.json": "Claude stock quotes"
                 }
             },
             {
@@ -149,7 +160,8 @@ class PipelineRunner:
                 "description": "Liquidity Analysis for Credit Spreads", 
                 "expected_files": {
                     "ticker_rankings_gpt.json": "GPT liquidity rankings",
-                    "ticker_rankings_grok.json": "Grok liquidity rankings"
+                    "ticker_rankings_grok.json": "Grok liquidity rankings",
+                    "ticker_rankings_claude.json": "Claude liquidity rankings"
                 }
             },
             {
@@ -158,7 +170,8 @@ class PipelineRunner:
                 "description": "Options Contract Discovery",
                 "expected_files": {
                     "options_contracts_gpt.json": "GPT options contracts", 
-                    "options_contracts_grok.json": "Grok options contracts"
+                    "options_contracts_grok.json": "Grok options contracts",
+                    "options_contracts_claude.json": "Claude options contracts"
                 }
             },
             {
@@ -167,7 +180,8 @@ class PipelineRunner:
                 "description": "Greeks & Market Data Collection",
                 "expected_files": {
                     "greeks_data_gpt.json": "GPT Greeks data",
-                    "greeks_data_grok.json": "Grok Greeks data"
+                    "greeks_data_grok.json": "Grok Greeks data",
+                    "greeks_data_claude.json": "Claude Greeks data"
                 }
             },
             {
@@ -177,6 +191,7 @@ class PipelineRunner:
                 "expected_files": {
                     "credit_spreads_gpt.json": "GPT credit spreads",
                     "credit_spreads_grok.json": "Grok credit spreads", 
+                    "credit_spreads_claude.json": "Claude credit spreads",
                     "final_credit_spread_comparison.json": "Final comparison table"
                 }
             }
@@ -192,10 +207,10 @@ class PipelineRunner:
             expected_files = step_config["expected_files"]
             
             self.log(f"\n🔄 Step {step_num}/6: {description}")
-            self.log("-" * 60)
+            self.log("---" * 20)
             
             # Run the script
-            if self.run_script(script, description):
+            if self.run_script(script, description, two_fa_code):
                 # Check results
                 if self.show_step_summary(step_num, script, expected_files):
                     successful_steps += 1
@@ -245,57 +260,27 @@ class PipelineRunner:
             
             table = final_data["final_comparison_table"]
             
-            self.log(f"{'AI Bot':<6} | {'Sector':<20} | {'Ticker':<6} | {'Type':<10} | {'Legs':<12} | {'DTE':<3} | {'PoP':<6} | {'ROI':<6}")
-            self.log("-" * 100)
-            
-            for spread in table[:10]:  # Show first 10 for summary
-                sector = spread['Sector'][:18] + '..' if len(spread['Sector']) > 20 else spread['Sector']
-                self.log(f"{spread['AI_bot_name']:<6} | {sector:<20} | {spread['Ticker']:<6} | {spread['Spread_Type'][:10]:<10} | {spread['Legs']:<12} | {spread['DTE']:<3} | {spread['PoP']:<6} | {spread['ROI']:<6}")
-            
-            if len(table) > 10:
-                self.log(f"... and {len(table) - 10} more spreads")
-            
-            # Summary stats
-            stats = final_data["summary_stats"]
-            self.log(f"\n📈 Performance Summary:")
-            self.log(f"   GPT:  {final_data['gpt_spreads']} spreads | Avg ROI: {stats['gpt_avg_roi']:.1f}% | Avg PoP: {stats['gpt_avg_pop']:.1f}%")
-            self.log(f"   Grok: {final_data['grok_spreads']} spreads | Avg ROI: {stats['grok_avg_roi']:.1f}% | Avg PoP: {stats['grok_avg_pop']:.1f}%")
-            
-            self.log(f"\n📁 Complete results saved to: final_credit_spread_comparison.json")
-            
-        except Exception as e:
-            self.log(f"❌ Could not display final results: {e}", "ERROR")
+            self.log(f"{ 'AI Bot':<6} | { 'Sector':<20} | { 'Ticker':<6} | { 'Type':<10} | { 'Legs':<12} | { 'DTE':<3} | { 'PoP':<6} | { 'ROI':<6}")
+            self.log("---" * 50)
+            # Print each row in the final table
+            for row in table:
+                self.log(
+                    f"{row['AI_bot_name']:<6} | {row['Sector'][:20]:<20} | {row['Ticker']:<6} | {row['Spread_Type']:<10} | {row['Legs']:<12} | {row['DTE']:<3} | {row['PoP']:<6} | {row['ROI']:<6}"
+                )
 
-def main():
-    """Main execution"""
-    print("\n" + "="*80)
-    print("🎯 CREDIT SPREAD ANALYSIS PIPELINE")
-    print("   GPT vs Grok AI Stock Selection Comparison")
-    print("   Real PoP and ROI calculations using live market data")
-    print("="*80)
-    
-    # Check Python dependencies
-    try:
-        import scipy
-        print("✅ Dependencies: scipy installed")
-    except ImportError:
-        print("❌ Missing dependency: pip install scipy")
-        sys.exit(1)
-    
-    # Check required files exist
-    required_files = ["config.py", "sectors.py", "build_universe.py", "spot.py", 
-                     "ticker_ranker.py", "options_chains.py", "greeks.py", "spread_analyzer.py"]
-    
-    missing_files = [f for f in required_files if not Path(f).exists()]
-    if missing_files:
-        print(f"❌ Missing required files: {missing_files}")
-        sys.exit(1)
-    
-    print("✅ All required files found")
-    
-    # Run the pipeline
-    runner = PipelineRunner()
-    runner.run_complete_pipeline()
+            # Print summary counts if available
+            gpt = final_data.get("gpt_spreads", 0)
+            grok = final_data.get("grok_spreads", 0)
+            claude = final_data.get("claude_spreads", 0)
+            stats = final_data.get("summary_stats", {})
+            self.log("\n📊 SUMMARY:")
+            self.log(f"  GPT: {gpt} spreads | Avg ROI: {stats.get('gpt_avg_roi', 0):.1f}% | Avg PoP: {stats.get('gpt_avg_pop', 0):.1f}%")
+            self.log(f"  Grok: {grok} spreads | Avg ROI: {stats.get('grok_avg_roi', 0):.1f}% | Avg PoP: {stats.get('grok_avg_pop', 0):.1f}%")
+            if claude:
+                self.log(f"  Claude: {claude} spreads | Avg ROI: {stats.get('claude_avg_roi', 0):.1f}% | Avg PoP: {stats.get('claude_avg_pop', 0):.1f}%")
+        except Exception as e:
+            self.log(f"Error displaying final results: {e}")
 
 if __name__ == "__main__":
-    main()
+    runner = PipelineRunner()
+    runner.run_complete_pipeline()
